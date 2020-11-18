@@ -1,0 +1,6 @@
+cd Users\William Gough\Desktop\mn190720-55\raw
+
+for %a in (*.mov) DO ffmpeg -i "%a" "AudioData\%~na.wav"
+
+move AudioData "C:\Users\William Gough\Desktop\mn190720-55"
+
