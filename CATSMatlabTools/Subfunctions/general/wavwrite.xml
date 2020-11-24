@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- Copyright 2011-2013 The MathWorks, Inc. -->
+<rsccat version="1.0" locale="en_US" product="MATLAB">
+  <message>
+    <entry key="invalidInputFormat">Data array cannot be an N-D array.</entry>
+    <entry key="invalidBitsPerSample">Invalid number of bits specified.</entry>
+    <entry key="dataClipped">Data clipped during write to file:{0}</entry>
+    <entry key="functionToBeRemoved">WAVWRITE will be removed in a future release. Use AUDIOWRITE instead.</entry>
+  </message>
+</rsccat>

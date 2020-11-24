@@ -1,0 +1,378 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" itemscope itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>wavwrite</title>
+<link rel="stylesheet" href="docstyle.css" type="text/css">
+<meta name="chunktype" content="refpage">
+<meta name="refentity" itemprop="refentity" content="function:wavwrite">
+  <meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="toctype" itemprop="pagetype" content="fcn">
+<meta name="infotype" itemprop="infotype" content="ref/function" />
+
+<meta name="description" itemprop="description" content="This MATLAB function writes the data stored in the variable y to a WAVE file called filename." />
+<script type="text/javascript" src="../../includes/product/scripts/jquery/jquery-latest.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/l10n.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/docscripts.js"></script>
+<script type="text/javascript" src="../../includes/product/scripts/docscripts.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/mw.toc.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/mw.imagescaling.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/mw.imageanimation.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/mw.breadcrumb.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/jquery.highlight.js"></script>
+<script type="text/javascript" src="../../includes/shared/scripts/nanoscroller.min.js"></script>
+
+
+
+
+<script type="text/javascript" src="../../includes/product/scripts/jquery/jquery.tmpl.js"></script>
+<script type="text/javascript" src="../../includes/product/scripts/jquery/jquery.tmpl.min.js"></script>
+<script type="text/javascript" src="../../includes/product/scripts/jquery/jquery.toggleval.js"></script>
+<script type="text/javascript" src="../../includes/product/scripts/localnav.js"></script>
+<script type="text/javascript" src="../../includes/product/scripts/suggest.js"></script>
+<script type="text/javascript">
+            var suggestionsObj;
+            $(function() {
+                var searchField = $('#docsearch');
+                suggestionsObj = new Suggestions(getSuggestions, getMore, searchField);
+            });
+        
+            function getSuggestions() {
+               var text = suggestionsObj.searchField.val();
+               document.location='docsuggestion:' + text;
+            }
+
+            function getMore(type) {
+                var text = suggestionsObj.searchField.val();
+                document.location='docsuggestion:' + type + ':' + text;
+            }
+        </script>
+
+<link href="../../includes/product/css/reset.css" rel="stylesheet" type="text/css">
+<link href="../../includes/product/css/960.css" rel="stylesheet" type="text/css">
+<link href="../../includes/product/css/site5.css" rel="stylesheet" type="text/css">
+<link href="../../includes/product/css/doc_center.css" rel="stylesheet" type="text/css">
+<link href="../../includes/product/css/doc_center_installed.css" rel="stylesheet" type="text/css">
+<link href="../../includes/product/css/doc_center_print.css" rel="stylesheet" type="text/css" media="print">
+</head>
+<body>
+<div class="site_container site_toc_opened"><div class="toc_pane"><div xmlns:atict="http://www.arbortext.com/namespace/atict">
+<div class="toc_container_wrapper" tabindex="0" style="display:block;">
+<div class="toc_header" lang="en">
+<div class="toc_icon" id="toc.matlab">
+<a href="../doccentertoc.html"></a>
+</div>
+<h3>Contents</h3>
+</div><!--close_toc_header-->
+<div class="toc_scroll_pane">
+<div class="toc_container">
+<!--BEGINNING OF TOC DATA-->
+<div class="toc_doc_center_home">
+<a href="../../documentation-center.html">Documentation Center</a>
+</div>
+<ul>
+<li id="matlab.index.html" class="toc_collapsed"><div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html" class="corrected_url">MATLAB</a></div>
+</div>
+<ul>
+<li id="matlab.getting-started-with-matlab.html.0" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../getting-started-with-matlab.html" class="corrected_url">Getting Started with MATLAB</a></div>
+</div>
+</li><li id="matlab.examples.index.html">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper">
+<a href="../examples/index.html" class="corrected_url">Examples</a>
+</div>
+</div>
+</li>
+<li id="matlab.release-notes.html">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper">
+<a href="../release-notes.html" class="corrected_url">Release Notes</a></div>
+</div>
+</li>
+<li id="matlab.functionlist.html">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper">
+<a href="../functionlist.html" class="corrected_url">Functions</a>
+</div>
+</div>
+</li>
+<li id="matlab.index.html.1" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#language-fundamentals" class="corrected_url">Language Fundamentals</a></div>
+</div>
+</li><li id="matlab.index.html.2" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#mathematics" class="corrected_url">Mathematics</a></div>
+</div>
+</li><li id="matlab.index.html.3" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#graphics" class="corrected_url">Graphics</a></div>
+</div>
+</li><li id="matlab.index.html.4" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#programming-and-data-types" class="corrected_url">Programming Scripts and Functions</a></div>
+</div>
+</li><li id="matlab.index.html.5" class="toc_expanded">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#data-and-file-management" class="corrected_url">Data and File Management</a></div>
+</div>
+<ul>
+<li id="matlab.workspace.html.0" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../workspace.html" class="corrected_url">Workspace Variables</a></div>
+</div>
+</li><li id="matlab.data-import-and-export.html.1" class="toc_expanded">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../data-import-and-export.html" class="corrected_url">Data Import and Export</a></div>
+</div>
+<ul>
+<li id="matlab.file-opening-loading-and-saving.html.0" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../file-opening-loading-and-saving.html" class="corrected_url">Import and Export Basics</a></div>
+</div>
+</li><li id="matlab.text-files.html.1" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../text-files.html" class="corrected_url">Text Files</a></div>
+</div>
+</li><li id="matlab.spreadsheets.html.2" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../spreadsheets.html" class="corrected_url">Spreadsheets</a></div>
+</div>
+</li><li id="matlab.low-level-file-i-o.html.3" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../low-level-file-i-o.html" class="corrected_url">Low-Level File I/O</a></div>
+</div>
+</li><li id="matlab.images_images.html.4" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../images_images.html" class="corrected_url">Images</a></div>
+</div>
+</li><li id="matlab.scientific-data.html.5" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../scientific-data.html" class="corrected_url">Scientific Data</a></div>
+</div>
+</li><li id="matlab.audio-and-video.html.6" class="toc_expanded">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../audio-and-video.html" class="corrected_url">Audio and Video</a></div>
+</div>
+<ul>
+<li id="matlab.reading-and-writing-files.html.0" class="toc_expanded">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../reading-and-writing-files.html" class="corrected_url">Reading and Writing Files</a></div>
+</div>
+<ul>
+<li class="toc_collapsed"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper">Functions</div></div><ul>
+<li id="matlab.ref.audioinfo.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/ref/audioinfo.html" class="corrected_url">audioinfo</a></div></div></li>
+<li id="matlab.ref.audioread.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/ref/audioread.html" class="corrected_url">audioread</a></div></div></li>
+<li id="matlab.ref.audiowrite.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/ref/audiowrite.html" class="corrected_url">audiowrite</a></div></div></li>
+<li id="matlab.ref.mmfileinfo.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/ref/mmfileinfo.html" class="corrected_url">mmfileinfo</a></div></div></li>
+<li id="matlab.ref.movie2avi.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/ref/movie2avi.html" class="corrected_url">movie2avi</a></div></div></li>
+<li id="matlab.videoreader-class.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="videoreader-class.html" class="corrected_url">VideoReader</a></div></div></li>
+<li id="matlab.videowriter-class.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="videowriter-class.html" class="corrected_url">VideoWriter</a></div></div></li>
+</ul>
+</li>
+<li class="toc_collapsed"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper">Examples and How To</div></div><ul>
+<li id="matlab.import_export.read-audio-files.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/read-audio-files.html" class="corrected_url">Read and Get Information About Audio Files</a></div></div></li>
+<li id="matlab.import_export.get-information-about-video-files.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/get-information-about-video-files.html" class="corrected_url">Get Information about Video Files</a></div></div></li>
+<li id="matlab.import_export.read-video-files.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/read-video-files.html" class="corrected_url">Read Video Files</a></div></div></li>
+<li id="matlab.import_export.convert-between-image-sequences-and-video.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/convert-between-image-sequences-and-video.html" class="corrected_url">Convert Between Image Sequences and Video</a></div></div></li>
+<li id="matlab.import_export.exporting-to-audio-and-video.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/exporting-to-audio-and-video.html" class="corrected_url">Export to Audio and Video</a></div></div></li>
+</ul>
+</li>
+<li class="toc_collapsed"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper">Concepts</div></div><ul>
+<li id="matlab.import_export.characteristics-of-audio-files.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/characteristics-of-audio-files.html" class="corrected_url">Characteristics of Audio Files</a></div></div></li>
+<li id="matlab.import_export.supported-video-file-formats.html"><div class="node_element"><div class="wrapper img_wrapper"></div><div class="wrapper text_wrapper"><a href="../../matlab/import_export/supported-video-file-formats.html" class="corrected_url">Supported Video File Formats</a></div></div></li>
+</ul>
+</li>
+</ul>
+</li><li id="matlab.recording-and-playback.html.1" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../recording-and-playback.html" class="corrected_url">Recording and Playback</a></div>
+</div>
+</li><li id="matlab.utilities.html.2" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../utilities.html" class="corrected_url">Utilities</a></div>
+</div>
+</li></ul>
+</li><li id="matlab.xml-documents.html.7" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../xml-documents.html" class="corrected_url">XML Documents</a></div>
+</div>
+</li><li id="matlab.memory-mapping.html.8" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../memory-mapping.html" class="corrected_url">Memory Mapping</a></div>
+</div>
+</li></ul>
+</li><li id="matlab.managing-files.html.2" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../managing-files.html" class="corrected_url">File Operations</a></div>
+</div>
+</li><li id="matlab.search-path.html.3" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../search-path.html" class="corrected_url">Search Path</a></div>
+</div>
+</li><li id="matlab.operating-system-commands.html.4" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../operating-system-commands.html" class="corrected_url">Operating System Commands</a></div>
+</div>
+</li><li id="matlab.internet-file-access.html.5" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../internet-file-access.html" class="corrected_url">Internet File Access</a></div>
+</div>
+</li><li id="matlab.serial-port-devices.html.6" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../serial-port-devices.html" class="corrected_url">Serial Port Devices</a></div>
+</div>
+</li><li id="matlab.hardware-support.html.7" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../hardware-support.html" class="corrected_url">Hardware Support</a></div>
+</div>
+</li></ul>
+</li><li id="matlab.index.html.6" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#gui-development" class="corrected_url">GUI Building</a></div>
+</div>
+</li><li id="matlab.index.html.7" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#external-interfaces" class="corrected_url">Advanced Software Development</a></div>
+</div>
+</li><li id="matlab.index.html.8" class="toc_collapsed">
+<div class="node_element">
+<div class="wrapper img_wrapper"></div>
+<div class="wrapper text_wrapper"><a href="../index.html#desktop-tools-and-development-environment" class="corrected_url">Desktop Environment</a></div>
+</div>
+</li></ul>
+</li>
+</ul>
+<!--END OF TOC DATA-->
+</div><!--close_toc_container-->
+</div><!--close_toc_scroll_pane-->
+</div><!--close_toc_container_wrapper-->
+</div>
+</div><!--close_toc_pane-->
+            <div class="page_container">
+               <div class="content_frame">
+                  <div class="content_container" id="content_container">
+            
+<div id="search_crumb_container"><div class="docsearch_container">
+<form id="docsearch_form" name="docsearch_form" method="get" action="../../templates/searchresults.html">
+<label for="docsearch" class="hidden">Search MATLAB Documentation</label>
+<input type="text" name="qdoc" id="docsearch" class="textfield" autocomplete="off" value="Search Documentation">
+<input type="submit" name="submitsearch" id="submitsearch" value="Search" class="docsearch_submit">
+<script type="text/javascript">
+         $("input[name='qdoc']").toggleVal({
+            focusClass: "hasFocus"
+         });
+       </script>
+</form>
+</div>
+<div class="breadcrumb_container">
+<div class="breadcrumbs"><ul><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb" class="breadcrumb_first"><a href="../../documentation-center.html" itemprop="url"><span itemprop="title">R2014a</span></a></li><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb" class="breadcrumb_product"><a href="../index.html" itemprop="url"><span itemprop="title">MATLAB</span></a></li><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb"><a href="../index.html#data-and-file-management" itemprop="url"><span itemprop="title">Data and File Management</span></a></li><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb"><a href="../data-import-and-export.html" itemprop="url"><span itemprop="title">Data Import and Export</span></a></li><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb"><a href="../audio-and-video.html" itemprop="url"><span itemprop="title">Audio and Video</span></a></li><li itemscope="" itemtype="http://www.data-vocabulary.org/Breadcrumb" itemprop="breadcrumb" class="breadcrumb_last"><a href="../reading-and-writing-files.html" itemprop="url"><span itemprop="title">Reading and Writing Files</span></a></li>
+</ul>
+</div>
+</div>
+
+</div><section id="doc_center_content">
+<a name="f15-478671"></a><a class="indexterm" name="zmw57dd0e639739"></a><div itemprop="content"><h1 class="r2014a" itemprop="title">wavwrite</h1><!-- SYNCHTO: _funcalpha.html --><div class="doc_topic_desc"><div class="purpose_container"><p itemprop="purpose">Write WAVE (<tt>.wav</tt>) sound file</p><div class="switch"><a href="javascript:void(0);" id="expandAllPage">expand all in page</a></div></div></div></div><div itemprop="content"><a name="btnen8z-1"></a><h2></h2><ul><a name="zmw57dd0e639755"></a><table cellspacing="0" class="note" summary="Note" cellpadding="5" border="1"><tr width="90%"><td><p><b>Note:</b>&nbsp;&nbsp;
+
+
+<tt>wavwrite</tt> will be removed in a future release.
+Use <a href="audiowrite.html"><tt>audiowrite</tt></a> instead.</p></td></tr></table></ul></div>
+<a name="f15-478675"></a><h2 id="syntax">Syntax</h2><div class="syntax_signature"><p class="synopsis"><tt>wavwrite(<i><tt>y</tt></i>,<i><tt>filename</tt></i>)<br>wavwrite(<i><tt>y</tt></i>,<i><tt>Fs</tt></i>,<i><tt>filename</tt></i>)<br>wavwrite(<i><tt>y</tt></i>,<i><tt>Fs</tt></i>,<i><tt>N</tt></i>,<i><tt>filename</tt></i>)<br></tt></p></div><div class="clear"></div><div itemprop="content"><a name="f15-478679"></a><h2>Description</h2><p><span itemprop="syntax"><tt><a name="f15-478681"></a>wavwrite(<i><tt>y</tt></i>,<i><tt>filename</tt></i>)</tt></span> writes<a class="indexterm" name="zmw57dd0e639778"></a><a class="indexterm" name="zmw57dd0e639785"></a><a class="indexterm" name="zmw57dd0e639792"></a><a class="indexterm" name="zmw57dd0e639799"></a> the data stored in the variable <i><tt>y</tt></i> to
+a WAVE file called <i><tt>filename</tt></i>. The <i><tt>filename</tt></i> input
+is a string enclosed in single quotes. The data has a sample rate
+of 8000 Hz and is assumed to be 16-bit. Each column of the data represents
+a separate channel. Therefore, stereo data should be specified as
+a matrix with two columns.</p><p><span itemprop="syntax"><tt><a name="f15-478684"></a>wavwrite(<i><tt>y</tt></i>,<i><tt>Fs</tt></i>,<i><tt>filename</tt></i>)</tt></span> writes
+the data stored in the variable <i><tt>y</tt></i> to a
+WAVE file called <i><tt>filename</tt></i>. The data has
+a sample rate of <i><tt>Fs</tt></i> Hz and is assumed to
+be 16-bit. </p><p><span itemprop="syntax"><tt><a name="f15-478686"></a>wavwrite(<i><tt>y</tt></i>,<i><tt>Fs</tt></i>,<i><tt>N</tt></i>,<i><tt>filename</tt></i>)</tt></span> writes
+the data stored in the variable <i><tt>y</tt></i> to a
+WAVE file called <i><tt>filename</tt></i>. The data has
+a sample rate of <i><tt>Fs</tt></i> Hz and is <i><tt>N</tt></i>-bit,
+where <i><tt>N</tt></i> is 8, 16, 24, or 32. </p><a name="bron00d"></a><h3>Input Data Ranges</h3><p>The range of values in <i><tt>y</tt></i> depends
+on the number of bits specified by <i><tt>N</tt></i> and
+the data type of <i><tt>y</tt></i>.  The following tables
+list the valid input ranges based on the  value of <i><tt>N</tt></i> and
+the data type of <i><tt>y</tt></i>.</p><p>If <i><tt>y</tt></i> contains integer data:</p><table cellspacing="0" class="body" cellpadding="4" border="2"><colgroup><col width="12%"><col width="30%"><col width="37%"><col width="21%"></colgroup><thead><tr valign="top"><th valign="top">N Bits</th><th valign="top">y
+Data Type</th><th valign="top">y Data Range</th><th valign="top">Output Format</th></tr>
+</thead><tbody><tr valign="top"><td>8</td><td><tt>uint8</tt></td><td>0 &lt;= <i><tt>y</tt></i> &lt;= 255</td><td><tt>uint8</tt></td></tr>
+<tr valign="top"><td>16</td><td><tt>int16</tt></td><td>&#8211;32768 &lt;= <i><tt>y</tt></i> &lt;= +32767</td><td><tt>int16</tt></td></tr>
+<tr valign="top"><td>24</td><td><tt>int32</tt></td><td>&#8211;2^23 &lt;= <i><tt>y</tt></i> &lt;= 2^23
+&#8211; 1</td><td><tt>int32</tt></td></tr>
+</tbody></table><p></p><p>If <tt>y</tt> contains floating-point
+data:</p><table cellspacing="0" class="body" cellpadding="4" border="2"><colgroup><col width="12%"><col width="31%"><col width="37%"><col width="20%"></colgroup><thead><tr valign="top"><th valign="top">N Bits</th><th valign="top">y
+Data Type</th><th valign="top">y Data Range</th><th valign="top">Output Format</th></tr>
+</thead><tbody><tr valign="top"><td>8</td><td><tt>single</tt> or <tt>double</tt></td><td>&#8211;1.0 &lt;= <i><tt>y</tt></i> &lt;  +1.0</td><td><tt>uint8</tt></td></tr>
+<tr valign="top"><td>16</td><td><tt>single</tt> or <tt>double</tt></td><td>&#8211;1.0 &lt;= <i><tt>y</tt></i> &lt;  +1.0</td><td><tt>int16</tt></td></tr>
+<tr valign="top"><td>24</td><td><tt>single</tt> or <tt>double</tt></td><td>&#8211;1.0 &lt;= <i><tt>y</tt></i> &lt;  +1.0</td><td><tt>int32</tt></td></tr>
+<tr valign="top"><td>32</td><td><tt>single</tt> or <tt>double</tt></td><td>&#8211;1.0 &lt;= <i><tt>y</tt></i> &lt;=  +1.0</td><td><tt>single</tt></td></tr>
+</tbody></table><p></p><p>For floating point data where <i><tt>N</tt></i> &lt;
+32, amplitude values are clipped to the range &#8211;1.0 &lt;= <i><tt>y</tt></i> &lt;
++1.0.</p><ul><a name="zmw57dd0e640056"></a><table cellspacing="0" class="note" summary="Note" cellpadding="5" border="1"><tr width="90%"><td><p><b>Note</b>&nbsp;&nbsp;
+
+
+8-, 16-, and 24-bit files are type 1 integer pulse code modulation
+(PCM). 32-bit files are written as type 3 normalized floating point.</p></td></tr></table></ul></div><h2>See Also</h2><p><span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="audioinfo.html"><span itemprop="name"><tt>audioinfo</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="audioplayer.html"><span itemprop="name"><tt>audioplayer</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="audioread.html"><span itemprop="name"><tt>audioread</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="audiorecorder.html"><span itemprop="name"><tt>audiorecorder</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="audiowrite.html"><span itemprop="name"><tt>audiowrite</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="mmfileinfo.html"><span itemprop="name"><tt>mmfileinfo</tt></span></a></span> | <span itemscope="" itemtype="http://www.mathworks.com/help/schema/MathWorksDocPage/SeeAlso" itemprop="seealso"><a itemprop="url" href="sound.html"><span itemprop="name"><tt>sound</tt></span></a></span></p>
+</section>
+<div class="feedbackblock">Was this topic helpful?
+<input type="button" value="Yes" onClick="openFeedbackWindow('http://www.mathworks.com/programs/bounce_hub_help.html?s_cid=Help_Topic_Survey&amp;surveyParams='+document.location.href+'-YES-R2014a');">
+<input type="button" value="No" onClick="openFeedbackWindow('http://www.mathworks.com/programs/bounce_hub_help.html?s_cid=Help_Topic_Survey&amp;surveyParams='+document.location.href+'-NO-R2014a');">
+</div>
+<!--Last updated: Fri Feb  7 21:30:33 EST 2014-->
+
+               </div> <!-- close_content_container -->
+             </div> <!-- close_content_frame -->
+           </div> <!--  close_page_container -->
+         
+      <div class="footer_container">
+         <div class="footer">
+            <ul class="footernav">
+               <li class="footernav_trademarks"><a href="MATLAB:web([docroot '/acknowledgments.html'])">Acknowledgments</a></li>
+               <li class="footernav_trademarks"><a href="MATLAB:web([matlabroot '/trademarks.txt'])">Trademarks</a></li>
+               <li class="footernav_patents"><a href="MATLAB:web([matlabroot '/patents.txt'])">Patents</a></li>
+               <li class="footernav_help"><a href="MATLAB:web([matlabroot '/license.txt'])">Terms of Use</a></li>
+            </ul>
+            <div class="copyright">&copy; 1994-2014 The MathWorks, Inc.</div>
+         </div>
+      </div>
+   
+         </div> <!--  close_site_container -->
+         </body>
+</html>
