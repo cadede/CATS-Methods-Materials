@@ -1,4 +1,4 @@
-function makeMovieTimes(dur,timestamps,folder,ripAudio,whaleID,vidNums)
+function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums)
 
 % timestamps- signals whether to read embedded timestamps on the video or
 % just read the encoded timestamps (i.e. if timestamps do not exist )
@@ -10,8 +10,10 @@ function makeMovieTimes(dur,timestamps,folder,ripAudio,whaleID,vidNums)
 % vidNums - optional.  if not present, looks at all videos.  If it is
 % present, look for an existing movieTimes file and fill in the videos listed in "vidnums"
 
-if nargin<4 || isempty(ripAudio); ripAudio = true; end
-if nargin<3 || isempty(folder);  folder = 'E:\CATS\'; end
+if nargin<6 || isempty(timewarn); timewarn = 0.1; end
+if nargin<5 || isempty(ripAudio); ripAudio = true; end
+if nargin<4 || isempty(folder);  folder = 'E:\CATS\'; end
+if nargin<3 || isempty(simpleread); simpleread = true; end
 if nargin<2 || isempty(timestamps); timestamps = true; end
 if nargin<1 || isempty(dur); dur = 15; end
 
@@ -44,7 +46,7 @@ m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; 
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
     for i = 1:length(m2); m2times(i) = datenum(m2{i}(min(regexp(m2{i},'-'))+1:max(regexp(m2{i},'-'))-1),'yyyymmdd-HHMMSS'); end
-    rootDIR = folder; %strfind(movieloc,'CATS'); rootDIR = movieloc(1:rootDIR+4);
+    rootDIR = folder; loc1 = strfind(movieloc,'CATS'); if ~isempty(loc1); rootDIR = movieloc(1:loc1+4); end
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch; [filename, fileloc] = uigetfile('*.xls*','Get Tag Guide to find tag off and recovery times'); [~,~,txt] = xlsread([fileloc filename]); end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
     if length(rows)>1; let = input('letter of interest? (1 = a, 2 = b, 3 = c, etc.) '); lets = 'abcdefghijklmnopqrstuvwxyz'; whaleID = [whaleID lets(let)]; rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false))); end
@@ -192,15 +194,16 @@ else vidNums = movN;
 end
 % 
 % start reading frames here:
+ badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
+    try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
+    catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will need to try to read from timestamps or adjust using surfacings'])
+        badvidDN(movN(n)) = true;
+    end
     if strcmp(movies{n}(end-2:end),'raw') || n > mlast;
         vidNam{movN(n)} = movies{n};
-       if ~strcmp(movies{n}(end-2:end),'raw'); 
-           disp(['Getting timestamp for Video ' num2str(movN(n)) ' from the file name']);
-       end
        if movN(n)>movN(mlast); vidNam{movN(n)} = []; vidDurs(movN(n)) = nan; end
-       vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS');
        continue; 
     end
     starttime = 0;
@@ -212,26 +215,43 @@ for n = 1:length(movies)
         clear M vid aud;
         if ~timestamps
             [vid,aud] = mmreadFT([movieloc movies{n}], [],[starttime endtime],false,true); %FT saves some time, but still not as efficient as it should be since it reads the video and not just the time
-        else
-            readwirelessvideo2; % workhorse script in here
+        elseif ~simpleread
+            readwirelessvideo2; 
             if badmovie; if ~exist([movieloc 'bad movies\'], 'dir'); mkdir([movieloc 'bad movies\']); end
                 movefile([movieloc movies{n}], [movieloc 'bad movies\' movies{n}]);
                 frameTimes{vidNum(n)} = []; oframeTimes{vidNum(n)} = []; vidDN(vidNum(n)) = nan;
             end
+        else %simpleread and timestamps
+            vid = mmread([movieloc movies{n}], [],[starttime endtime],false,true);
+            flag = true; iii = -1;
+            while flag && iii<100 % try 100 frames until you get a good read
+                iii = iii+1;
+                [newf, flag] = gettimestamp(vid.frames(end-iii).cdata,false);
+            end
+            if ~flag; viddif = (abs(newf*24*60*60-vid.times(end-iii)-(vidDN(movN(n))-floor(vidDN(movN(n))))*24*60*60)); else viddif = nan; end
+            if viddif>timewarn || isnan(viddif);
+                warning(['end frame of this snippet appears to be ' num2str(viddif) ' s off from video''s time stamp']);
+            end
         end
         if ~badmovie; frameTimes{movN(n)} = [frameTimes{movN(n)} vid.times]; end
-        if sum(isnan(vid.times)) > 0; lbl = '(will be fixed at movie end)'; else lbl = ''; end
-        disp([num2str(endtime) ' sec completed with ' num2str(sum(isnan(vid.times))) ' bad data points ' lbl]);
+        if sum(isnan(vid.times)) > 0; lbl = [' with ' num2str(sum(isnan(vid.times))) ' bad data points (will be fixed at movie end)']; else lbl = ''; end
+        disp([num2str(endtime) ' sec completed' lbl]);
         videoL = vid.totalDuration;
         if timestamps; starttime = endtime-0.1; else starttime = endtime; end
         endtime = endtime+dur;
     end
-    [frameTimes{movN(n)},numbad,numbadsect] = checkbadframes(frameTimes{movN(n)});
+    if ~simpleread
+        [frameTimes{movN(n)},numbad,numbadsect] = checkbadframes(frameTimes{movN(n)});
+        lbl = [' with ' num2str(numbad) ' frames that could not be read and were interpolated, and ' num2str(numbadsect) ' frames that were shifted and corrected'];
+    else if viddif>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
+        viddifs(movN(n)) = viddif;
+    end
     
-    
-    if timestamps && ~badmovie
-
-            vidDN(movN(n)) = frameTimes{movN(n)}(1); frameTimes{movN(n)} = (frameTimes{movN(n)} - frameTimes{movN(n)}(1))*24*60*60;
+    if timestamps && ~badmovie && ~simpleread
+        if badvidDN(movN(n))
+            vidDN(movN(n)) = frameTimes{movN(n)}(1);
+        end
+            frameTimes{movN(n)} = (frameTimes{movN(n)} - frameTimes{movN(n)}(1))*24*60*60;
             %         frameTimes{movN(n)} = round(frameTimes{movN(n)}*30)/30; %easier to read if closer to 1/30 rate?
             if n>1 && vidDN(movN(n)) < vidDN(movN(n-1)); vidDN(movN(n)) = vidDN(movN(n))+1; DAY = DAY+1; end
             % oi = find(diff(vidDN)<0)+1; %find the changes from one day to the next
@@ -241,9 +261,9 @@ for n = 1:length(movies)
 
         vidDurs(movN(n)) = frameTimes{movN(n)}(end)+median(diff(frameTimes{movN(n)}));
     end
-    disp([movies{n} ' completed with ' num2str(numbad) ' frames that could not be read and were interpolated, and ' num2str(numbadsect) ' frames that were shifted and corrected']);
+    disp([movies{n} ' completed' lbl]);
     save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','vidDN','videoL','vidDurs');
-    if timestamps; save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'oframeTimes','-append'); end
+    if timestamps&&~simpleread; save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'oframeTimes','-append'); end
 end
 
 % for i = 1:length(frameTimes)
@@ -273,15 +293,16 @@ end
 %     end
 % end
 
-if ~timestamps
-    disp('Do metadata timestamps from video files come from the beginning of the video (e.g. gopro?) or the end of the video (e.g. 2k)?');
+if ~timestamps && sum(badvidDN)>= length(movN)
+    disp('Using metadata timestamps from video files (times could not be read from video name)')
+    disp('Do these timestamps come from the beginning of the video (e.g. gopro?) or the end of the video (e.g. 2k)?');
     s = input('1 = beginning, 2 = end');
     if s == 2;
         vidDN = vidDN - vidDurs/60/60/24;  % new CATS videos from 2k save date stamp at the END of recording rather than the beginning
     end
 end
 
-if timestamps
+if timestamps && ~simpleread % if vid start time is read from the time stamps.
     for n = 1:length(movies)
         if ~strcmp(movies{n}(end-2:end),'raw') && n<= mlast;
             DAY = floor(datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS'));
@@ -304,11 +325,12 @@ for i = 1:length(frameTimes);
         oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < 0);
         plot(I+oi-1,vidDN(i)+frameTimes{i}(oi)/24/60/60,'r*','markersize',8); hold on;
         df = round(1000*diff(frameTimes{i}))/1000;
-        for ii = 1:length(oi); text(I+oi(ii)-1,vidDN(i)+frameTimes{i}(oi(ii))/24/60/60,[num2str(df(oi(ii))) ' s jump'],'rotation',90,'verticalalignment','bottom'); end
+        for ii = 1:length(oi); text(I+oi(ii)-1,vidDN(i)+frameTimes{i}(oi(ii))/24/60/60,[num2str(df(oi(ii))) ' s jump at vidFrame ' num2str(oi(ii))],'rotation',90,'verticalalignment','bottom'); end
         title('zoom in and check red stars, may have to check videos files and adjust frameTimes and vidDN if there is an error');
     end
     I = I+length(frameTimes{i});
-    disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]);
+    if ~simpleread || badvidDN(i); disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]); end
+    if simpleread && viddifs(i)>timewarn; disp(['end frame of movie #' num2str(i) ' appears to be ' num2str(viddifs(i)) ' s off from video''s time stamp']); end
 end; xlabel('Frame #'); 
 set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));  
 

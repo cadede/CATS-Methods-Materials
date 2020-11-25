@@ -38,12 +38,16 @@ dbstop if error;
 
 dur = 15; % break the video up into chunks to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E:\CATS\tag_data_raw\';
-readtimestamps = true; % if there are embeded timestamps on the video
-readaudiofiles = true;
-redovids = []; % set this if you are trying to reread specific video numbers
+readaudiofiles = false;
+
+% these will be less commonly adjusted
+readtimestamps = true; % if there are embeded timestamps on the video.  If simpleread, only read timestamps at the end of a section and compare to the video time
+simpleread = true; % newer videos with accurate initial timestamps (to the ms). If false, reads timestamps from every frame and tries to estimate the bad frame reads
+timewarn = 0.1; % since typical data is downsampled to 10 Hz, use this as a threshold for accuracy of the video timestamps
+redovids = []; % set this if you are trying to re-read specific video numbers
 whaleID = []; 
 
-makeMovieTimes(dur,readtimestamps,folder,readaudiofiles,whaleID,redovids);
+makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids);
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section
 % 
