@@ -17,7 +17,7 @@ dbstop if error;
 %          **movieTimes.mat file saved in the folder with the raw movies
 %          (has the time of each frame in each movie)
 %          A graph with all the video times graphed.  Look for obvious
-%          errors in the order of the videos.
+%          errors in the order of the timestamps in the videos.
 % Delete "movieTimesTEMP.mat" file AFTER this section finishes.
 
 % Matlab packages required: Signal Processing Toolbox, Image Processing
@@ -37,8 +37,8 @@ dbstop if error;
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
 dur = 15; % break the video up into chunks to ensure progress and avoid crashes.  Smaller numbers use less memory
-folder = 'E:\CATS\tag_data_raw\';
-readaudiofiles = false;
+folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
+readaudiofiles = true;
 
 % these will be less commonly adjusted
 readtimestamps = true; % if there are embeded timestamps on the video.  If simpleread, only read timestamps at the end of a section and compare to the video time
@@ -47,7 +47,7 @@ timewarn = 0.1; % since typical data is downsampled to 10 Hz, use this as a thre
 redovids = []; % set this if you are trying to re-read specific video numbers
 whaleID = []; 
 
-makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids);
+makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids); %workhorse script
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section
 % 

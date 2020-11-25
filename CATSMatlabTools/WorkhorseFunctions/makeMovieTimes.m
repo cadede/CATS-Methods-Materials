@@ -314,15 +314,21 @@ end
 
 % if exist('shortmovies','var') && ~isempty(shortmovies); disp(['Audio lengths are slightly off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible.']); end
 
-figure; hold on; I = 1; 
+figure; hold on; I = 1; numrepeats = zeros(size(vidDN));
 title('Plot of frameTimes (if no red stars, you should be good)');
 for i = 1:length(frameTimes); 
     plot(I:I+length(frameTimes{i})-1,vidDN(i)+frameTimes{i}/24/60/60); 
     if ~isempty(frameTimes{i}); text(I,frameTimes{i}(1)/24/60/60+vidDN(i),num2str(i)); end; 
-    oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < 0);
+    oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < -median(diff(frameTimes{i})));% mark if it's a whole frame backward
+    oi2 = find(abs(diff(frameTimes{i})) < median(diff(frameTimes{i}))/2 | (diff(frameTimes{i}) < 0 & diff(frameTimes{i}) > -median(diff(frameTimes{i}))));
+    numrepeats(i) = length(oi2); 
+    % fix the very close frames that are less than 0 to be just bigger than 0 so that time
+    % never decreases.
+    oi2 = find((diff(frameTimes{i}) < 0 & diff(frameTimes{i}) > -median(diff(frameTimes{i}))));
+    frameTimes{i}(oi2+1) = frameTimes{i}(oi2)+.001;
     if ~isempty(oi); 
-        frameTimes{i} = checkbadframes(frameTimes{i},true,true,i);
-        oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < 0);
+%         frameTimes{i} = checkbadframes(frameTimes{i},true,true,i);
+%         oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < 0);
         plot(I+oi-1,vidDN(i)+frameTimes{i}(oi)/24/60/60,'r*','markersize',8); hold on;
         df = round(1000*diff(frameTimes{i}))/1000;
         for ii = 1:length(oi); text(I+oi(ii)-1,vidDN(i)+frameTimes{i}(oi(ii))/24/60/60,[num2str(df(oi(ii))) ' s jump at vidFrame ' num2str(oi(ii))],'rotation',90,'verticalalignment','bottom'); end
@@ -331,6 +337,7 @@ for i = 1:length(frameTimes);
     I = I+length(frameTimes{i});
     if ~simpleread || badvidDN(i); disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]); end
     if simpleread && viddifs(i)>timewarn; disp(['end frame of movie #' num2str(i) ' appears to be ' num2str(viddifs(i)) ' s off from video''s time stamp']); end
+    if simpleread && numrepeats(i)~=0; disp(['movie #' num2str(i) ' appears to have ' num2str(numrepeats(i)) ' repeated frames']); end
 end; xlabel('Frame #'); 
 set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));  
 

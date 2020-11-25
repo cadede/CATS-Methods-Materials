@@ -38,7 +38,6 @@ Mt- Magnetometer data for each axis (x,y,z) in the tag's reference frame (uT).
 Mw- Magnetometer data for each axis in the whale's reference frame
 p- pressure (depth) in meters
 Ptrack- [x,y,z] in meters of the pseudotrack
-Paddles- impulses/second of the paddlewheel (tags 2-4 only)
 pitch- pitch of the whale (radians)
 roll- roll of the whale (radians)
 speed- a table of speed values from different calculations
