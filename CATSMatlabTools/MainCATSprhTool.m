@@ -10,6 +10,7 @@
 % location of tagon, and, if there are not timestamps on the video surfacing times for each video 
 
 dbstop if error;
+disp('Section completed')
 %% 1 Read time stamps on video files (can skip for data only)
 % runs for a long time (like 2x as long as the amount of video you have)
 % Saves output so can run this and come back to it later
@@ -28,15 +29,15 @@ dbstop if error;
 % Just load the videos taken at least partly on whale.
 % BEFORE RUNNING!: Create wav files from videos using ffmpeg (recommended),
 % or VLC (also seems to work). For ffmpeg, in command prompt, change the
-% directory to the directory with your movie files, create a "wavaudio"
-% directory, then type: for %a in (*.mov) DO ffmpeg -i "%a" "wavaudio\%~na.wav"
+% directory to the directory with your movie files, create a "wavfiles"
+% directory, then type: for %a in (*.mov) DO ffmpeg -i "%a" "wavfiles\%~na.wav"
 % This file can also create wav files from the
 % videos, but this seems to sometimes create an offset error, so check the
 % results if you use this program to create wav files instead of the above recommendation.
 % also: input whale ID or put files in a folder listed with the whale ID if
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
-dur = 15; % break the video up into chunks to ensure progress and avoid crashes.  Smaller numbers use less memory
+dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
 readaudiofiles = true;
 
@@ -48,6 +49,7 @@ redovids = []; % set this if you are trying to re-read specific video numbers
 whaleID = []; 
 
 makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids); %workhorse script
+disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section
 % 

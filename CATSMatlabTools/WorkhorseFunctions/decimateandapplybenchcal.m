@@ -1,4 +1,4 @@
-function [fs,Mt,At,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip)
+function [fs,Mt,At,Gt,DN,Temp,Light,LightIR,TempInternal,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip)
 
 
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
@@ -14,7 +14,15 @@ try try Light = decimateM(data.Light,ofs,Hzs.lHz,df,'lHz'); %decdc(data.Light,df
 catch; Light = nan(size(Temp)); LightIR = nan(size(Light));
 end
 
-Temp1 = decimateM(data.Temp1,ofs,Hzs.T1Hz,df);
+try 
+    TempInternal = decimateM(data.Temp1,ofs,Hzs.T1Hz,df);
+catch
+    try
+    TempInternal = decimateM(data.TempDepthInternal,ofs,Hzs.TDIHz,df);
+    warning('No Temp1, used TempDepthInternal');
+    catch
+    end
+end
 % Temp1 = decdc(data.Temp1,df);
 % DV = DV(1:df:end,:); DV = DV(1:length(Temp),:);
 
@@ -50,7 +58,11 @@ numrows = size(Depth,1);
 %     Mt = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05);
 %     Mt = filterMag(Mt,ofs,tagon);
 % else
+try
     Mt = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); % check filterCATS;
+catch; Mt = nan(size(Depth,1),3);
+    warning ('No magnetometer detected, Mt is nans');
+end
 % end
 I = isnan(Mt);
 Mt = edgenans(Mt); MtNoNan= Mt;
@@ -74,7 +86,12 @@ tagslipdec = ceil(tagslip/df);
 
 % Gt = (decdc(filterCATS([data.Gyr1 data.Gyr2 data.Gyr3],ceil(fs/8),round(fs),.05),df)-repmat(gyconst,numrows,1))*gycal;
 % At = (decdc(filterCATS([data.Acc1 data.Acc2 data.Acc3],ceil(fs/8),round(fs),.05),df)-repmat(aconst,numrows,1))*acal;
+try
 Gt = [data.Gyr1 data.Gyr2 data.Gyr3];
+catch
+    Gt = nan(size(Mt));
+    warning('no gyros detected, Gt is nans');
+end
 I = isnan(Gt);
 Gt = edgenans(Gt);
 % Gt = decdc(filterCATS(Gt,ceil(fs/8),round(fs),.05),df);

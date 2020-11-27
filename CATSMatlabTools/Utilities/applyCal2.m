@@ -8,23 +8,30 @@ for ii = 1:length(names);
     eval([names{ii} ' = CAL.' names{ii} ';']);
 end
 
-    try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end
-    Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,'pHz');
-    try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
-    Temp = decimateM(Temp,ofs,Hzs.THz,df,'THz');
-    try Temp1 = decimateM(data.Temp1,ofs,Hzs.T1Hz,df,'THz'); catch; Temp1 = nan(size(Temp)); end
-    try try Light = decimateM(data.Light,ofs,Hzs.lHz,df,'lHz'); %decdc(data.Light,df);
-            LightIR = nan(size(Light));
-        catch
-            Light = decimateM(data.Light1,ofs,Hzs.lHz,df,'lHz');
-            LightIR = decimateM(data.Light2,ofs,Hzs.lHz,df,'lHz');
-            %         Light = decdc(data.Light1,df); LightIR = decdc(data.Light2,df);
-        end % IR = infrared
-    catch; Light = nan(size(Temp)); LightIR = nan(size(Light));
-    end
-Gt = decimateM([data.Gyr1 data.Gyr2 data.Gyr3],ofs,Hzs.gyrHz,df,'gyrHz');
+try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end
+Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,'pHz');
+try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
+Temp = decimateM(Temp,ofs,Hzs.THz,df,'THz');
+try Temp1 = decimateM(data.Temp1,ofs,Hzs.T1Hz,df,'THz'); catch; Temp1 = nan(size(Temp)); end
+try try Light = decimateM(data.Light,ofs,Hzs.lHz,df,'lHz'); %decdc(data.Light,df);
+        LightIR = nan(size(Light));
+    catch
+        Light = decimateM(data.Light1,ofs,Hzs.lHz,df,'lHz');
+        LightIR = decimateM(data.Light2,ofs,Hzs.lHz,df,'lHz');
+        %         Light = decdc(data.Light1,df); LightIR = decdc(data.Light2,df);
+    end % IR = infrared
+catch; Light = nan(size(Temp)); LightIR = nan(size(Light));
+end
+try Gt = decimateM([data.Gyr1 data.Gyr2 data.Gyr3],ofs,Hzs.gyrHz,df,'gyrHz');
+catch
+    Gt = nan(size(Mt));
+    warning('no gyros detected, Gt is nans');
+end
 At = decimateM([data.Acc1 data.Acc2 data.Acc3],ofs,Hzs.accHz,df,'accHz');
-Mt = decimateM([data.Comp1 data.Comp2 data.Comp3],ofs,Hzs.magHz,df,'magHz');
+try Mt = decimateM([data.Comp1 data.Comp2 data.Comp3],ofs,Hzs.magHz,df,'magHz');
+catch; Mt = nan(size(Depth,1),3);
+    warning ('No magnetometer detected, Mt is nans');
+end
 numrows = size(Gt,1);
 Gt = (Gt-repmat(gyconst,numrows,1))*gycal;
 if ~exist('Acal','var') || isempty(Acal)
