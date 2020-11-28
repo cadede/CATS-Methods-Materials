@@ -70,6 +70,17 @@ Mt = edgenans(Mt); MtNoNan= Mt;
 Mt = decimateM(Mt,ofs,magHz,df,'magHz'); MtO = Mt;
 % Mt = decdc(Mt,df); MtO = Mt;
 % Mt(188200:end,:) = nan;
+if ~exist('magconstoff','var'); 
+    try magconstoff = magconston; magcaloff = magcalon; catch
+        try magconstoff = magconst; magconston = magconst; magcalon = magcal; magcaloff = magcal;
+        catch; warning('no magnetometer bench cal, to continue press enter'); pause;
+            magconston = [0 0 0]; magcalon = diag(ones(3,1));
+            magconstoff = magconston; magcaloff = magcalon;
+        end
+    end
+end
+
+
 I = I(1:df:end,:); if size(I,1)<size(Mt,1); I(end,:) = I(end-1,:); else I = I(1:size(Mt,1),:); end
 Mtoff = Mt;
 Mtoff = (Mtoff-repmat(magconstoff,numrows,1))*magcaloff;
@@ -91,6 +102,7 @@ Gt = [data.Gyr1 data.Gyr2 data.Gyr3];
 catch
     Gt = nan(size(Mt));
     warning('no gyros detected, Gt is nans');
+     gyconst = [0 0 0]; gycal = diag(ones(3,1));
 end
 I = isnan(Gt);
 Gt = edgenans(Gt);
