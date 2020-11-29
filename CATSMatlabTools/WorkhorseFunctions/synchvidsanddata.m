@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,nocam,tagslip] = synchvidsanddata(data,headers,Hzs,DN,ODN,fs,CAL,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,synchusingvidtimestamps,useFrames)
 global fileloc filename
 if nargin<10; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
@@ -6,7 +6,7 @@ if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else 
 try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status'); end
  times = cell2mat(headers(7:end,2:3));
 %if no movie files
-if ((size(headers,1)<7 || (isnan(headers{7,1})||headers{7,1} == 0))) || nocam
+if nocam
 %     GPS = cell2mat(headers(2,2:3)); %from above file
 %     whaleName = char(headers(1,2));
 %     timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
@@ -34,19 +34,26 @@ if ((size(headers,1)<7 || (isnan(headers{7,1})||headers{7,1} == 0))) || nocam
     
 %       nocam = true;
 %     if ~exist('magcalon','var'); magcalon = magcaloff; magconston = magconstoff; end
+ vidDN = nan;
 else
    
     useold = false;
     nocam = false;
-    load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
-%     if (tagnum >= 40 && tagnum < 50)||tagnum>51 
+    
+    names =fieldnames(viddata);
+    for ii = 1:length(names)
+        eval([names{ii} ' = viddata.' names{ii} ';']);
+    end
+%     vidDN = viddata.vidDN;
+    
+   %     if (tagnum >= 40 && tagnum < 50)||tagnum>51 
 %         kitten = true; else kitten = false;
 %     end
 %     kitten = false;
 %     if isempty(strfind(movies{1},'CATS')) && isempty(strfind(movies{1},'AW')) && isempty(strfind(movies{1},'MP4'))
 %         kitten = true; else kitten = false;
 %     end
-    if synchusingvidtimestamps;
+    if synchusingvidtimestamps
 %         try Hzs = importdata([fileloc filename(1:end-3) 'txt']);
 %         catch; try Hzs = importdata([fileloc 'raw\' filename(1:end-3) 'txt']);
 %             catch; try Hzs = importdata([fileloc 'raw\' filename(1:end-5) '.txt']); catch; try Hzs = importdata([fileloc filename(1:end-5) '.txt']);

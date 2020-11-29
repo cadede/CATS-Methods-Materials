@@ -84,6 +84,8 @@ end
 mini = i;
 notes = [];
 Adata = nan(0,3); rownum = 1; Atime = nan(0,1);
+noPress = false;
+extraData = [];
 
 %% Section 2 runs through the csv files and reads them into the data frame
 while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({DIR.name},[fname(1:end-7) num2str(i,'%03u') '.csv'])) || any(strcmp({DIR.name},[fname(1:end-4) '_' num2str(i,'%03u') '.csv'])) || simple
@@ -144,6 +146,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
            x = input('?');
            if x ~=1;
                error ('Fix pressure data');
+           else noPress = true;
            end            
         end
         %This adds a numeral to every subsequently found version of
@@ -207,6 +210,8 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         else baddataEnd = false;
         end
     end
+    if isempty(extraData); extraData = dataT(1,:); extraData(1,:) = []; end
+    dataT = [extraData; dataT]; % add in any leftover rows from last reading.
     
     % this checks for errors in a specific row.  If you get this error
     % check your csv.  If it is just a couple of bad rows, this smooths
@@ -306,8 +311,20 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     end
     if numgaps>0; disp([num2str(numgaps) ' additional gaps in data filled']); end
     
+    % this line ensures all data decimates to the right length, if there
+    % are extra points, carry them to the next csv;
+    if mod(size(dataT,1),accHz/fs) ~=0
+        lastrows = size(dataT,1)-mod(size(dataT,1),accHz/fs)+1:size(dataT,1);
+        extraData = dataT(lastrows,:);
+        dataT(lastrows,:) = [];
+        DN(lastrows,:) = [];
+        oi(lastrows,:) = [];
+    else
+        extraData = [];
+    end
     dataT.Time = DN-floor(DN);
     dataT.Date = floor(DN);
+    
     Atime = [Atime; DN];
     Adata = [Adata; oi];
     
@@ -350,40 +367,41 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             dataT.(headers{j}) = str2num(char(dataT.(headers{j})));
         end
     end
-    % sometimes decdc is one short from the sampled points, this tries to
-    % fit it in as best as possible and then fill in the gap, also only
-    % resamples p, comp, gyr if you set FS to be less than the maximum of
-    % those
-    I = size(dataT,1)-size(acc,1)+1;
-    I2 = sum(abs(dataT.Pressure(I:end)-p));
-    I1 = sum(abs(dataT.Pressure(1:end-I+1)-p));
-    adjcols = any([ ~cellfun(@isempty,strfind(headers,'Comp'));  ~cellfun(@isempty,strfind(headers,'Acc'));  ~cellfun(@isempty,strfind(headers,'Gyr'));  ~cellfun(@isempty,strfind(headers,'Pressure'))]);
-    if size(dataT,1) == size(acc,1) || I2<=I1
-        dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
-        if exist('FS','var') && ~isempty(FS)
-            dataT.Comp1(I:end) = comp(:,1); dataT.Comp2(I:end) = comp(:,2); dataT.Comp3(I:end) = comp(:,3);
-            dataT.Gyr1(I:end) = gyr(:,1); dataT.Gyr2(I:end) = gyr(:,2); dataT.Gyr3(I:end) = gyr(:,3);
-            dataT.Pressure(I:end) = p;
-            % if there was a leftover point
-            if I2<I1 ; for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{1,jj} = nan; end; end; end
-        end
-    else
-        dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
-        if exist('FS','var') && ~isempty(FS)
-            dataT.Comp1(1:end-I+1) = comp(:,1); dataT.Comp2(1:end-I+1) = comp(:,2); dataT.Comp3(1:end-I+1) = comp(:,3);
-            dataT.Gyr1(1:end-I+1) = gyr(:,1); dataT.Gyr2(1:end-I+1) = gyr(:,2); dataT.Gyr3(1:end-I+1) = gyr(:,3);
-            dataT.Pressure(1:end-I+1) = p;
-        end
-        for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{end,jj} = nan; end; end;
-    end
-    testcol = find(adjcols,1,'first');
-    if i~=mini && (isnan(dataT{1,testcol}) || isnan(data{end,testcol}))
-        for jj = 1:length(adjcols); if adjcols(jj)
-                col = inpaint_nans([data{end-10:end, jj};dataT{1:11,jj}]);
-                data{end-10:end,jj} = col(1:11);
-                dataT{1:11,jj} = col(12:end);
-            end; end
-    end
+%     %now accounted for by carrying over data to the next csv
+%     % sometimes decdc is one short from the sampled points, this tries to
+%     % fit it in as best as possible and then fill in the gap, also only
+%     % resamples p, comp, gyr if you set FS to be less than the maximum of
+%     % those
+%     I = size(dataT,1)-size(acc,1)+1;
+%     I2 = sum(abs(dataT.Pressure(I:end)-p));
+%     I1 = sum(abs(dataT.Pressure(1:end-I+1)-p));
+%     adjcols = any([ ~cellfun(@isempty,strfind(headers,'Comp'));  ~cellfun(@isempty,strfind(headers,'Acc'));  ~cellfun(@isempty,strfind(headers,'Gyr'));  ~cellfun(@isempty,strfind(headers,'Pressure'))]);
+%     if size(dataT,1) == size(acc,1) || I2<=I1
+%         dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
+%         if exist('FS','var') && ~isempty(FS)
+%             dataT.Comp1(I:end) = comp(:,1); dataT.Comp2(I:end) = comp(:,2); dataT.Comp3(I:end) = comp(:,3);
+%             dataT.Gyr1(I:end) = gyr(:,1); dataT.Gyr2(I:end) = gyr(:,2); dataT.Gyr3(I:end) = gyr(:,3);
+%             dataT.Pressure(I:end) = p;
+%             % if there was a leftover point
+%             if I2<I1 ; for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{1,jj} = nan; end; end; end
+%         end
+%     else
+%         dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
+%         if exist('FS','var') && ~isempty(FS)
+%             dataT.Comp1(1:end-I+1) = comp(:,1); dataT.Comp2(1:end-I+1) = comp(:,2); dataT.Comp3(1:end-I+1) = comp(:,3);
+%             dataT.Gyr1(1:end-I+1) = gyr(:,1); dataT.Gyr2(1:end-I+1) = gyr(:,2); dataT.Gyr3(1:end-I+1) = gyr(:,3);
+%             dataT.Pressure(1:end-I+1) = p;
+%         end
+%         for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{end,jj} = nan; end; end;
+%     end
+%     testcol = find(adjcols,1,'first');
+%     if i~=mini && (isnan(dataT{1,testcol}) || isnan(data{end,testcol}))
+%         for jj = 1:length(adjcols); if adjcols(jj)
+%                 col = inpaint_nans([data{end-10:end, jj};dataT{1:11,jj}]);
+%                 data{end-10:end,jj} = col(1:11);
+%                 dataT{1:11,jj} = col(12:end);
+%             end; end
+%     end
     
     if ~isnan(GPSHz) && iscell(dataT.GPSDate(1))
         I = find(cellfun(@isempty,dataT.GPSDate),1,'last'); if isempty(I); I = 0; end
@@ -466,16 +484,18 @@ plot(data.Date+data.Time,data.Pressure); title('Pressure'); set(s3,'ydir','rev')
 linkaxes([s1 s2 s3],'x');
 set([s1 s2 s3],'xticklabel',datestr(get(s1,'xtick'),'HH:MM:SS'))
 disp('For figure 2, use "set([s1 s2 s3],''xticklabel'',datestr(get(s1,''xtick''),''HH:MM:SS''))" to reset axis labels if you zoom in');
-if any(sum(diff([data.Acc1 data.Acc2 data.Acc3])==0)>20); error('CHECK ACCELEROMETER GRAPH, may have dropped an axis'); end
+if any(sum(diff([data.Acc1 data.Acc2 data.Acc3])==0)>.25*size(data,1)); error('CHECK ACCELEROMETER GRAPH, may have dropped an axis'); end
 Mdiff = diff([data.Comp1 data.Comp2 data.Comp3]);
 Mdiff2 = [[data.Comp1(1:end-2) data.Comp2(1:end-2) data.Comp3(1:end-2)] - [data.Comp1(3:end) data.Comp2(3:end) data.Comp3(3:end)]; [0 0 0]];
 Mdiff3 = [[data.Comp1(1:end-3) data.Comp2(1:end-3) data.Comp3(1:end-3)] - [data.Comp1(4:end) data.Comp2(4:end) data.Comp3(4:end)]; [0 0 0; 0 0 0]];
 Mdiff4 = [[data.Comp1(1:end-4) data.Comp2(1:end-4) data.Comp3(1:end-4)] - [data.Comp1(5:end) data.Comp2(5:end) data.Comp3(5:end)]; [0 0 0; 0 0 0; 0 0 0]];
 Mdiff5 = [[data.Comp1(1:end-5) data.Comp2(1:end-5) data.Comp3(1:end-5)] - [data.Comp1(6:end) data.Comp2(6:end) data.Comp3(6:end)]; [0 0 0; 0 0 0; 0 0 0; 0 0 0]];
-if any(sum(Mdiff == 0 & Mdiff2 == 0 & Mdiff3 == 0 & Mdiff4 == 0 & Mdiff5 == 0)>500); error('CHECK MAGNETOMETER GRAPH, may have dropped an axis'); end
+if any(sum(Mdiff == 0 & Mdiff2 == 0 & Mdiff3 == 0 & Mdiff4 == 0 & Mdiff5 == 0)>.25*size(data,1)); error('CHECK MAGNETOMETER GRAPH, may have dropped an axis'); end
 
 try
-    gettagon;
+    if sum(data.Pressure>5)<fs*120; error('less than two minutes of dives below 5 m'); end
+    tagon = gettagon(data.Pressure,fs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]);
+    save([newfileloc file(1:end-3) 'mat'],'tagon','-append');
 catch
-    disp('No Pressure Data or error in gettagon function (could not get tag on time)')
+    disp('No pressure data (or less than two minutes of dives below 5 m) or error in gettagon function, could not determine tag on time')
 end

@@ -98,6 +98,12 @@ tagnum = cell2mat(headers(4,2))
 disp('Section 2 finished');
 % look for progress Index in info file, tell you cell to continue on 
 warning('off','MATLAB:load:variableNotFound');
+
+if ~isempty(strfind(filename,'truncate'))
+    disp('Using truncated file'); %load([fileloc filename]);
+    filename = filename([1:end-12 end-3:end]); % filename without the truncate label
+end
+
 try load([fileloc filename(1:end-4) 'Info.mat'],'CellNum');
     disp(['Prhfile created through step number ' num2str(CellNum) ' (can start at subsequent step)']);
 catch
@@ -107,7 +113,7 @@ catch
       end
 end
 
-clearvars -except fileloc filename decfac drive folder tagnum headers vol
+clearvars -except fileloc filename decfac drive folder tagnum headers vol 
 %% 3. Create a truncated file (or load it) and rename variables
 % if you haven't run importCATSdata, this will run it.
 % output: *truncate.mat files.  Truncate reduces file size by
@@ -116,14 +122,14 @@ clearvars -except fileloc filename decfac drive folder tagnum headers vol
 % fills in gaps in the data with nans
 
 % Matlab packages required: Statistics and Machine learning Toolbox
-
+% dbstop if error;
 
 df = decfac;
 if exist([fileloc filename(1:end-4) 'truncate.mat'],'file') 
     disp('Using truncated file'); load([fileloc filename(1:end-4) 'truncate.mat']);
 elseif ~isempty(strfind(filename,'truncate'))
     disp('Using truncated file'); load([fileloc filename]);
-    filename = filename([1:end-12 end-4:end]); % filename without the truncate label
+    filename = filename([1:end-12 end-3:end]); % filename without the truncate label
 else
     load([fileloc filename]);
     disp('Data Loaded, making truncated file');
@@ -134,7 +140,8 @@ else
     disp('Check to ensure these times are before tag on and after tag off (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
 end
-if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
+if ~exist('Hzs','var')
+    [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
     Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
 end
 
@@ -155,20 +162,10 @@ cd(cf);
 disp('Section 3 finished');
    CellNum = 3;
       save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','-append');
-%% 4. adjust video times to match data times based on surfacings
-% This is mostly for pre-wireless data (see below), but run it anyway as it
-% sets up some variables.
+%% 4. adjust video times to match data times 
+% This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
 % for pre-wireless data:
-% Makes graphs where boxes should line up with surfacings.
-% output is a lot of variables including "tagon" and "camon" that are
-% indices indicated when those events occur
-% output also is a **Info.mat file which will save variables like tagon and
-% camon for later processing
-% displays some values indicating how much each video needs to be adjusted.
-%  Except for the first one, others should be small (one second or less)
-% if you want to use a preexisting file and skip this step.  Set 'useold'
-% to true
-
+% Makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
 nocam = false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
@@ -183,7 +180,11 @@ DNorig = data.Date+data.Time+timedif/24;
 if nocam
     camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [];
 else
-    [camon,audon,vidDN,nocam,tagslip] =  synchvidsanddata(data,headers,Hzs,DNorig,ODN,ofs,CAL,synchusingvidtimestamps);
+   viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
+   % this script makes a few variables, but its main purpose is to
+   % synchronize video and data using surfacings for videos that do not
+   % have a record of their start times (i.e. collected independently of the diary data)
+   [camon,audon,vidDN,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,synchusingvidtimestamps);
 end
    CellNum = 4;
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','timedif','CellNum','nocam','-append');
@@ -195,9 +196,11 @@ disp('Section 4 done');
 % After finishing this, update TAG GUIDE with the actual tag on and tag off
 % times as well as the Video Time
 
-load([fileloc filename(1:end-4) 'Info.mat'],'ofs','camon','audon','tagon','nopress');
+load([fileloc filename(1:end-4) 'Info.mat'],'ofs','camon','audon','nopress');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 
+% tests for existence of pressure data (since most scripts rely on having pressure data)
+if ~exist('nopress','var') && sum(isnan(data.Pressure)) == length(data.Pressure) || sum(diff(data.Pressure) == 0) == length(data.Pressure) -1; nopress = true; else nopress = false; end
 
 tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
 % inputs: Depth variable
@@ -212,7 +215,7 @@ disp(['Total Cam Time: ' datestr(sum(camon&tagon)/ofs/24/60/60,'HH:MM:SS')]);
 disp(['Total Aud Time (in addition to cam time): ' datestr(sum(audon&tagon)/ofs/24/60/60,'HH:MM:SS')]);
 disp(['Original data start time: ' datestr(ODN,'mm/dd/yy HH:MM:SS')]);
    CellNum = 5;
-      save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','-append');
+      save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
 disp('Section 5 done');
 %% 6.
 %Makes some variables(calibrated tag frame matrices Gt, At, Mt).  Also calibrates p by using the
@@ -229,9 +232,9 @@ if ofs/df ~= 10; warning('Final sampling rate does not equal 10 Hz'); end
 
 %filterCATS needs improvement
 DV = datevec(DNorig(1));
-if DV(1,1)<2015; str = '2010'; else str = '2015'; end
+if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 if isnan(GPS(1,1)) || isnan(GPS(1,2)); error('No GPS location (needed to calculate magnetic field'); end
-try [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DV(1,:)),str); % after 2015 or before 2010 use igrf11magm with the same parameters, or if you want to account for changes during deep dives
+try [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DV(1,:)),str); % newest wrldmagm in subfunctions 
 catch
    warning('''wrldmagm.m'' is not present or is throwing an error, input declination (deg), inclination (deg below horizon) and magnetic field strength (nanoTeslas)');
    disp('see, e.g.: https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm');
@@ -255,7 +258,7 @@ DN = DNorig(1:df:end,:); DN = DN(1:length(Depth));
 % get original cats cal values, but will likely be replaced in in situ
 % cals.  Inspect for major errors but At and Mt will be recalibrated next.
 % This uses bench cals (acal and aconst, not spherical cals)
-[fs,Mt,At,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
+[fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
 CellNum = 6;
 save([fileloc filename(1:end-4) 'Info.mat'],'DN','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
 disp('Section 6 done');
@@ -268,10 +271,10 @@ disp('Section 6 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','camondec','nocam','df','CAL','Hzs','b');
+load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','camondec','nocam','df','CAL','Hzs','b','ofs');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 if ~exist('Depth','var')
-    try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end
+    try pressTemp = data.TempDepthInternal; catch; try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end; end
     Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,'pHz');
     try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
     Temp = decimateM(Temp,ofs,Hzs.THz,df,'THz');
@@ -567,7 +570,7 @@ if ~exist('head','var');
     [pitch,roll,head] = calcprh(Aw,Mw,dec);
 end
 if ~exist('speed','var');
-    speed = applySpeed(JigRMS,'JJ',flownoise,'FN',tagondec,Depth,pitch,roll,fs,speedstats);
+    speed = applySpeed(JigRMS,'JJ',flownoise,'FN',tagondec,p,pitch,roll,fs,speedstats);
 end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 
@@ -632,10 +635,10 @@ addGPS(fileloc); %catch; disp('No GPS file found or error in adding tag GPS'); e
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
 
-manualGPS2prh(fileloc,[INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
+manualGPS2prh(fileloc,prhfile); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
 % Run this file to check georeferenced pseudotracks.  May have to go back a step to adjust points more once you see the track
-load([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
-if floor(DN)<2015; str = '2010'; else str = '2015'; end
+load([fileloc prhfile]);
+if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DN(1)),str); % after 2015 or before 2010 use igrf11magm with the same parameters, or if you want to account for changes during deep dives
 inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % i
 AA = Aw;

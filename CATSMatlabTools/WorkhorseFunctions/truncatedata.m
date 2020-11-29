@@ -36,7 +36,7 @@ while ~isempty(button);
     plot(1:length(p),p); set(gca,'ydir','rev');
     xlabel('Sample number')
     ylabel('Pressure (raw units)');
-    title(s1,{'Can Zoom in and out to one side or the other. Press enter when to bring up cursor to select boundary of data to maintain'; 'Data outside of yellow boundaries will be deleted'});
+    title(s1,{'Can use zoom tool to examine one side or the other. Press enter when ready to bring up a cursor to select boundary of data to maintain'; 'Data outside of yellow boundaries will be deleted'});
     hold on;
     % rectangle('position',[p1 min(p) p2-p1 2*pmax-min(p)],'facecolor','y')
     %  oi = get(s1,'children'); delete(oi(strcmp(get(get(ax1(1),'children'),'type'),'patch')));

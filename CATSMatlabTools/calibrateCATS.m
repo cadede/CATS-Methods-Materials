@@ -497,7 +497,7 @@ GPS = benchdata(3:4,2);
 elev = benchdata(5,2);
 
 try 
-    if decyear(data.Date(1))<2015; str = '2010'; else str = '2015'; end
+    if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
     [~,~,~,~,b] = wrldmagm(elev,GPS(1),GPS(2),decyear(data.Date(1))); % Best guess for 2015 dates until they update the script
 catch
  disp('Go to https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm and enter the magnetic field strength (in nT) for the place where calibration was performed')

@@ -13,7 +13,7 @@ surfs = peakfinder(smoothp(tagondec),1,2,-1);
 surfs = surfs + tag1 - 1;
 Asurf = nan(length(surfs),3);
 for i = 1:length(surfs)
-    Asurf(i,:) = nanmean(At(surfs(i)-round(5*fs):surfs(i)+round(5*fs),:));
+    Asurf(i,:) = nanmean(At(max(1,surfs(i)-round(5*fs)):min(surfs(i)+round(5*fs),size(At,1)),:));
 end
 J = njerk(At,fs);
 button = 100;

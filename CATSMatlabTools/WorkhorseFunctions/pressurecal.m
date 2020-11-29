@@ -5,7 +5,7 @@ catch
     CAL.pconst = 0; CAL.pcal = 1;
     pconst = 0; pcal = 1;
 end
-try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end % get temp data for pressure cal
+try pressTemp = data.TempDepthInternal; catch; try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end; end
 
 if ~nopress %&& tagnum>5
 
@@ -26,7 +26,7 @@ if ~nopress %&& tagnum>5
 %     Depth = decdc(Depth,df/(ofs/pHz));
     
     figure(4); clf;
-    plot(DN,decdc((data.Pressure-pconst)*pcal,df),DN,Depth);
+    plot(DN,decdc((data.Pressure-pconst)*pcal,df),'b',DN,Depth,'g--');
     set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev');
     legend('Bench cal','In situ cal (animaltags.org method)');
     title('Examine data, then look at main screen to choose calibration method');
@@ -35,7 +35,7 @@ if ~nopress %&& tagnum>5
     %      figure(4); clf;  plot(data.Date+data.Time+timedif/24,data.Pressure,DN,Depth); set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS')); legend('Orig','Calibrated Pressure (Johnson Method)');
     z1 = zoom(4); %z2 = zoom(sp2); z3 = zoom(sp3);% z4 = zoom(s4);
     set(z1,'enable','on','Motion','both');
-    Pchoice = input('bench cal (blue) = 1, in situ cal (green) = 2, add an offset = 3. Which do you want to use? (Enter 1 or 2) ');
+    Pchoice = input('bench cal (blue) = 1, in situ cal (green dashes) = 2, add an offset = 3. Which do you want to use? (Enter 1 or 2) ');
     switch Pchoice
         case 1
             Depth = decdc((data.Pressure-pconst)*pcal,df);
@@ -56,7 +56,7 @@ if ~nopress %&& tagnum>5
                     pc = [];
                     disp('bench cal chosen');
             end
-            figure(4); clf;  plot(DN,decdc((data.Pressure-CAL.pconst)*CAL.pcal,df),DN,Depth); set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev'); legend('original data','recalibrated pressure');
+            figure(4); clf;  plot(DN,decdc((data.Pressure-CAL.pconst)*CAL.pcal,df),'b',DN,Depth,'g--'); set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev'); legend('original data','recalibrated pressure');
         otherwise
             disp('No calibration chosen, so in situ cal was used by default');
     end

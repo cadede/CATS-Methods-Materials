@@ -15,7 +15,7 @@ DN = starttime:1/24/60/60/fs:starttime+(length(Depth)-1)/24/60/60/fs;
 tagon = find(Depth>1,1,'first');
 if isempty(tagon); tagon = 1; end
 tagoff = find(Depth>1,1,'last');
-if isempty(tagoff); tagoff = length(p); end
+if isempty(tagoff); tagoff = length(Depth); end
 figure(41); clf;
 sp2 = subplot(4,1,4);
 plot(DN,At);

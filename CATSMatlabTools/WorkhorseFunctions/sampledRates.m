@@ -7,7 +7,7 @@ try
     % first try to automatically import text file
     try
         FILES = dir(fileloc); FILES ={FILES.name};
-        FILES= FILES(~cellfun(@isempty, strfind(FILES,'.txt')));
+        FILES= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-4) '.txt'])));
         [~,b] = max(cellfun(@(x) sum(x(1:min(length(x),length(file))) == file(1:min(length(x),length(file)))),FILES));
         FILES = char(FILES(b));
         Hzs = importdata([fileloc FILES],'\t'); try Hzs = Hzs.textdata; catch; end %old instead of FILES: fname(1:end-3) 'txt'
@@ -16,13 +16,13 @@ try
             dirup = regexp(fileloc,'\');
             dirup = fileloc(1:dirup(end-1));
             FILES = dir(dirup); FILES ={FILES.name};
-            FILES= FILES(~cellfun(@isempty, strfind(FILES,'.txt')));
+            FILES= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-4) '.txt'])));
             [~,b] = max(cellfun(@(x) sum(x(1:min(length(x),length(file))) == file(1:min(length(x),length(file)))),FILES));
             FILES = char(FILES(b));
             Hzs = importdata([dirup FILES],'\t'); try Hzs = Hzs.textdata; catch; end %old instead of FILES: fname(1:end-3) 'txt'
         catch
             FILES = dir([fileloc 'raw\']); FILES ={FILES.name};
-            FILES= FILES(~cellfun(@isempty, strfind(FILES,'.txt')));
+            FILES= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-4) '.txt'])));
             [~,b] = max(cellfun(@(x) sum(x(1:min(length(x),length(file))) == file(1:min(length(x),length(file)))),FILES));
             FILES = char(FILES(b));
             Hzs = importdata([fileloc 'raw\' FILES],'\t'); try Hzs = Hzs.textdata; catch; end %old instead of FILES: fname(1:end-3) 'txt'

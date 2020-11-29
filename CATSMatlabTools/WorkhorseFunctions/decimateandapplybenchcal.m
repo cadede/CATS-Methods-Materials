@@ -60,7 +60,7 @@ numrows = size(Depth,1);
 % else
 try
     Mt = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); % check filterCATS;
-catch; Mt = nan(size(Depth,1),3);
+catch; Mt = nan(size(data.Pressure,1),3);
     warning ('No magnetometer detected, Mt is nans');
 end
 % end
@@ -100,7 +100,7 @@ tagslipdec = ceil(tagslip/df);
 try
 Gt = [data.Gyr1 data.Gyr2 data.Gyr3];
 catch
-    Gt = nan(size(Mt));
+    Gt = nan(size(data.Pressure,1),3);
     warning('no gyros detected, Gt is nans');
      gyconst = [0 0 0]; gycal = diag(ones(3,1));
 end
@@ -151,7 +151,7 @@ figure(3); clf;
 s1 = subplot(3,1,1);
 Mt_mag = sqrt(sum(Mt.^2,2));
 plot(Mt); hold on; plot(Mt_mag,'k');
-legend('X','Y','Z','|Mt|'); title('Mt bench cal'); ylim([min(Mt(:)) max([Mt(:); Mt_mag])]);
+legend('X','Y','Z','|Mt|'); title('Mt bench cal'); try ylim([min(Mt(:)) max([Mt(:); Mt_mag])]); catch; end
 s2 = subplot(3,1,2);
 At_mag = sqrt(sum(At.^2,2));
 plot(At); hold on; plot(At_mag,'k');
