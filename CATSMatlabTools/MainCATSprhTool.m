@@ -31,7 +31,7 @@ disp('Section completed')
 % or VLC (also seems to work). For ffmpeg, in command prompt, change the
 % directory to the directory with your movie files, create a "wavfiles"
 % directory, then type: for %a in (*.mov) DO ffmpeg -i "%a" "wavfiles\%~na.wav"
-% This file can also create wav files from the
+% This script can also create wav files from the
 % videos, but this seems to sometimes create an offset error, so check the
 % results if you use this program to create wav files instead of the above recommendation.
 % also: input whale ID or put files in a folder listed with the whale ID if
@@ -73,17 +73,8 @@ disp('Section 1 completed');
 decfac = 5; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 
 % Can set "drive" and "folder" below to start looking for files in a specific place on your computer
-try
-    drive = 'Drobo'; % name of drive where files are located. (can be drive name or drive letter)
-    folder = 'CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users\Dave\Documents\Programs\MATLAB\Tagging\CATS cal';%
-    % make finding the files easier
-    a = getdrives;
-    for i = 1:length(a)
-        [~,vol]=system(['vol ' a{i}(1) ':']);
-        if strfind(vol,drive); vol = a{i}(1); break; end
-    end
-catch
-end
+
+folder = 'e:/CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users\Dave\Documents\Programs\MATLAB\Tagging\CATS cal';%
 global fileloc filename
 cf = pwd; try cd([vol ':\' folder]); catch; end
 [filename,fileloc]=uigetfile('*.mat', 'select CATS data (imported mat file)'); 
