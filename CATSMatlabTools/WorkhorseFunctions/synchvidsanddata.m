@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,synchusingvidtimestamps,useFrames)
 global fileloc filename
 if nargin<10; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end

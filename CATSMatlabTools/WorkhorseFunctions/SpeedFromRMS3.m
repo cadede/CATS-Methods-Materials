@@ -362,7 +362,7 @@ C95 = P95;
 P952 = P95; P682 = P68; C952 = C95;
 
 %
-error('note for Dave- this was set at i = 2, why would that be?  Check with next set of data.');
+% error('note for Dave- this was set at i = 2, why would that be?  Check with next set of data.');
 
 for i = 1:length(speedper(:,1))
     sectI = round(speedper(i,1)):speedper(i,2); % period of time between tag slips
@@ -458,11 +458,15 @@ while ~isempty(button)
             case 2
                 C = abs(pitch(Is)*180/pi);
                 T = '|pitch| (deg)';
-                D = ['Min: ' num2str(minPitch2)];
+              try  D = ['Min: ' num2str(minPitch2(sectnum))];
+              catch; D = ['Min: ' num2str(minPitch2(1))];
+              end
             case 3
                 C = p(Is);
                 T = 'Depth (m)';
-                D = ['Min: ' num2str(minDepth2) ', Max: ' num2str(maxDepth2)];
+               try  D = ['Min: ' num2str(minDepth2(sectnum)) ', Max: ' num2str(maxDepth2(sectnum))];
+               catch;  D = ['Min: ' num2str(minDepth2(1)) ', Max: ' num2str(maxDepth2(1))];
+               end
             case 4
                 if ~horiz
                     C = zeros(size(p));
@@ -503,19 +507,25 @@ while ~isempty(button)
     again = true;
     vers = version('-release'); if strcmp(vers(end),'a'); vers = str2num(vers(1:4)); else vers = str2num(vers(1:4))+0.1; end
     axs = get(gcf,'children');
-    if vers>2014 %accounts for recent versions of matlab that treat colorbars differently than older versions.
-        for iii = 7:-2:1
-            axes('position',get(axs(iii),'position'),'ylim',get(axs(iii),'Limits'),'color','none','yticklabel',[]);
-        end
-    end
+
     
     while again
         again = false;
+        if vers>2014 %accounts for recent versions of matlab that treat colorbars differently than older versions.
+            if horiz; AA = 6:-2:2; else AA = 7:-2:1; end
+            for iii = AA
+                axes('position',get(axs(iii),'position'),'ylim',get(axs(iii),'Limits'),'color','none','yticklabel',[]);
+            end
+        end
         [x,y,button] = ginput(1);
         axs1 = get(gcf,'children');
         axs = axs1;
         
-        if vers>2014; error('put a break point here to test if this works with new version'); axs([5 7 9 11]) = axs(1:4); axs(1:4) = []; end
+        if vers>2014 && ~horiz
+            axs([5 7 9 11]) = axs(1:4); axs(1:4) = []; 
+        elseif vers>2014
+            axs([5 7 9]) = axs(1:3); axs(1:3) = []; 
+        end
         ii = find(axs == gca);
         if horiz && ii ~=1; ii = ii+1; end
         secti = 1:length(minDepth2);
@@ -542,23 +552,23 @@ while ~isempty(button)
             case 4
                 if button == 1
                     minDepth2(secti) = minDepth;
-                    Is3(p>=minDepth2) = true;
+                    Is3(p>=minDepth) = true;
                 elseif button == 3;
                     maxDepth2(secti) = maxDepth;
-                    Is3(p>=minDepth2) = true;
+                    Is3(p>=minDepth) = true;
                 end
             case 5
                 Is2(abs(pitch*180/pi)<round(y)) = false;
                 minPitch2(secti) = round(y);
             case 6
                 minPitch2(secti) = minPitch;
-                Is2(abs(pitch*180/pi)>=minPitch2) = true;
+                Is2(abs(pitch*180/pi)>=minPitch) = true;
             case 7
                 maxRR2(secti) = abs(round(y));
-                Is1(rollrate>maxRR2)=false;
+                Is1(rollrate>abs(round(y)))=false;
             case 8
                 maxRR2(secti) = maxRR;
-                Is1(rollrate<=maxRR2) = true;
+                Is1(rollrate<=maxRR) = true;
             otherwise
                 again = true;
         end

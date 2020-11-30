@@ -32,19 +32,24 @@ while ~isempty(button)
     oi = 1:length(camondec);
     p3 = plot(oi(camondec),camondec(camondec)*-5,'gs','linewidth',3,'markerfacecolor','g','markersize',2);
     if pats(1,2) == 0; pats(1,2) = rectangle('position',[tag1 -50 1 1],'facecolor',[1 1 .4]); set(gca,'ylim',ys); end
-    try legend([p1 pats(1,1) pats(1,2) p3], 'Depth','Tag Slips','Tag Slip Duration','Cam On','location','Southeast');
+    patleg = patch([tagslip(1,1) tagslip(1,2) tagslip(1,2) tagslip(1,1)],[0 0 1 1],[1 1 .4]);
+    try legend([p1 pats(1,1) patleg p3], 'Depth','Tag Slips','Tag Slip Duration','Cam On','location','Southeast');
     catch
-        legend([p1 pats(1,1) pats(1,2)], 'Depth','Tag Slips','Tag Slip Duration','location','Southeast');
+        legend([p1 pats(1,1) patleg], 'Depth','Tag Slips','Tag Slip Duration','location','Southeast');
     end
     
     title('Left click on an apparent tag slip location to add a location, click within a tagslip to adjust a spot, press enter when finished');
     s2 = subplot(8,1,6:8);
     
-    plot(surfs,Asurf,'s','markersize',2); set(gca,'xlim',[1 tag2]);
-    hold on;
-    plot(surfs,runmean(Asurf,3),'linewidth',2);
+    cols = 'bkr';
+    
+    for ii = 1:size(Asurf,2)
+       plot(surfs,Asurf(:,ii),['s' cols(ii)],'markersize',2); set(gca,'xlim',[1 tag2]);
+        hold on;
+        pp(ii) =  plot(surfs,runmean(Asurf(:,ii),3),cols(ii),'linewidth',2);
+    end
     ylim([-1.1 1.1])
-    legend('X @ surface','Y @ surface','Z @ surface','orientation','horizontal','location','southoutside');
+    legend(pp,'X @ surface','Y @ surface','Z @ surface','orientation','horizontal','location','southoutside');
     linkaxes([p1 s2],'x');
     %
     [x,~,button] = ginput(1);

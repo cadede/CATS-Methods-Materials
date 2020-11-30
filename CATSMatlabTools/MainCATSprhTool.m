@@ -184,10 +184,10 @@ else
    % this script makes a few variables, but its main purpose is to
    % synchronize video and data using surfacings for videos that do not
    % have a record of their start times (i.e. collected independently of the diary data)
-   [camon,audon,vidDN,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,synchusingvidtimestamps);
+   [camon,audon,vidDN,vidDurs,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,synchusingvidtimestamps);
 end
    CellNum = 4;
-     save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','timedif','CellNum','nocam','-append');
+     save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
 disp('Section 4 done');
 %% 5. get tagon and tagoff times 
 % id tagon and tagoff times by zooming in and selecting the boundaries of
@@ -324,11 +324,11 @@ try load([fileloc filename(1:end-4) 'Info.mat'],'slips'); catch; end
 % periods)
 
 if exist('slips','var')
-tempslips = slips;
-else tempslips = tagslipdec;
+prelimslips = slips;
+else prelimslips = tagslipdec;
 end
 
-slips = IDtagslips(DN,At,Depth,fs,tagondec,tempslips,camondec);
+slips = IDtagslips(DN,At,Depth,fs,tagondec,prelimslips,camondec);
 
 save([fileloc filename(1:end-4) 'Info.mat'],'slips','-append');
 disp('section 8.1 completed');
@@ -378,6 +378,7 @@ disp('Section 8.2 done');
 
 
 %% 9. (removed)- calibrate gyroscopes in situ.  Recalculate pitch, roll and heading using gyroscopes to be more accurate during times of high specific acceleration
+% [GwUB, bias, pitchgy,rollgy,headgy] = unbiasgyro(Aw,fs,Gw,Mw,pitch,roll,head,tagondec,camondec)
 
 %% 10a. Calculate flow noise from audio files 
 % inputs audio file flow noise. 
@@ -395,7 +396,7 @@ vars.Depth = Depth;
 audiodir = [fileloc 'AudioData\'];
 
 load([fileloc filename(1:end-4) 'Info.mat'],'flownoise');
-if exist('flownoise','var') && sum(isnan(flownoise))~=length(flownoise); 
+if exist('flownoise','var') && sum(isnan(flownoise))~=length(flownoise) 
     s = input('flownoise variable "DB" already exists and has data, overwrite?  (this will take some time) 1 = yes, 2= no ');
 else s = 1;
 end
@@ -409,9 +410,9 @@ tag2 = find(vars.tagondec,1,'last');
     disp('Done importing, check out figure 300 to examine data for outliers');
 % plot data.  Look for outliers, may have to remove data above a threshold
 % if there are spikes
-if sum(isnan(flownoise)) ~= length(flownoise);
+if sum(isnan(flownoise)) ~= length(flownoise)
     figure(300); clf; set(300,'windowstyle','docked');
-    ax = plotyy(DN(tag1:tag2),Depth(tag1:tag2),DN(tag1:tag2),DB(tag1:tag2));
+    ax = plotyy(vars.DN(tag1:tag2),Depth(tag1:tag2),vars.DN(tag1:tag2),flownoise(tag1:tag2));
     set(ax(1),'ydir','rev');
     legend('Depth','Flow noise (dB)');
     ylabel('Depth (m)','parent',ax(1));
@@ -438,7 +439,7 @@ disp('Section 10a finished');
 load([fileloc filename(1:end-4) 'Info.mat'],'Afs','CAL','fs','timedif','DN','flownoise','ofs');
 if ~exist('data','var') || ~exist('Adata','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 names =fieldnames(CAL);
-for ii = 1:length(names);
+for ii = 1:length(names)
     eval([names{ii} ' = CAL.' names{ii} ';']);
 end
 
@@ -467,7 +468,8 @@ disp('Section 10b finished');
 % acoustics (and likely video)
 JJ = J; JJ(isnan(JJ)) = 0; JJ = runmean(JJ,fs);
 D = flownoise; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
-figure; plotyy(DN,JJ,DN,D)
+figure; plotyy(DN,JJ,DN,D);
+legend('JiggleRMS','FlownoiseRMS')
 
 % should not have to run this
 % maxoffset = 2.5; % set with what you think the max offset would be
@@ -485,10 +487,10 @@ figure; plotyy(DN,JJ,DN,D)
 
 load([fileloc filename(1:end-4) 'Info.mat'],'speedper','Jig','CAL','fs','timedif','DN','camondec','ofs','Hzs','df','W','slips','tagondec','flownoise');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
-if ~exist('At','var');
+if ~exist('At','var')
     [Depth,At,Mt,Gt] = applyCal2(data,CAL,camondec,ofs,Hzs,df);
 end
-if ~exist('pitch','var');
+if ~exist('pitch','var')
     [Aw,Mw,Gw] = applyW(W,slips(1:end-1,2),slips(2:end,1),At,Mt,Gt);
     [pitch,roll] = calcprh(Aw,Mw);
 end
@@ -501,7 +503,7 @@ minPitch = 40;
 minSpeed = 1;
 % speedEnds([1 4 5 end-1:end]) = [];
 
-if sum(isnan(flownoise)) == length(flownoise);
+if sum(isnan(flownoise)) == length(flownoise)
     RMS2 = []; lab = '';% could set RMS2 = Jig(:,4); lab = 'magJ'; if you want to compare the multiaxes model jig to the overall magnitude model
 else
     RMS2 = flownoise; lab = 'FN';
@@ -517,7 +519,7 @@ for fig = [1 301:300+size(speedstats.r2used,1)]
 end
 
 
-if sum(isnan(flownoise)) ~= length(flownoise);
+if sum(isnan(flownoise)) ~= length(flownoise)
     s = input('Would you like to recalibrate speed from flow noise using its own sections (1 = yes, 2 = no- click no if current calibration is good)? ');
     if s == 1
         disp('Can quit out of this and start cell again later if the results don''t seem to be improving');
@@ -565,16 +567,19 @@ if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 % if ~exist('At','var');
     [p,At,Mt,Gt,T,TempI,Light] = applyCal2(data,CAL,camondec,ofs,Hzs,df);
 % end
-if ~exist('head','var');
+if ~exist('head','var')
     [Aw,Mw,Gw] = applyW(W,slips(1:end-1,2),slips(2:end,1),At,Mt,Gt);
     [pitch,roll,head] = calcprh(Aw,Mw,dec);
 end
-if ~exist('speed','var');
+if ~exist('speed','var')
     speed = applySpeed(JigRMS,'JJ',flownoise,'FN',tagondec,p,pitch,roll,fs,speedstats);
 end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
+if ~exist('frameTimes','var')
+load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam');
+end
 if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes)); end
 if nocam; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; viddeploy = [];  if ~exist('speed','var'); speed = table(nan(size(p)),nan(size(p)),nan(size(p)),'VariableNames',{'JJ' 'FN','SP'}); end; end
 audon = audondec; 
