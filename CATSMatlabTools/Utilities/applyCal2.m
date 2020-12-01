@@ -26,6 +26,7 @@ try Gt = decimateM([data.Gyr1 data.Gyr2 data.Gyr3],ofs,Hzs.gyrHz,df,'gyrHz');
 catch
     Gt = nan(size(Mt));
     warning('no gyros detected, Gt is nans');
+    gyconst = zeros(1,size(Gt,2)); gycal = diag(ones(size(Gt,2),1));
 end
 At = decimateM([data.Acc1 data.Acc2 data.Acc3],ofs,Hzs.accHz,df,'accHz');
 try Mt = decimateM([data.Comp1 data.Comp2 data.Comp3],ofs,Hzs.magHz,df,'magHz');
@@ -33,6 +34,7 @@ catch; Mt = nan(size(Depth,1),3);
     warning ('No magnetometer detected, Mt is nans');
 end
 numrows = size(Gt,1);
+
 Gt = (Gt-repmat(gyconst,numrows,1))*gycal;
 if ~exist('Acal','var') || isempty(Acal)
     At = (At-repmat(aconst,numrows,1))*acal;
@@ -41,6 +43,17 @@ else
     At = At*axA;
     At = (At*diag(Acal.poly(:,1))+repmat(Acal.poly(:,2)',[size(At,1),1]))*Acal.cross;
 end
+if ~exist('magconstoff','var'); 
+    try magconstoff = magconston; magcaloff = magcalon; catch
+        try magconstoff = magconst; magconston = magconst; magcalon = magcal; magcaloff = magcal;
+        catch; warning('no magnetometer bench cal, to continue press enter'); pause;
+            magconston = [0 0 0]; magcalon = diag(ones(3,1));
+            magconstoff = magconston; magcaloff = magcalon;
+        end
+    end
+end
+
+
 if ~exist('Mcal','var') || isempty(Mcal)
     Mt(camondec,:) = (Mt(camondec,:)-repmat(magconston,sum(camondec),1))*magcalon;
     Mt(~camondec,:) = (Mt(~camondec,:)-repmat(magconstoff,sum(~camondec),1))*magcaloff;

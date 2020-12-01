@@ -256,7 +256,7 @@ end
     
     disp(head(data,5));
     % Save Hzs (determined from data)
-    Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',fs,'THz',THz,'TDIHz',TDIHz);
+    Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',0,'THz',THz,'TDIHz',TDIHz);
     
     disp('Section 2 (Data Processing) finished');
         

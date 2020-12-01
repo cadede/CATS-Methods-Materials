@@ -91,7 +91,7 @@ disp('Section 2 finished');
 warning('off','MATLAB:load:variableNotFound');
 
 if ~isempty(strfind(filename,'truncate'))
-    disp('Using truncated file'); %load([fileloc filename]);
+    disp('Using truncated file');
     filename = filename([1:end-12 end-3:end]); % filename without the truncate label
 end
 
