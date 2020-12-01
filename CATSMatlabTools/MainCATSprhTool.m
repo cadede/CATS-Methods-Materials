@@ -221,7 +221,6 @@ load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress',
 disp(['New Sampling Rate: ' num2str(ofs/df);]);
 if ofs/df ~= 10; warning('Final sampling rate does not equal 10 Hz'); end
 
-%filterCATS needs improvement
 DV = datevec(DNorig(1));
 if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 if isnan(GPS(1,1)) || isnan(GPS(1,2)); error('No GPS location (needed to calculate magnetic field'); end
@@ -389,7 +388,8 @@ audiodir = [fileloc 'AudioData\'];
 load([fileloc filename(1:end-4) 'Info.mat'],'flownoise');
 if exist('flownoise','var') && sum(isnan(flownoise))~=length(flownoise) 
     s = input('flownoise variable "DB" already exists and has data, overwrite?  (this will take some time) 1 = yes, 2= no ');
-else s = 1;
+else
+    s = 1;
 end
 
 if s == 1
@@ -417,6 +417,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
     %         end
 end
 clear vars
+if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
 save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','-append');
 disp('Section 10a finished');
 
@@ -603,6 +604,7 @@ end
 disp(['UTC = ' num2str(INFO.UTC) ', if incorrect, set INFO.UTC and resave prhfile']); %save([fileloc prhfile],'INFO','-append');
 INFO.prhcreated = date;
 INFO.creator = creator;
+INFO.Hzs = Hzs; %original data sample rates
 try
     INFO.aud = AUD;
 catch
@@ -614,22 +616,36 @@ prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
-%% 13. Import fastloc GPS data into file
-% construct pos file from ubx file, then run this code (ENSURE prh and ALLDATA saved as this deletes all data)
-% first graphs checks to make sure hits line up with deployment.  Usually just press enter if everything looks like it lines up
-% bb190302-52 is a good one to figure out wtf is going on with the timestamps
+%% 13a. Import fastloc GPS data into file
+% construct pos file from ubx file, then run this code 
+% if you have GPS data from another source, can skip this section in favor
+% of the next code
+
+% Matlab packages required: Mapping toolbox
 
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
-addGPS(fileloc); %catch; disp('No GPS file found or error in adding tag GPS'); end
-%% Make a "GPShits.xlsx" file with Time, Lat, Long from any other manual locations (like deployment or focal follows or Argos)
+addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
+load([fileloc prhfile],'DN','GPS','tagon','p','fs');
+[fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs);
+try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
+    savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
+    saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
+catch
+end
+
+%% 13b Make a "GPShits.xlsx" file with Time, Lat, Long from any other manual locations (like deployment or focal follows or Argos)
 % If no manual hits exist, can press enter to just use tag on and recovery
 % locations from tag guide
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
+clearvars -except prhfile fileloc filename
+load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
+close all
+rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
 manualGPS2prh(fileloc,prhfile); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
 % Run this file to check georeferenced pseudotracks.  May have to go back a step to adjust points more once you see the track
@@ -674,7 +690,7 @@ gI = find(~isnan(GPS(:,1)));
 [~,b] = min(abs(gI-t1)); gI = gI(b);
 gtrack2kml(geoPtrack,tagon,fs,DN,1/60,GPS(gI),GPS(gI,2),UTC,INFO.whaleName,fileloc)
 
-%% Once you have a good track, run this file to save all the results, including trackplot and kml file
+%% 13c Once you have a good track, run this file to save all the results, including trackplot and kml file
 save([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],'geoPtrack','Ptrack','head','-append');
 saveas(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.bmp']);
 savefig(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.fig']);
@@ -702,13 +718,12 @@ copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\pr
 % to get lats and longs of geoPtrack, run:
 % Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
 
-%% needs images generated from above script as well as:
+%% 14 needs images generated from above script as well as:
 % pics&vids folder with ID_... labeled and TAG_.... labeled. (and drone_... labeled if applicable) 
 % Also needs  spyymmdd-tag#kml.jpg and spyymmdd-tag#map.jpg from google earth plot
-% and tag video still jpg (spyymmdd-tag#cam.jpg) in the QL folder.  For single cams, best is to also have a second file (spyymmdd-tag#cam2.jpg) that will be displayed side by side.
-% whaleID = 'be180424-41';
-% fileloc = ['E:\CATS\tag_data\' whaleID ' (South Africa)\'];
-% rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
+% and up to two tag video still jpgs (spyymmdd-tag#cam.jpg and spyymmdd-tag#cam2.jpg) in the QL folder.  
+
+rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
 makeQuickLook(fileloc);
 whaleID = INFO.whaleName;
