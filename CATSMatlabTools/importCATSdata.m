@@ -128,11 +128,17 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     % most of the "try"s are to allow older file versions to work if they
     % do not have the newer data columns.  If your file has additional data
     % columns that should be imported, may need to add them in here.
-    if i == mini;
+    if i == mini
         % check the version of matlab and how readtable might read data.
+        vers = version('-release'); if strcmp(vers(end),'a'); vers = str2num(vers(1:4)); else vers = str2num(vers(1:4))+0.1; end
+       if vers<2020
         data = readtable([fileloccsv file '.csv'],'headerlines',0,'readvariablenames',false);
-        headers = data{1,:};
+       else 
+           data = readtable([fileloccsv file '.csv'],'headerlines',0,'readvariablenames',false,'Format','auto');
+       end
+            headers = data{1,:};
         data(1,:) = [];
+         
         try headers(~cellfun(@isempty,strfind(headers,'Light'))) = {'Light1' 'Light2'}; catch; headers(~cellfun(@isempty,strfind(headers,'Light'))) = {'Light'}; end
         % you may wish to be more descriptive with your "Temp" heading.
         try headers(~cellfun(@isempty,strfind(headers,'Pressure'))) = {'Pressure' 'Temp'}; catch;...
@@ -194,7 +200,12 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         data = data(find(~strcmp(data.Acc1,'0'),1,'first'):end,:);
         dataT = data;
     else % if not on the first csv imported
+        if vers<2020
         dataT = readtable([fileloccsv file '.csv'],'headerlines',0,'readvariablenames',false);
+        else 
+           dataT = readtable([fileloccsv file '.csv'],'headerlines',0,'readvariablenames',false,'Format','auto');
+       end 
+        end
         dataT(:,delcol) = [];
         if any(cellfun(@any,cellfun(@(x) strfind(x,'Acc'),table2cell(dataT(1,:)),'uniformoutput',false))) % if the csv has headers
             dataT(1,:) = []; % this line gets rid of any copied headers

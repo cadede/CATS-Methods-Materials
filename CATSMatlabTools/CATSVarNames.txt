@@ -21,7 +21,7 @@ GPSerr- for tagged derived GPS points (not for manual GPS points from focal foll
 Gt- Gyroscope data (radians/sec) around each axis (x,y,z) in the tag's reference frame
 Gw- Gyroscope data rotated to the whale's reference frame
 GwUB- Gyroscope data in the whale's reference frame with the bias removed for each sample.  
-head- heading of the whale (radians)
+head- heading of the whale (radians), positive heading is as a compass
 INFO- a structure with some metadata of the prh file creation.  Includes:
 INFO.cal- first 8 values are bench calibrations, application: (At-aconst)*acal.  Also accounts for axis orientations in raw data that differ from NED.  CAL.Mag3d and p3d are calibration constants from spherical_cal and fix_pressure from Mark Johnson/Stacy DeRuiter tag_tools workshop
 INFO.calperiod- datenumbers of the surfacings and dive used to calculate each W
@@ -38,8 +38,8 @@ Mt- Magnetometer data for each axis (x,y,z) in the tag's reference frame (uT).
 Mw- Magnetometer data for each axis in the whale's reference frame
 p- pressure (depth) in meters
 Ptrack- [x,y,z] in meters of the pseudotrack
-pitch- pitch of the whale (radians)
-roll- roll of the whale (radians)
+pitch- pitch of the whale (radians), positive is for an animal ascending to the surface
+roll- roll of the whale (radians), positive is a roll to the animal's right
 speed- a table of speed values from different calculations
 speedstats- a structure containing info on the models used to create the speed table (see speedstats.info).
 speed.FN- speed from flow noise (only when the camera/hydrophone is on and enabled)

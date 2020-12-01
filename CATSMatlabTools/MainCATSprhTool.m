@@ -1,10 +1,12 @@
 % David Cade
-% version 11.23.2020
+% version 12.1.2020
 % UC Santa Cruz
 % Stanford University
 
 
-% Before running through the steps in this file, run importCATSdata; (saves a *.mat file with data at 40 or 50 Hz, and Adata with raw accelerometer files)
+% Before running through the steps in this file, run importCATSdata;
+% this saves a *.mat file with data at 40 or 50 Hz, and Adata with raw
+% accelerometer files, and will be needed starting in step 2.
 % Run section 1 well before you want to start making the prh file as it takes a long time.
 % Also prepare an xls file like spYYMMDD-tag#.xls with any observed tagslip times, GPS
 % location of tagon, and, if there are not timestamps on the video surfacing times for each video 
