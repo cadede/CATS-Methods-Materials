@@ -183,7 +183,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try delcol = [delcol find(~cellfun(@isempty,strfind(headers,'CC vid. size')),1)];
         catch; end
         data(:,delcol) = []; headers(delcol) = [];
-        if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTC = true; else UTC = false; end
+        if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTCflag = true; else UTCflag = false; end
         headers(~cellfun(@isempty,strfind(headers,'Date'))) = {'Date'};
         headers(~cellfun(@isempty,strfind(headers,'Time'))) = {'Time'};
         try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat1' 'GPSsat2'}; catch; try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat'}; catch; end; end
@@ -194,6 +194,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         data.Properties.VariableNames = headers;
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
+        if ~UTCflag; UTC = 0; end
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
         else fs = max([gyrHz magHz pHz lHz GPSHz]);
         end

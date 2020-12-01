@@ -7,7 +7,8 @@ try
     % first try to automatically import text file
     try
         FILES = dir(fileloc); FILES ={FILES.name};
-        FILES= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-4) '.txt'])));
+        FILEST= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-4) '.txt'])));
+        if ~isempty(FILEST); FILES = FILEST; else  FILES= FILES(~cellfun(@isempty, strfind(FILES,[file(1:end-8) '.txt']))); end
         [~,b] = max(cellfun(@(x) sum(x(1:min(length(x),length(file))) == file(1:min(length(x),length(file)))),FILES));
         FILES = char(FILES(b));
         Hzs = importdata([fileloc FILES],'\t'); try Hzs = Hzs.textdata; catch; end %old instead of FILES: fname(1:end-3) 'txt'

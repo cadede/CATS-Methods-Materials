@@ -84,6 +84,7 @@ Gs = repmat(gcal,length(acc),1);
 Gc = repmat(gconst,length(acc),1);
 M = sqrt(sum(((acc-Gc)./Gs).^2,2));
 figure(9); clf; plot(M);
+title('Overall magnitude of accelerometer data (should be very close to 1 when the tag is not moving)');
 acal = axA*diag(1./gcal);
 aconst = (axA*gconst')';
 if abs(nanmedian(M)-1)>.01
@@ -303,6 +304,8 @@ for pos = unique(positions)'
         gyconst{pos}(abs([newx newy newz])) = gyconst{pos}.*sign([newx newy newz]);
     end
 end
+title({'Left axis is magnetometer data (peaks are used to calculate rotation rate),'; 'right axis is gyros (axis of interest should be flat, other two should be ~ 0, 45 rpm should be higher than 33 rpm'});
+
 gycal = 1./nanmean(vertcat(gycal{:}));
 I = [1 0 0; 0 1 0; 0 0 1];
 gyconst = mean(vertcat(gyconst{:}));
@@ -498,7 +501,7 @@ elev = benchdata(5,2);
 
 try 
     if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
-    [~,~,~,~,b] = wrldmagm(elev,GPS(1),GPS(2),decyear(data.Date(1))); % Best guess for 2015 dates until they update the script
+    [~,~,~,~,b] = wrldmagm(elev,GPS(1),GPS(2),decyear(data.Date(1)),str); % Best guess for 2015 dates until they update the script
 catch
  disp('Go to https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm and enter the magnetic field strength (in nT) for the place where calibration was performed')
     b = input('? ');
