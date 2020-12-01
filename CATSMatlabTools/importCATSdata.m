@@ -205,7 +205,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         else 
            dataT = readtable([fileloccsv file '.csv'],'headerlines',0,'readvariablenames',false,'Format','auto');
        end 
-        end
+      
         dataT(:,delcol) = [];
         if any(cellfun(@any,cellfun(@(x) strfind(x,'Acc'),table2cell(dataT(1,:)),'uniformoutput',false))) % if the csv has headers
             dataT(1,:) = []; % this line gets rid of any copied headers
