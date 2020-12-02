@@ -8,7 +8,7 @@ The tool kit works primarily with Matlab and includes tools to read/write, calib
 
 This repository is designed to provide the entire CATS toolkit and a full tutorial (available in the Wiki section of this repository) for working with the CATS tag plaform. Our goal is for you to be able to turn raw data into a calibrated and properly oriented data packet that can be used for any of your subsequent analysis.
 
-1) To start, download the CATS Tools folder and add it to your Matlab file path.
+1) To start, download the CATS Tools folder and **add it to your Matlab file path with all folders and subfolders.**
 
 2) If you have a brand new CATS tag, navigate to the Wiki and start with the first section ("Setting Up Tag And User Interface") to set up your tag. Please note that the CATS tag design changes regularly and may make some segments of the Wiki out-of-date. We will try to update the Wiki as often as we can.
 
