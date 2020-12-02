@@ -20,6 +20,7 @@ if ~nopress %&& tagnum>5
     Depth = (data.Pressure-pconst)*pcal+polyval([pc.tcomp,pc.poly(2)],pressTemp-pc.tref);
     
     Depth = decimateM(Depth,ofs,pHz,df,'pHz');
+    if length(Depth) == length(DN)+1; Depth(end) = []; end
 %     if abs(round(ofs/pHz)-ofs/pHz)>.01; error('pHz does not divide evenly into original sample rate'); end
 %     Depth = Depth(1:ofs/pHz:end);
 %     if abs(round(df/(ofs/pHz)) - df/(ofs/pHz)) > .01; error('decimation factor does not divide evenly into pHz'); end

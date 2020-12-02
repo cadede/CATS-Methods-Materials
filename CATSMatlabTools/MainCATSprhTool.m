@@ -177,7 +177,7 @@ else
    % this script makes a few variables, but its main purpose is to
    % synchronize video and data using surfacings for videos that do not
    % have a record of their start times (i.e. collected independently of the diary data)
-   [camon,audon,vidDN,vidDurs,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,synchusingvidtimestamps);
+   [camon,audon,vidDN,vidDurs,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchusingvidtimestamps);
 end
    CellNum = 4;
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');

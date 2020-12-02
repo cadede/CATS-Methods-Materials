@@ -194,7 +194,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         data.Properties.VariableNames = headers;
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
-        if ~UTCflag; UTC = 0; end
+        if ~UTCflag; UTCoffset = 0; else UTCoffset = UTC; end
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
         else fs = max([gyrHz magHz pHz lHz GPSHz]);
         end
@@ -290,7 +290,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     for iii = 1:length(badrows)
         ms(badrows(iii)) = ms(badrows(iii)-1)+1/accHz;
     end
-    DN = DN + ms/24/60/60+UTC/24; % brings back to local time
+    DN = DN + ms/24/60/60+UTCoffset/24; % brings back to local time
     for iii = 1:length(badrows)
         if isempty(notes); notes = 'Bad data at t = '; end
         notes = [notes datestr(DN(badrows(iii)),'mm/dd HH:MM:SS.fff') ', '];
