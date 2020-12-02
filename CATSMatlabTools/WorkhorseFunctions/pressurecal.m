@@ -15,7 +15,7 @@ if ~nopress %&& tagnum>5
     %     Depth = decdc(calDepth((data.Pressure-pconst)*pcal,data.Temp,tagon,ofs),df);
     %     [~,peakmag] = peakfinder(Depth,3,min(Depth)+6,-1); Depth = Depth-max(min(peakmag),max(peakmag)-2);
     % else %Depth = decdc(calDepth(data.Pressure,data.Temp,tagon,ofs),df);
-    %     [~,pc] = decdc(fix_pressure(data.Pressure(tagon),data.Temp1(tagon),ofs),df); %Mark Johnson's method
+    %     [~,pc] = decdc(fix_pressure(data.Pressure(tagon),data.Temp1q(tagon),ofs),df); %Mark Johnson's method
     % end
     Depth = (data.Pressure-pconst)*pcal+polyval([pc.tcomp,pc.poly(2)],pressTemp-pc.tref);
     

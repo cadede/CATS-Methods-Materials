@@ -37,6 +37,7 @@ aud = struct();
     end
 else noaud = false;
 end
+AUD = struct();
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
