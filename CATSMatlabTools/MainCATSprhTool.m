@@ -294,7 +294,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CAL','CellNum','-append');
 disp('Section 7b finished');
 
 
-%% 8 Find orientation of tag on animal
+%% 8.1 Find orientation of tag on animal
 % iteratively goes section by section, rotating tag frame to whale frame
 % given user defined selection 
 
