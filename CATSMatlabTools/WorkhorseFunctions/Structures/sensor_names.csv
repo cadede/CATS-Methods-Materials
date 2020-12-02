@@ -1,0 +1,20 @@
+name,type,abbrev,description,axes,def_units,def_unit_name,def_label,def_frame,def_axes,def_cols
+Pressure,press,P,dive depth,1,m H2O,meters H2O (salt),meters,,D,
+Depth,press,P,dive depth,1,m H2O,meters H2O (salt),meters,,D,
+Altitude,press,P,altitude above sea-level,1,m,meters above sea-level,meters,,U,
+TAcceleration,acc,At,triaxial acceleration,3,m/s2,meters per seconds squared,m/s^2,tag,FRD (NED),"x,y,z"
+TMagnetometer,mag,Mt,triaxial magnetometer,3,uT,micro Tesla,\muT,tag,FRD (NED),"x,y,z"
+TGyroscope,gyr,Gt,triaxial gyroscope,3,rads/s,radians per second,rads/s,tag,FRD (NED),"x,y,z"
+Acceleration,acc,A,triaxial acceleration,3,m/s2,meters per seconds squared,m/s^2,tag,FRD (NED),"x,y,z"
+Magnetometer,mag,M,triaxial magnetometer,3,uT,micro Tesla,\muT,tag,FRD (NED),"x,y,z"
+Gyroscope,gyr,G,triaxial gyroscope,3,rads/s,radians per second,rads/s,tag,FRD (NED),"x,y,z"
+Speed,spd,S,speed with respect to medium,1,m/s,meters per second,m/s,,F,
+Position,pos,POS,GPS position,2,degrees,decimal degrees,degrees,WGS84,NE,"lat,long"
+DTemperature,temp,T,temperature,2,"matlab datenumber, degrees C","matlab datenumber, degrees Celsius","matlab datenumber, degrees",,,
+Temperature,temp,T,temperature,1,degrees C,degrees Celsius,degrees,,,
+Light,light,LL,light level,1,lux,lux,lux,,,
+DLight,light,LL,light level,2,"matlab datenumber, lux","matlab datenumber, lux","matlab datenumber, lux",,,
+Datenumber,datenum,DN,matlab date number,1,day,day,day,,,
+Pitch,pitch,pitch,"pitch (+ up, - down)",1,rad,radians,rad,whale,,
+Roll,roll,roll,"roll (+ right, - left)",1,rad,radians,rad,whale,,
+Heading,head,head,"heading (+ right, - left, 0 True North)",1,rad,radians,rad,whale,,

@@ -1,0 +1,26 @@
+field,required,params
+data,1,
+sampling,1,regular
+sampling_rate,1,
+sampling_rate_unit,1,Hz
+depid,1,
+creation_date,1,
+history,0,
+name,1,speedJJ
+type,1,speed
+full_name,1,Jiggle-based speed 
+description,1,Animal speed computed by regressing rms jiggle against orientation corrected depth rate
+column_names,1,speed
+unit,1,m/s
+unit_name,1,meters per second
+unit_label,1,m/s
+speed_calibration_periods_end_times,1,
+speed_calibration_periods_end_times_unit,1,second
+speed_jiggleRMS,1,
+speed_jiggleRMS_unit,1,dB re 1g
+speed_jiggleRMS_unit_name,1,decibels relative to 1 g of acceleration
+speed_jiggleRMS_unit_label,1,dB re 1g
+model,1,a*exp(b*(c*x+d*y+e*z))
+fit_r2,1,
+start_offset,1,
+start_offset_units,1,second

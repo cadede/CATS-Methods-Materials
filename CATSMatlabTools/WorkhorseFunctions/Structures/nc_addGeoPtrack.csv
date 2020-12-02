@@ -1,0 +1,18 @@
+field,required,params
+data,1,
+sampling,1,regular
+sampling_rate,1,
+sampling_rate_unit,1,Hz
+depid,1,
+creation_date,1,
+history,0,
+name,1,geoPtrack
+type,1,geoPtrack
+full_name,1,Georeferenced Pseudotrack
+description,1,"Georeferenced Pseudotrack of the animal, giving an estimate of the animal's position at the same sampling rate of data. Start location of the data is the deployment location. Caution: the resulting pseudo-track is not reliable. Speed estimation from pitch and depth data is unproven and no allowance is made for currents. Use at your own risk!"
+column_names,1,"Easting, Northing, Depth"
+unit,1,"m,m,m"
+unit_name,1,"meters East, meters North, meters Depth"
+unit_label,1,"m,m,m"
+start_offset,1,
+start_offset_units,1,second

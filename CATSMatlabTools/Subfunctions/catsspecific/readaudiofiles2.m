@@ -96,7 +96,7 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
                 wavwrite(aud.data((i-1)*aud.rate*60*60+1:i*aud.rate*60*60,:),aud.rate,aud.bits,[DIR fname])
             end
         end
-    else movefile(wavfile,[DIR movies{n}(1:end-4) '.wav']);
+    else try movefile(wavfile,[DIR movies{n}(1:end-4) '.wav']); catch; warning(['could not move file ' movies{n}(1:end-4) '.wav into audioData directory']); end
     end
 %     if audrate>70000
 %         aud.data = decdc(aud.data,2); % decimate to make them reasonable

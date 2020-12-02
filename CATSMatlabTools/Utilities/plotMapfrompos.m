@@ -1,40 +1,48 @@
-function [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,edges)
+function [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc,edges)
    global fileloc
 %plots a coastline map and the GPS points in GPS up to the boundary of
 %edges.  Default is 10 km.
-if nargin<6; edges = 10; end
+if nargin<7; edges = 10; end
 %
 try
-    curdir = pwd;
-    oi = strfind(curdir,'MATLAB');
-    [D2,F2] = subdir(curdir(1:oi+5));
-    oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\Utilities\map files'),D2,'uniformoutput',false))==0);
-    Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'GSHHS_f_L1.shp'),F2{oi},'uniformoutput',false)));
-    FnumB = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'bathy_l.shp'),F2{oi},'uniformoutput',false)));
-    DIR = [D2{oi} '\']; filename =  F2{oi}{Fnum}; bathy = F2{oi}{FnumB};
+%     curdir = pwd;
+%     oi = strfind(curdir,'MATLAB');
+%     [D2,F2] = subdir(curdir(1:oi+5));
+%     oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\Utilities\map files'),D2,'uniformoutput',false))==0);
+%     [D2,F2] = mapfileloc;
+    F2 = dir(mapfileloc); F2 = {F2.name};
+    Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'GSHHS_f_L1.shp'),F2,'uniformoutput',false)));
+    FnumB = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'bathy_l.shp'),F2,'uniformoutput',false)));
+%     DIR = [D2{oi} '\']; 
+    DIR = mapfileloc;
+%     filename =  F2{oi}{Fnum}; bathy = F2{oi}{FnumB};
+    filename = F2{Fnum}; bathy = F2{FnumB};
     river = cell(9,1);
     for k = 1:9
-        Fnum(k) = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,['WDBII_river_f_L0' num2str(k) '.shp']),F2{oi},'uniformoutput',false))); 
-        river{k} = F2{oi}{Fnum(k)};
+        Fnum(k) = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,['WDBII_river_f_L0' num2str(k) '.shp']),F2,'uniformoutput',false))); 
+        river{k} = F2{Fnum(k)};
     end
-    
 catch
-    [~,DIR] = uigetfile('*.shp','Find GSHHS shape file (in CATSMatlabTools\Utilities\map files), other files should be in the same folder');
-    cd (DIR)
-%     [bathy,DIR] = uigetfile('*.shp','Find bathy_l shape file (in CATStools\Scripts\Tools), other files should be in the same folder');
-    curdir = pwd;
-    oi = strfind(curdir,'MATLAB');
-    [D2,F2] = subdir(curdir(1:oi+5));
-    oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\Utilities\map files'),D2,'uniformoutput',false))==0);
-    Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'GSHHS_f_L1.shp'),F2{oi},'uniformoutput',false)));
-    FnumB = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'bathy_l.shp'),F2{oi},'uniformoutput',false)));
-    DIR = [D2{oi} '\']; filename =  F2{oi}{Fnum}; bathy = F2{oi}{FnumB};
-    river = cell(9,1);
-    for k = 1:9
-        Fnum(k) = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,['WDBII_river_f_L0' num2str(k) '.shp']),F2{oi},'uniformoutput',false))); 
-        river{k} = F2{oi}{Fnum(k)};
-    end
+    error('likely could not find mapfiles, check mapfileloc variable');
 end
+    
+% catch
+%     [~,DIR] = uigetfile('*.shp','Find GSHHS shape file (in CATSMatlabTools\Utilities\map files), other files should be in the same folder');
+%     cd (DIR)
+% %     [bathy,DIR] = uigetfile('*.shp','Find bathy_l shape file (in CATStools\Scripts\Tools), other files should be in the same folder');
+%     curdir = pwd;
+%     oi = strfind(curdir,'MATLAB');
+%     [D2,F2] = subdir(curdir(1:oi+5));
+%     oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\Utilities\map files'),D2,'uniformoutput',false))==0);
+%     Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'GSHHS_f_L1.shp'),F2{oi},'uniformoutput',false)));
+%     FnumB = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'bathy_l.shp'),F2{oi},'uniformoutput',false)));
+%     DIR = [D2{oi} '\']; filename =  F2{oi}{Fnum}; bathy = F2{oi}{FnumB};
+%     river = cell(9,1);
+%     for k = 1:9
+%         Fnum(k) = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,['WDBII_river_f_L0' num2str(k) '.shp']),F2{oi},'uniformoutput',false))); 
+%         river{k} = F2{oi}{Fnum(k)};
+%     end
+% end
 %
 mins = min(GPS(tagon,:));
 maxs = max(GPS(tagon,:));

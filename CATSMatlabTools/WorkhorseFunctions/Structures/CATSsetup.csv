@@ -1,0 +1,55 @@
+field,required,params
+depid,1,
+altid,1,None
+dtype.source,0,
+dtype.datetime.made,0,
+dtype.nfiles,0,
+dtype.format,0,
+dtype.author,0,
+device.serial,1,
+device.make,1,CATS (Customized Animal Tracking Solutions)
+device.type,1,Archival
+device.model,1,
+device.url,0,http://www.cats.is/
+sensors.firm,1,Not specified
+sensors.soft,1,Not specified
+sensors.list,0,
+animal.id,0,Unknown
+animal.species.code,1,
+animal.species.common,1,
+animal.species.science,1,
+animal.lifehist.sex,0,
+animal.lifehist.stage,0,
+animal.lifehist.age,0,
+animal.dbase.url,1,
+dephist.device.tzone,1,0
+dephist.utc2loc,0,
+dephist.device.regset,1,dd-mmm-yyyy HH:MM:SS.fff
+dephist.device.datetime.start,1,
+dephist.device.datetime.end,1,
+dephist.deploy.locality,1,
+dephist.deploy.location.lat,1,
+dephist.deploy.location.lon,1,
+dephist.deploy.datetime.start,1,
+dephist.deploy.datetime.end,1,
+dephist.deploy.method,1,4 Suction Cups
+dephist.deploy.details,1,
+dephist.deploy.tagger,1,Not specified
+dephist.recov.datetime.start,1,
+dephist.recov.location.lat,1,
+dephist.recov.location.lon,1,
+dephist.recov.details,1,Not specified
+project.name,1,
+project.details,1,Contact data provider
+project.permit,1,Contact data provider
+project.datetime.start,1,
+project.datetime.end,1,
+provider.name,1,
+provider.details,1,
+provider.email,1,
+provider.license,1,Contact data provider
+provider.cite,1,Contact data provider
+provider.doi,1,Contact data provider
+udm.drone,0,Not applicable
+udm.camera.primaryview,0,Not applicable
+udm.camera.videotime,0,Not applicable

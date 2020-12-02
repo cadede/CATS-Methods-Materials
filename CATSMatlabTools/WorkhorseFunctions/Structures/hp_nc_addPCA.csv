@@ -1,0 +1,16 @@
+field,required,params
+data,1,
+sampling,1,irregular
+sampling_time,1,column 1
+sampling_time_unit,1,second
+depid,1,
+creation_date,1,
+history,0,
+name,1,PCA
+type,1,PCA
+column_names,1,"time,duration"
+full_name,1,Prey capture attempt durations
+description,1,Prey capture attempts inferred from buzzes in sound recording
+unit,1,s
+unit_name,1,seconds
+unit_label,1,seconds

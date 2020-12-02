@@ -618,12 +618,14 @@ prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
-%% 13a. Import fastloc GPS data into file
+%% 13a. 
 % construct pos file from ubx file, then run this code 
 % if you have GPS data from another source, can skip this section in favor
 % of the next code
 
 % Matlab packages required: Mapping toolbox
+
+mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 3\map files\';
 
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
@@ -632,7 +634,9 @@ rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can
 
 addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
 load([fileloc prhfile],'DN','GPS','tagon','p','fs');
-[fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs);
+disp('GPS data added from pos file, plotting data');
+%
+[fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
 try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
     savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
     saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
@@ -644,6 +648,9 @@ end
 % locations from tag guide
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
+
+% Matlab packages required: Signal Processing Toolbox,
+
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
@@ -652,11 +659,13 @@ rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can
 manualGPS2prh(fileloc,prhfile); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
 % Run this file to check georeferenced pseudotracks.  May have to go back a step to adjust points more once you see the track
 load([fileloc prhfile]);
+DV = datevec(DN(1));
 if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DN(1)),str); % after 2015 or before 2010 use igrf11magm with the same parameters, or if you want to account for changes during deep dives
 inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % i
 AA = Aw;
-for i = 1:3; AA(:,i) = fixgaps(Aw(:,i)); end
+% eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
+for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
 [fpk,q] = dsf(AA(tagon,:),fs,fs); % determine dominant stroke frequency;
 disp(['dominant stroke frequency: ' num2str(fpk) ' quality: ' num2str(q)]);
 [bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses Johnson method and then rotates back to normal axis orientation.
@@ -670,7 +679,6 @@ sp(isnan(sp)) = 0;
 sp(p<1) = 0.1; sp = runmean(sp,fs);
 
 [t,pt,newspeed,newhead] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[3 3 3],0);
-
 
 % make a ptrack if no geo information at all (come back with gps info later)
 % nhead = fixgaps(bodyhead); nhead(isnan(nhead)) = 0;
@@ -693,6 +701,8 @@ gI = find(~isnan(GPS(:,1)));
 gtrack2kml(geoPtrack,tagon,fs,DN,1/60,GPS(gI),GPS(gI,2),UTC,INFO.whaleName,fileloc)
 
 %% 13c Once you have a good track, run this file to save all the results, including trackplot and kml file
+% Matlab packages required: Audio Toolbox,
+
 save([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],'geoPtrack','Ptrack','head','-append');
 saveas(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.bmp']);
 savefig(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.fig']);
@@ -711,12 +721,22 @@ copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data
 t1 = find(~isnan(Ptrack(:,1)),1)+1; t2 = find(~isnan(Ptrack(:,1)),1,'last')-1;
 % uncomment line if you have nans before and after tag on;
 % head(isnan(head)) = 0; pitch(isnan(pitch)) = 0; roll(isnan(roll)) = 0; Ptrack(1:t1,:) = repmat(Ptrack(t1,:),t1,1); Ptrack(t2:end,:) = repmat(Ptrack(t2,:),length(p)-t2+1,1); geoPtrack(1:t1,:) = repmat(geoPtrack(t1,:),t1,1); geoPtrack(t2:end,:) = repmat(geoPtrack(t2,:),length(p)-t2+1,1);
+% these try/catches are just about putting the files in the correct folder
+try
+CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
+CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
+catch
+    CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
+CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
+end
 
-CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,[rootDIR 'tag_data\TrackPlot\']);
-CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,[rootDIR 'tag_data\TrackPlot\']);
-
+try
 CATSnc([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'TAG GUIDE.xlsx']);
 copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\prh\nc\' INFO.whaleName '_prh' num2str(fs) '.nc']);
+catch
+    [fn,fl] = uigetfile('*.xls*','Find Tag guide to make nc file');
+    CATSnc([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[fl fn]);
+end
 % to get lats and longs of geoPtrack, run:
 % Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
 
@@ -724,6 +744,8 @@ copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\pr
 % pics&vids folder with ID_... labeled and TAG_.... labeled. (and drone_... labeled if applicable) 
 % Also needs  spyymmdd-tag#kml.jpg and spyymmdd-tag#map.jpg from google earth plot
 % and up to two tag video still jpgs (spyymmdd-tag#cam.jpg and spyymmdd-tag#cam2.jpg) in the QL folder.  
+
+% Matlab packages required: Robust Control Toolbos, Computer Vision Toolbox, 
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 

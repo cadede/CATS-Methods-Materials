@@ -118,7 +118,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     %at the surface)
     if ~importAll
         try if max(dataT.Pressure)<mean(dataT.Pressure)+1 && sum(data.Pressure>10)>100
-                disp(['Tag appears off, check profile but saving as is (through csv ' num2str(i-1) ').  Comment out lines 98-104 if tag is not yet off and re-run script, or rerun with 4th argument sent to true']);
+                disp(['Tag appears off, check profile but saving as is (through csv ' num2str(i-1) '). If tag is not yet off, rerun importCATSdata with 4th argument set to true.']);
                 break
             end
         catch

@@ -1,7 +1,7 @@
 function [data, Adata, Atime] = importTDR10toCATS(fileloc, filename)
 %
 % David Cade and James Fahlbusch
-% version 12.1.2020
+% version 11.27.2020
 % Goldbogen Lab
 % Stanford University
 %
@@ -24,17 +24,10 @@ if nargin <2;
 end
 
 %% 1. Import Section
-        vers = version('-release'); if strcmp(vers(end),'a'); vers = str2num(vers(1:4)); else vers = str2num(vers(1:4))+0.1; end
-        if vers<2020
-            opts = detectImportOptions([fileloc filename]);
-            opts.ExtraColumnsRule = 'ignore';
-            data = readtable([fileloc filename],opts);        
-            headers = opts.VariableNames;
-            clearvars opts
-        else 
-            data = readtable([fileloc filename],'Format','%s%f%f%f%f%f%f%f%f%f%u%f%s');
-            headers = data.Properties.VariableNames;
-        end
+        opts = detectImportOptions([fileloc filename]);
+        opts.ExtraColumnsRule = 'ignore';
+        data = readtable([fileloc filename],opts);
+        headers = opts.VariableNames;
         %Change the uncorrected depth field name to pressure
         headers{strcmp(headers,'Depth')} = 'Pressure';
         %Change CorrectedDepth field name to Depth
@@ -264,7 +257,7 @@ end
     disp(head(data,5));
     % Save Hzs (determined from data)
     Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',0,'THz',THz,'TDIHz',TDIHz);
-   
+    
     disp('Section 2 (Data Processing) finished');
         
 %% 2a. Truncate Data (optional)

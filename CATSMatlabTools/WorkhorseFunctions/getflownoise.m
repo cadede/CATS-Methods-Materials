@@ -62,7 +62,6 @@ if ~nocam || ~noaud
 %              vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'_')+1:max(regexp(audiofiles(i).name,'\d'))));
 %              if isempty(vidnum); vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'C')+1:max(regexp(audiofiles(i).name,'\d')))); end
 %         elseif kitten
-
             vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
             vidnum = str2num(vidnum(end-3:end));
             disp(['Video number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
@@ -76,6 +75,9 @@ if ~nocam || ~noaud
         catch
             if i == 1; disp('assuming audiofiles start at beginning of file and are continuous');
                 audStart = data.Date(1)+data.Time(1)+offset/24/60/60;
+            elseif (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
+                warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
+                continue
             else
                 audStart = audStart+lastDur;
             end

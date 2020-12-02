@@ -217,7 +217,7 @@ while restart
         I2 = intersect(sectI,find(newIstot2==1));
         fJ{length(speedper(:,1))+1,1} = fJtot; gofJ{length(speedper(:,1))+1,1} = gofJtot;
         fJ{length(speedper(:,1))+1,2} = fJtot2; gofJ{length(speedper(:,1))+1,2} = gofJtot2;
-        sp1 = oi(end);  sp2 = oi(end-2);
+        sp1 = oi(end);  sp2 = oi(end-2); if strcmpi(get(sp2,'type'),'legend'); sp2 = oi(end-1); end
         xs = get(sp1,'xlim'); xsc = xs; %current xs;
               
         if ci>length(speedper(:,1))

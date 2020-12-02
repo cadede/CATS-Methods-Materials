@@ -94,7 +94,7 @@ function [XYZ, H, D, I, F] = wrldmagm(height, lat, lon, dyear, varargin )
 %   http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 
 narginchk(4, 6);
-[varargin{:}] = convertStringsToChars(varargin{:});
+try [varargin{:}] = convertStringsToChars(varargin{:}); catch; end;
 
 % Use 2020 epoch or catch numeric inputs for epoch
 if (nargin < 5)
