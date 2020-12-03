@@ -587,6 +587,7 @@ if nocam; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; vidde
 audon = audondec; 
 
 INFO = struct;
+INFO.magfield.b = b; INFO.magfield.inc = inc; INFO.magfield.dec = dec;
 INFO.whaleName = whaleName;
 INFO.tagnum = tagnum;
 INFO.notes = notes;
@@ -633,23 +634,22 @@ disp('Section 12 finished, prh file and INFO saved');
 
 % Matlab packages required: Mapping toolbox
 
-mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 4\map files\';
 
-clearvars -except prhfile fileloc filename mapfileloc
+clearvars -except prhfile fileloc filename 
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
 addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
 load([fileloc prhfile],'DN','GPS','tagon','p','fs');
-disp('GPS data added from pos file, plotting data');
-%
-[fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
-try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
-    savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
-    saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
-catch
-end
+disp('GPS data added from pos file, can plot data using commented out script below')% ting data (even if map doesn''t plot, you can move to 13b');
+% mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 4\map files\';
+% [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
+% try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
+%     savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
+%     saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
+% catch
+% end
 
 %% 13b Make a "GPShits.xlsx" file with Time, Lat, Long from any other manual locations (like deployment or focal follows or Argos)
 % If no manual hits exist, can press enter to just use tag on and recovery
@@ -667,10 +667,15 @@ rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can
 manualGPS2prh(fileloc,prhfile); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
 % Run this file to check georeferenced pseudotracks.  May have to go back a step to adjust points more once you see the track
 load([fileloc prhfile]);
-DV = datevec(DN(1));
-if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
-[~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DN(1)),str); % after 2015 or before 2010 use igrf11magm with the same parameters, or if you want to account for changes during deep dives
-inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % i
+
+% get declination to recalculate head
+try dec = INFO.magfield.dec; catch
+    try DV = datevec(DN(1)); if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
+        [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DN(1)),str); % after 2015 or before 2010 use igrf11magm with the same parameters, or if you want to account for changes during deep dives
+        inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % i
+    catch; dec = input('input declination in degrees'); dec = dec*pi/180; 
+    end
+end
 AA = Aw;
 % eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
 for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
@@ -719,28 +724,27 @@ savefig(102,[fileloc 'QL\' INFO.whaleName 'geotrack.fig']);
 
 prh2Acq(fileloc,[INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
 
-% first option makes just the DMA file, second option uses the pseudotrack,
-% third option uses the geocorrected pseudotrack.
-% CATS2TrackPlot_DMA(fileloc,[whaleName ' ' num2str(fs) 'Hzprh.mat']);
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
-copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data\prh\' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
-
+% copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data\prh\' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
 
 t1 = find(~isnan(Ptrack(:,1)),1)+1; t2 = find(~isnan(Ptrack(:,1)),1,'last')-1;
 % uncomment line if you have nans before and after tag on;
-% head(isnan(head)) = 0; pitch(isnan(pitch)) = 0; roll(isnan(roll)) = 0; Ptrack(1:t1,:) = repmat(Ptrack(t1,:),t1,1); Ptrack(t2:end,:) = repmat(Ptrack(t2,:),length(p)-t2+1,1); geoPtrack(1:t1,:) = repmat(geoPtrack(t1,:),t1,1); geoPtrack(t2:end,:) = repmat(geoPtrack(t2,:),length(p)-t2+1,1);
+head(isnan(head)) = 0; pitch(isnan(pitch)) = 0; roll(isnan(roll)) = 0; Ptrack(1:t1,:) = repmat(Ptrack(t1,:),t1,1); Ptrack(t2:end,:) = repmat(Ptrack(t2,:),length(p)-t2+1,1); geoPtrack(1:t1,:) = repmat(geoPtrack(t1,:),t1,1); geoPtrack(t2:end,:) = repmat(geoPtrack(t2,:),length(p)-t2+1,1);
 % these try/catches are just about putting the files in the correct folder
 try
-CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
-CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
+    % first option makes just the DMA file, second option uses the pseudotrack,
+    % third option uses the geocorrected pseudotrack.
+    % CATS2TrackPlot_DMA(fileloc,[whaleName ' ' num2str(fs) 'Hzprh.mat']);
+    CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
+    CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
 catch
     CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
-CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
+    CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
 end
 
 try
-CATSnc([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'TAG GUIDE.xlsx']);
-copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\prh\nc\' INFO.whaleName '_prh' num2str(fs) '.nc']);
+    CATSnc([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'TAG GUIDE.xlsx']);
+    copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\prh\nc\' INFO.whaleName '_prh' num2str(fs) '.nc']);
 catch
     [fn,fl] = uigetfile('*.xls*','Find Tag guide to make nc file');
     CATSnc([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[fl fn]);
@@ -759,4 +763,4 @@ rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
 makeQuickLook(fileloc);
 whaleID = INFO.whaleName;
-copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data\Quicklook\' whaleID 'Quicklook.jpg']);
+% copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data\Quicklook\' whaleID 'Quicklook.jpg']);

@@ -242,19 +242,19 @@ for j = 1:length(Dmatch)
             tstart = DN(~isnan(GPS(:,1)))-timespan/2/24/60/60; tstart(1) = [];
             tstop = DN(~isnan(GPS(:,1)))+timespan/2/24/60/60; tstop(1) = [];
             %convoluted system, but it works
-            kmlstr = '';
-            for ii = 1:length(lat)
-                kmlstr = [kmlstr ge_point(long(ii),lat(ii),0,'timeSpanStart',datestr(tstart(ii)-UTC/24,'yyyy-mm-ddTHH:MM:SSZ'),'timeSpanStop',datestr(tstop(ii)-UTC/24,'yyyy-mm-ddTHH:MM:SSZ'))];
-            end
-            KML = ge_folder('Points',kmlstr);
-            try
-                ge_output([D{j}(1) ':\' whalename '.kml'],KML);
-                movefile([D{j}(1) ':\' whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
-            catch
-                outdir = regexp(D{j},'\'); outdir = D{j}(1:outdir(4));
-                ge_output([outdir whalename '.kml'],KML);
-                movefile([outdir whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
-            end
+%             kmlstr = '';
+%             for ii = 1:length(lat)
+%                 kmlstr = [kmlstr ge_point(long(ii),lat(ii),0,'timeSpanStart',datestr(tstart(ii)-UTC/24,'yyyy-mm-ddTHH:MM:SSZ'),'timeSpanStop',datestr(tstop(ii)-UTC/24,'yyyy-mm-ddTHH:MM:SSZ'))];
+%             end
+%             KML = ge_folder('Points',kmlstr);
+%             try
+%                 ge_output([D{j}(1) ':\' whalename '.kml'],KML);
+%                 movefile([D{j}(1) ':\' whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
+%             catch
+%                 outdir = regexp(D{j},'\'); outdir = D{j}(1:outdir(4));
+%                 ge_output([outdir whalename '.kml'],KML);
+%                 movefile([outdir whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
+%             end
 %             if exist([D{j}(1:oneup) 'Quicklook\'],'dir'); copyfile([D{j} '\' whalename '.kml'],[D{j}(1:oneup) 'Quicklook\' whalename '.kml']); end
         end
     end
