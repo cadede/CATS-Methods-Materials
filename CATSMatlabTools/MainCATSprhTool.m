@@ -562,7 +562,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = '';
+notes = 'Created for tutorial';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
@@ -635,7 +635,7 @@ disp('Section 12 finished, prh file and INFO saved');
 
 mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 4\map files\';
 
-clearvars -except prhfile fileloc filename
+clearvars -except prhfile fileloc filename mapfileloc
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
