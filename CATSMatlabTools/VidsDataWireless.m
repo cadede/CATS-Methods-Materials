@@ -404,7 +404,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
         oi = max(njerk(b:round(fs*(dataendtime)+b)).*tagnan(b:round(fs*(dataendtime)+b)));
         oi = ceil(oi/ymax*2)/2;
         h3 = plot(ax1(2),b:round(fs*(dataendtime)+b),njerk(b:round(fs*(dataendtime)+b)).*tagnan(b:round(fs*(dataendtime)+b))/oi,'m');
-        try usePaddles = INFO.usePaddles; catch; end;
+        try usePaddles = INFO.usePaddles; catch; usePaddles = false; end;
         if usePaddles; speedoi = 'SpeedP'; else speedoi = 'Speed'; end
         set(get(ax1(2),'ylabel'),'string',[speedoi ' (m/s)'],'fontsize',16 + adF);
         %         if vidW == 2560; JP = 1.037; else JP = 1.062; end

@@ -232,12 +232,13 @@ for n = 1:length(movies)
             if viddif>timewarn || isnan(viddif);
                 warning(['end frame of this snippet appears to be ' num2str(viddif) ' s off from video''s time stamp']);
             end
+            oframeTimes{movN(n)} = [oframeTimes{movN(n)} vid.times];
         end
         if ~badmovie; frameTimes{movN(n)} = [frameTimes{movN(n)} vid.times]; end
         if sum(isnan(vid.times)) > 0; lbl = [' with ' num2str(sum(isnan(vid.times))) ' bad data points (will be fixed at movie end)']; else lbl = ''; end
         disp([num2str(endtime) ' sec completed' lbl]);
         videoL = vid.totalDuration;
-        if timestamps; starttime = endtime-0.1; else starttime = endtime; end
+        if timestamps && ~simpleread; starttime = endtime-0.1; else starttime = endtime; end
         endtime = endtime+dur;
     end
     if ~simpleread
@@ -263,7 +264,7 @@ for n = 1:length(movies)
     end
     disp([movies{n} ' completed' lbl]);
     save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','vidDN','videoL','vidDurs');
-    if timestamps&&~simpleread; save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'oframeTimes','-append'); end
+    if timestamps; save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'oframeTimes','-append'); end
 end
 
 % for i = 1:length(frameTimes)

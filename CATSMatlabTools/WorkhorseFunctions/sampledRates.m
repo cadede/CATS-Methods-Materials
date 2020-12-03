@@ -64,10 +64,10 @@ try acc = find(~cellfun(@isempty,strfind(Hzs,'GPS')),1,'last'); acc = Hzs{ints(f
 try
 acc = find(~cellfun(@isempty,strfind(Hzs,'Temp.')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};
 THz =str2num(acc(regexp(acc,'=')+1:end));
-catch; THz = nan;
+catch; THz = 1; warning('No Temp. variable seen, assuming Thz was 1')
 end
 try
 acc = find(~cellfun(@isempty,strfind(Hzs,'Temperature')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};
 T1Hz =str2num(acc(regexp(acc,'=')+1:end));
-catch; T1Hz = nan;
+catch; T1Hz = 1; warning('No Temperature variable seen (the IMU), assuming T1hz was 1')
 end

@@ -161,7 +161,7 @@ speedper(todel,:)= [];
 function [W,calperiodI,tagslip,tocal,startsI,endsI,Wchange,Wchangeend]= adjslips(tagslip,At,Aw,Mw,dec,DN,Depth,tocal,surfs,dives,W,calperiodI)
 titl = 'Tag Slip adjustment';
 global fileloc filename
-inst = sprintf('Controls:\nLeft Click: create a new tag slip (and cal period)\n1: adjust nearest tag slip start to here\nadjust nearest tag slip end to here\n"del" (or backspace): delete nearest tag slip\nEnter: go back to prior mode');
+inst = sprintf('Controls:\nLeft Click: create a new tag slip (and cal period)\n1: adjust nearest tag slip start to here\n2: adjust nearest tag slip end to here\n"del" (or backspace): delete nearest tag slip\nEnter: go back to prior mode');
 xs = get(gca,'xlim');
 for ii = 1:2; [~,xs(ii)] = min(abs(DN-xs(ii))); end
 button = 1;

@@ -41,7 +41,7 @@ disp('Section completed')
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
-readaudiofiles = true;
+readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
 % these will be less commonly adjusted
 readtimestamps = true; % if there are embeded timestamps on the video.  If simpleread, only read timestamps at the end of a section and compare to the video time
@@ -130,6 +130,7 @@ else
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
     [data,Adata,Atimem,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename); % workhorse script in this section
+          save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','-append');
     disp('Check to ensure these times are before tag on and after tag off (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
 end
@@ -171,7 +172,7 @@ if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
 
 if nocam
-    camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [];
+    camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1];
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to
@@ -189,7 +190,7 @@ disp('Section 4 done');
 % After finishing this, update TAG GUIDE with the actual tag on and tag off
 % times as well as the Video Time
 
-load([fileloc filename(1:end-4) 'Info.mat'],'ofs','camon','audon','nopress');
+load([fileloc filename(1:end-4) 'Info.mat'],'ofs','camon','audon','nopress','Afs');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 
 % tests for existence of pressure data (since most scripts rely on having pressure data)
@@ -218,7 +219,7 @@ disp('Section 5 done');
 % Machine Learning Toolbox
 
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
-load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress','CAL','tagon','camon','audon','tagslip','Hzs');
+load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress','CAL','tagon','camon','audon','tagslip','Hzs','Afs');
 
 disp(['New Sampling Rate: ' num2str(ofs/df);]);
 if ofs/df ~= 10; warning('Final sampling rate does not equal 10 Hz'); end
@@ -263,7 +264,7 @@ disp('Section 6 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','camondec','nocam','df','CAL','Hzs','b','ofs');
+load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','camondec','nocam','df','CAL','Hzs','b','ofs','Afs');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 if ~exist('Depth','var')
     try pressTemp = data.TempDepthInternal; catch; try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end; end
@@ -302,7 +303,7 @@ disp('Section 7b finished');
 
 load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','tagslipdec','fs','ofs','camondec','nocam','nopress','df','CAL','Hzs','DN');
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
-if ~exist('Depth','var')
+if ~exist('Depth','var') | ~ exist('At','var')
     [Depth,At,Mt,Gt] = applyCal2(data,CAL,camondec,ofs,Hzs,df);
 end
 try load([fileloc filename(1:end-4) 'Info.mat'],'slips'); catch; end
@@ -354,7 +355,14 @@ disp('section 8.1 completed');
       s = input('It appears that new tag slips were created in a previous running.  Do you want to use the new slips? 1 = yes, 2 = no ');
       if s == 1; slips = tempslips; end
  end 
-  if length(W)~=length(calperiodI) || (~isempty(W) && length(W) ~= size(slips,1)-1); error('check input parameters'); end
+ if length(W)~=length(calperiodI) || (~isempty(W) && length(W) ~= size(slips,1)-1)
+     Wold = W; calperiodIold = calperiodI; slipsold = slips;
+     [W,calperiodI,slips] = reconcileSlips(Wold,calperiodIold,slipsold);
+     disp('Reconciled old W and calperiodI with new tagslip sections. If that is not right, see Wold and calperiodIold');
+    W
+    slips
+    %      error('check input parameters');
+ end
  
 [Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,newslips,speedper] = estimatePRH(At,Mt,Gt,fs,DN,Depth,tagondec,dec,slips,calperiodI,W);
 %
@@ -571,9 +579,9 @@ end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
-if ~exist('frameTimes','var')
-load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam');
-end
+if ~exist('frameTimes','var'); load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
+if length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
+
 if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes)); end
 if nocam; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; viddeploy = [];  if ~exist('speed','var'); speed = table(nan(size(p)),nan(size(p)),nan(size(p)),'VariableNames',{'JJ' 'FN','SP'}); end; end
 audon = audondec; 
@@ -625,7 +633,7 @@ disp('Section 12 finished, prh file and INFO saved');
 
 % Matlab packages required: Mapping toolbox
 
-mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 3\map files\';
+mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 4\map files\';
 
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
