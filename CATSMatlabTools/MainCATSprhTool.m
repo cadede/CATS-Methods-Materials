@@ -250,7 +250,7 @@ DN = DNorig(1:df:end,:); DN = DN(1:length(Depth));
 [Depth,CAL] = pressurecal(data,DN,CAL,nopress,ofs,df,tagon,Hzs.pHz);
 % get original cats cal values, but will likely be replaced in in situ
 % cals.  Inspect for major errors but At and Mt will be recalibrated next.
-% This uses bench cals (acal and aconst, not spherical cals)
+% This uses bench cals acal, magcal, gycal to orient the axes to NED
 [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
 CellNum = 6;
 save([fileloc filename(1:end-4) 'Info.mat'],'DN','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
@@ -397,7 +397,7 @@ audiodir = [fileloc 'AudioData\'];
 
 load([fileloc filename(1:end-4) 'Info.mat'],'flownoise');
 if exist('flownoise','var') && sum(isnan(flownoise))~=length(flownoise) 
-    s = input('flownoise variable "DB" already exists and has data, overwrite?  (this will take some time) 1 = yes, 2= no ');
+    s = input('"flownoise" variable already exists and has data, overwrite?  (this will take some time) 1 = yes, 2= no ');
 else
     s = 1;
 end
@@ -428,7 +428,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
 end
 clear vars
 if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
-save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','-append');
+if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','-append'); end
 disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  Makes a summary
