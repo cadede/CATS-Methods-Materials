@@ -167,7 +167,8 @@ nocam = false; % set to true if this is a data only tag. If there is just audio,
 GPS = cell2mat(headers(2,2:3)); %from above file
 whaleName = char(headers(1,2));
 timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
-load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs');
+load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum');
+if CellNum < 3; error('Step 3 has not been run'); end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
 
@@ -752,6 +753,10 @@ end
 % to get lats and longs of geoPtrack, run:
 % Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
 
+CellNum = 13;
+save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','-append');
+disp('Section 13 finished, prh file and INFO saved');
+
 %% 14 needs images generated from above script as well as:
 % pics&vids folder with ID_... labeled and TAG_.... labeled. (and drone_... labeled if applicable) 
 % Also needs  spyymmdd-tag#kml.jpg and spyymmdd-tag#map.jpg from google earth plot
@@ -762,5 +767,5 @@ end
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
 makeQuickLook(fileloc);
-whaleID = INFO.whaleName;
+% whaleID = INFO.whaleName;
 % copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data\Quicklook\' whaleID 'Quicklook.jpg']);

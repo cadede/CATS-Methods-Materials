@@ -1,5 +1,6 @@
-function makeQuickLook(fileloc)
+function makeQuickLook(fileloc,makemetadata)
 
+if nargin<2; makemetadata = false; end
 co = [0 0 1;
       0 0.5 0;
       1 0 0;
@@ -143,19 +144,21 @@ spec = txt{row,col}; switch spec; case 'bw'; genus = 'Balaenoptera'; spec = 'mus
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'PI Contact'),txt(3,:),'uniformoutput',false)));
 PI = txt{row,col};
 
-try
-    filelocATN = fileloc(1:regexp(fileloc,'tag_data')-1);
-    copyfile([filelocATN 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls'],'f');
-catch
+s = input('Make metadata file? 1 = yes, 2 = no ');
+if s == 1 || makemetadata
     try
-        copyfile([fileloc2 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls']);
+        filelocATN = fileloc(1:regexp(fileloc,'tag_data')-1);
+        copyfile([filelocATN 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls'],'f');
     catch
-        [filenameATN,filelocATN] = uigetfile('*.*','Select ATN_Metadata Template');
-        copyfile([filelocATN filenameATN],[fileloc 'ATN_Metadata.xls'],'f');
+        try
+            copyfile([fileloc2 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls']);
+        catch
+            [filenameATN,filelocATN] = uigetfile('*.*','Select ATN_Metadata Template');
+            copyfile([filelocATN filenameATN],[fileloc 'ATN_Metadata.xls'],'f');
+        end
     end
+    xlswrite([fileloc 'ATN_Metadata.xls'],{whaleName,'CATS',tagtype,tagnum,deplong,deplat,datestr(datenum(whaleName(3:8),'YYMMDD'),'YYYY-MM-DD'),genus,spec,'2021-01-01','',name,PI,'davecade@alumni.stanford.edu'},'A2:N2');
 end
-xlswrite([fileloc 'ATN_Metadata.xls'],{whaleName,'CATS',tagtype,tagnum,deplong,deplat,datestr(datenum(whaleName(3:8),'YYMMDD'),'YYYY-MM-DD'),genus,spec,'2021-01-01','',name,PI,'davecade@alumni.stanford.edu'},'A2:N2');
-
 
 try
     [im,imc] = imread([fileloc tdr]); try im = ind2rgb(im,imc); catch; end

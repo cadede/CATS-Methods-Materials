@@ -663,8 +663,8 @@ set(ax,'xlim',[DN(sectI(1)) DN(sectI(end))],'nextplot','add');
 set(ax(1),'ydir','rev','ylim',[0 max(p(sectI))]);
 % pos = get(gca,'position');
 oi = datestr(get(ax(1),'xtick'),'HH:MM:SS'); set(ax(1),'xticklabel',oi);
-plot(ax(1),[DN(round(tagslip(:,1)/bin)) DN(round(tagslip(:,1)/bin))]', repmat([-10 1000],length(tagslip(:,1)),1)','k','linewidth',2);
-TEX = text(DN(round(tagslip(:,1)/bin)),repmat(max(p(sectI)),length(tagslip(:,1)),1),'Tag Slip','parent',ax(1),'color','k','rotation',90,'verticalalignment','top');
+plot(ax(1),[DN(ceil(tagslip(:,1)/bin)) DN(ceil(tagslip(:,1)/bin))]', repmat([-10 1000],length(tagslip(:,1)),1)','k','linewidth',2);
+TEX = text(DN(ceil(tagslip(:,1)/bin)),repmat(max(p(sectI)),length(tagslip(:,1)),1),'Tag Slip','parent',ax(1),'color','k','rotation',90,'verticalalignment','top');
 %     legend(h1,'Depth','location','eastoutside');
 
 sp(2) = subplot(412);

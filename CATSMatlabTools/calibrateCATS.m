@@ -597,8 +597,12 @@ for k = 1:2
     elseif k == 2
         Acal3d0cam = Acalnew;
     end
-    try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
-    catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
+    try
+        try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
+        catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
+        end
+    catch
+        disp('could not plot legend');
     end
         title (['Cam ' offon{k} ' cal'],'fontsize',14);
     
