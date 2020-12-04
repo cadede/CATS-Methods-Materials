@@ -430,7 +430,7 @@ end
 speedFN.speed_flownoiseRMS = flownoise;
 speedFN.start_offset = 0;
 speedFN.history = 'sens_struct';
-speedFN.author = 'Dave Cade, davecade@stanford.edu';
+% speedFN.author = 'Dave Cade, davecade@stanford.edu';
 
 add_nc([prhfileloc ncfile],speedFN) ;
 disp('Section 5 (Add Speed from FN) finished');
