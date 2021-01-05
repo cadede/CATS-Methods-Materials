@@ -7,34 +7,13 @@ try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp
  times = cell2mat(headers(7:end,2:3));
 %if no movie files
 if nocam
-%     GPS = cell2mat(headers(2,2:3)); %from above file
-%     whaleName = char(headers(1,2));
-%     timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
-%     DN = data.Date+data.Time+timedif/24;
-%     DV = datevec(DN);
     tagslip = [1 1]; %tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
     camon = false(size(DN)); audon = false(size(DN));
     if exist('pconst','var'); p = (data.Pressure-pconst)*pcal;
         %     [~,peakmag] = peakfinder(p,3,min(p)+6,-1); p = p-max(min(peakmag),max(peakmag)-2);
     else p = data.Pressure;
     end
-%     try
-%         p = surfadj(p,fs,min(p)+4,min(p)+2, ceil(nanmean(diff(times,[],2))/2)); % uses Ann's surface adjustment to "0 out" the pressure sensor;
-%         disp('Used Anne''s method');
-%     catch %if times does not exist
-%         try
-%             times = [1 4];
-%             p = surfadj(p,fs,min(p)+4,min(p)+2, ceil(nanmean(diff(times,[],2))/2)); % use
-%             disp('Used Anne''s method');
-%         catch
-%             p = Depth_Correction(p,fs);
-%             disp('Used Angie''s method');
-%         end
-%     end
-    
-%       nocam = true;
-%     if ~exist('magcalon','var'); magcalon = magcaloff; magconston = magconstoff; end
- vidDN = nan;
+ vidDN = nan; vidDurs = 0;
 else
    
     useold = false;
@@ -44,24 +23,7 @@ else
     for ii = 1:length(names)
         eval([names{ii} ' = viddata.' names{ii} ';']);
     end
-%     vidDN = viddata.vidDN;
-    
-   %     if (tagnum >= 40 && tagnum < 50)||tagnum>51 
-%         kitten = true; else kitten = false;
-%     end
-%     kitten = false;
-%     if isempty(strfind(movies{1},'CATS')) && isempty(strfind(movies{1},'AW')) && isempty(strfind(movies{1},'MP4'))
-%         kitten = true; else kitten = false;
-%     end
     if synchusingvidtimestamps
-%         try Hzs = importdata([fileloc filename(1:end-3) 'txt']);
-%         catch; try Hzs = importdata([fileloc 'raw\' filename(1:end-3) 'txt']);
-%             catch; try Hzs = importdata([fileloc 'raw\' filename(1:end-5) '.txt']); catch; try Hzs = importdata([fileloc filename(1:end-5) '.txt']);
-%                     catch; try Hzs = importdata([fileloc(1:end-2) 'raw\' filename(1:end-3) 'txt']); catch; Hzs = importdata([fileloc(1:end-2) 'raw\' filename(1:end-5) '.txt']);
-%                         end;end;end;end
-%         end; Hzs = Hzs.textdata;
-%         UTC = Hzs{find(~cellfun(@isempty, strfind(Hzs,'utc')),1,'first')};
-%         UTC = str2num(UTC(regexp(UTC,'=')+1:end));
         UTC = Hzs.UTC;
         timedif = cell2mat(headers(3,2));
         vidDNorig = vidDN;
@@ -135,22 +97,10 @@ else
                 %             [~,peakmag] = peakfinder(p,3,min(p)+6,-1); p = p-max(min(peakmag),max(peakmag)-2);
             else p = data.Pressure;
             end
-%             try
-%                 p = surfadj(p,fs,min(p)+4,min(p)+2, ceil(nanmean(diff(times,[],2))/2)); % uses Ann's surface adjustment to "0 out" the pressure sensor;
-%                 disp('Used Anne''s method');
-%             catch %if times does not exist
-%                 try
-%                     times2 = [1 4];
-%                     p = surfadj(p,fs,min(p)+4,min(p)+2, ceil(nanmean(diff(times2,[],2))/2)); % use
-%                     disp('Used Anne''s method');
-%                 catch
-%                     p = Depth_Correction(p,fs);
-%                     disp('Used Angie''s method');
-%                 end
-%             end
+
         end
         DN = data.Date+data.Time+timedif/24;
-%         DV = datevec(DN);
+
         %adjust the video date numbers by assuming video 1 started with the start
         %of the tag
         ODNa = ODN + timedif/24;

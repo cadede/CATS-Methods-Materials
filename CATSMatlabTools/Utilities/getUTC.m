@@ -1,28 +1,31 @@
-function [UTC,cityGPS,citytext,UTCs,TZs] = getUTC(lat,long,DN,cityGPS,citytext,UTCs,TZs)
+function [UTC,cityGPS,citytext,UTCs,TZs] = getUTC(lat,long,DN,UTCloc,cityGPS,citytext,UTCs,TZs)
 %input latitude, longitude, datenumber (in local time), output a difference in UTC from the
 %closest city with known timezone from UTC location spreadsheet
 % set up to save time so that if you want it can input cityGPS and citytext
 % so it doesn't have to reread it for every use.
 %
-if nargin<4
+if nargin<4 || isempty(UTCloc)
     try
         curdir = pwd;
         oi = strfind(curdir,'MATLAB');
         [D2,F2] = subdir(curdir(1:oi+5));
-        oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\Utilities\'),D2,'uniformoutput',false))==0);
+        oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\excel templates and files\'),D2,'uniformoutput',false))==0);
         Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'UTC location spreadsheet.xlsx'),F2{oi(1)},'uniformoutput',false)));
         fileloc = [D2{oi(1)} '\']; filename =  F2{oi(1)}{Fnum};
         [cityGPS,citytext]= xlsread([fileloc filename],'cities');
     catch
-        fileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\CATSMatlabTools\Utilities\';
+        fileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\CATSMatlabTools\excel templates and files\';
         filename = 'UTC location spreadsheet.xlsx';
         try    [cityGPS,citytext]= xlsread([fileloc filename],'cities');
         catch
-            [filename,fileloc] = uigetfile('*.xlsx','to calculate UTC offset select UTC location spreadsheet (should be in Utilities folder)');
+            [filename,fileloc] = uigetfile('*.xlsx','to calculate UTC offset select UTC location spreadsheet (should be in excel files folder)');
             [cityGPS,citytext]= xlsread([fileloc filename],'cities');
         end
     end
     [UTCs, TZs] = xlsread([fileloc filename],'DST');
+elseif nargin<5
+    [cityGPS,citytext]= xlsread([UTCloc 'UTC location spreadsheet.xlsx'],'cities');
+    [UTCs, TZs] = xlsread([UTCloc 'UTC location spreadsheet.xlsx'],'DST');
 end
 [~,b] = min(arrayfun(@(x,y) distance(lat,long,x,y),cityGPS(:,1),cityGPS(:,2))); %find the closest city
 TZ = citytext{b,end}; % timezone of closest city

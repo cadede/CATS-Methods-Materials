@@ -4,7 +4,7 @@ All axes are in a North-East-Down (x,y,z) orientation. (Dtag3- accel NEU, Mag NE
 Facing up towards gravity gives positive acceleration.  (Dtag3- same)
 Euler angle orientations are calculated in heading, pitch, roll order and are counter-clockwise rotations when facing the plane of rotation from the positive side of the perpendicular axis.
 This means positive pitch is up, positive roll is a roll to the right, and heading is congruent to compass orientation.  (Dtag3- positive roll is to the left)
-raw tag data has both local and UTC time.  Local time in raw data is the time on the computer for which the tags were downloaded. prh files are in whale local time.  Adjustments from tag time are in the INFO.timedif variable (in hours)
+raw tag data has both local and UTC time.  Local time in raw data is the time on the computer for which the tags were downloaded. prh files are in whale local time.  Any adjustments from tag time are in the INFO.timedif variable (in hours)
 
 
 At- Acceleration data for each axis (x,y,z) in the tag's reference frame (g's)
@@ -20,19 +20,19 @@ GPS- An index of Lat, Long for each position that is known.  This is mostly nans
 GPSerr- for tagged derived GPS points (not for manual GPS points from focal follows), an error estimate of the std in m.
 Gt- Gyroscope data (radians/sec) around each axis (x,y,z) in the tag's reference frame
 Gw- Gyroscope data rotated to the whale's reference frame
-GwUB- Gyroscope data in the whale's reference frame with the bias removed for each sample.  
+GwUB (not in current workflow)- Gyroscope data in the whale's reference frame with the bias removed for each sample.  
 head- heading of the whale (radians), positive heading is as a compass
 INFO- a structure with some metadata of the prh file creation.  Includes:
-INFO.cal- first 8 values are bench calibrations, application: (At-aconst)*acal.  Also accounts for axis orientations in raw data that differ from NED.  CAL.Mag3d and p3d are calibration constants from spherical_cal and fix_pressure from Mark Johnson/Stacy DeRuiter tag_tools workshop
+INFO.CAL- first 8 values are bench calibrations, application: (At-aconst)*acal. acal, magcalon/off account for axis orientations in raw data that differ from NED.  Then usually CAL.Acal, Mcal and pc are calibration structures created from in situ calibrations using spherical_cal.m and fix_pressure.m from animaltags.org managed by Mark Johnson/Stacy DeRuiter.  
 INFO.calperiod- datenumbers of the surfacings and dive used to calculate each W
 INFO.calperiodI- indices corresponding to above
 INFO.notes- information on the prh file creation
 INFO.tagprh- the pitch, roll and heading (in radians) of the tag from the whale frame
-INFO.tagslip- indices of when the tag slip (including tag on and tagoff).
+INFO.tagslip- indices of when the tag slipped (including tag on and tagoff).  First column is start of slip, second column is end of slip.
 INFO.W- cell with an orientation matrix calculating the rotation of the tag onto the whale (i.e. Aw = At*W for each calibration period)
 INFO.UTC- UTC offset (usually calculated when GPS was added).
 JigRMS- the accelerometer motion in DB re 1 g for all axes, used to calculate speed.JJ.
-Light- light levels (lux in tags 2-4, uncalibrated raw in newer tags).  Maximum value recorded is 3500 in tags 2-4
+Light- light levels (uncalibrated units).  
 LightIR- infrared light levels (uncalibrated units).
 Mt- Magnetometer data for each axis (x,y,z) in the tag's reference frame (uT).
 Mw- Magnetometer data for each axis in the whale's reference frame
@@ -44,8 +44,8 @@ speed- a table of speed values from different calculations
 speedstats- a structure containing info on the models used to create the speed table (see speedstats.info).
 speed.FN- speed from flow noise (only when the camera/hydrophone is on and enabled)
 speed.SP- speed from change in depth over sine of pitch (OCDR)
-speed.JJ- speed from the jiggling of the tag (Cade et al. 2018 JEB).  Probably best but be sure to exlude surfacings (spikes in speed at those points)
-T- temperature
+speed.JJ- speed from the amplitude of tag vibrations (tag jiggle, see Cade et al. 2018 JEB).  Probably best but be sure to exlude surfacings (spikes in speed at those points)
+T- temperature (CATS tags have a variety of temp sensors including internal and external sensors, you will want to ensure this value is what you are looking for)
 tagon- logical index indicating when the tag was on the whale
 viddeploy- the videos recording time when the tag was on the whale
 vidDN- datenumbers of the start of the videos

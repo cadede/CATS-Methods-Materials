@@ -316,7 +316,7 @@ end
 % if exist('shortmovies','var') && ~isempty(shortmovies); disp(['Audio lengths are slightly off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible.']); end
 
 figure; hold on; I = 1; numrepeats = zeros(size(vidDN));
-title('Plot of frameTimes (if no red stars, you should be good)');
+title('Plot of frameTimes.  Red stars indicate a jump in time (if no red stars, you should be good)');
 for i = 1:length(frameTimes); 
     plot(I:I+length(frameTimes{i})-1,vidDN(i)+frameTimes{i}/24/60/60); 
     if ~isempty(frameTimes{i}); text(I,frameTimes{i}(1)/24/60/60+vidDN(i),num2str(i)); end; 

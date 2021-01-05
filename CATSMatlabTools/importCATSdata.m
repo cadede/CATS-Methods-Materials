@@ -1,13 +1,32 @@
-function [data, Adata, Atime] = importCATSdata(fileloc, filename,FS,importAll)
+function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll)
 %
 % David Cade
 % version 11.23.2020
 % Goldbogen Lab
 % Stanford University
 
-
 % Matlab packages required: Signal Processing Toolbox
 %
+% script format:
+% importCATSdata(); % prompts to select file
+% importCATSdata(fileloc, filename,FS);
+% importCATSdata(fileloc, filename);
+% importCATSdata(FS);
+% importCATSdata([],[],[],true); % sets the importAll parameter to
+% true.  setting this to true ensures that all csvs are read (default is to
+% stop once a file has no depth change throughout after a period where there were depth changes).  If false,
+% data stops once pressure remains at the surface for an entire csv read.
+% [data, Adata, Atime, Hzs] = importCATSdata(...);
+%
+%set FS if you want to set the frequency of data table (you will have to
+%ensure that the values divide evenly).  Default is to use the maximum non
+%acceleration value.  FS = new frequency
+%
+%filename is the original csv (if large) or the first csv if files are
+%split from the tag.  Can also select a later file if you know that the
+%first xx files are from before the deployment. If filename and fileloc are
+%excluded, user will be prompted to select the file.
+
 % Reads tag data and outputs a matlab formatted data table "data", as well as
 % "Adata" (the accelerometer data at the original sample rate) and "Atime" 
 % a time stamp for each Adata point.  "data" is sampled at the highest 
@@ -30,27 +49,11 @@ function [data, Adata, Atime] = importCATSdata(fileloc, filename,FS,importAll)
 % bin, and videos) are in a single folder labeled "raw" within whatever
 % organizing folder (typically the deployment ID).
 
-% script format:
-% importCATSdata(); % prompts to select file
-% importCATSdata(fileloc, filename,FS);
-% importCATSdata(fileloc, filename);
-% importCATSdata(FS);
-% importCATSdata([],[],[],true); % sets the importAll parameter to
-% true.  setting this to true ensures that all csvs are read.  If false,
-% data stops once pressure remains at the surface for an entire csv read.
-% [data, Adata, Atime] = importCATSdata(...);
-%
-%set FS if you want to set the frequency of data table (you will have to
-%ensure that the values divide evenly).  Default is to use the maximum non
-%acceleration value.  FS = new frequency
-%
-%filename is the original csv (if large) or the first csv if files are
-%split from the tag.  Can also select a later file if you know that the
-%first xx files are from before the deployment.
+
 
 
 %% Section 1, set up files to run through and import
-% nargin = 0; %uncomment this line if you are running from the code (not as a function)
+% nargin = 0; %uncomment this line if you are running from the cell (not as a function)
 deletecsvs = true; %if you want to delete csv file after it is created from the split file and then read
 if nargin <2 || isempty(fileloc) || isempty(filename)
     if nargin == 1; FS = fileloc; end
@@ -73,7 +76,7 @@ DIR = dir(fileloccsv);
 
 disp('Can watch the csvs folder with partial files to gauge progress (the currently uploading file is a copy).');
 disp('When processing is complete, if not all files were read a copy of the last csv read will be left in the csvs folder.');
-
+warning('off','MATLAB:textscan:AllNatSuggestFormat')
 % allows you to start the import at a file number above 0
 if regexp(filename(end-7:end-4),'_\d\d\d')
     i = strfind(filename,'_');
@@ -455,18 +458,24 @@ if regexp(file(end-7:end-4),'_\d\d\d')
     file = [file(1:end-8) file(end-3:end)];
 end
 if ~exist('THz','var'); THz = nan; end; if ~exist('T1Hz','var'); T1Hz = nan; end
-Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
+datafs = fs;
+Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
 try
     save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs');
     if ~isempty(notes); save([newfileloc file(1:end-3) 'mat'],'notes','-append'); end
     if ~isempty(lastwarn)
         error(lastwarn);
     end
+    disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
+    disp(newfileloc)
 catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
     if isempty (notes); save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','-v7.3');
     else save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','notes','Hzs','-v7.3'); end
     disp('Made a version 7.3 file in order to include all');
+    disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
+    disp(newfileloc)
 end
+disp('Now plotting depth data and Acc and Mag data to allow tag data to be inspected.');
 if exist('pconst','var'); p = (data.Pressure-pconst)*pcal; else p = data.Pressure; end
 if any(data.Pressure>10)&&min(data.Pressure)<.5*max(data.Pressure) % plot something if it went underwater
     if ~exist('fs','var'); fs = round(1/((data.Time(50)-data.Time(49))*60*60*24)); end
@@ -484,7 +493,6 @@ if any(data.Pressure>10)&&min(data.Pressure)<.5*max(data.Pressure) % plot someth
         saveas(1,[newfileloc 'TDR3.fig']);
     end
 end
-disp(newfileloc);
 disp(['data on: ' datestr(data.Date(1)+data.Time(1),'mm/dd/yy HH:MM:SS') ' data off: ' datestr(data.Date(end)+data.Time(end),'mm/dd/yy HH:MM:SS')]);
 figure(2); clf;
 s1=subplot(311);
@@ -504,10 +512,12 @@ Mdiff4 = [[data.Comp1(1:end-4) data.Comp2(1:end-4) data.Comp3(1:end-4)] - [data.
 Mdiff5 = [[data.Comp1(1:end-5) data.Comp2(1:end-5) data.Comp3(1:end-5)] - [data.Comp1(6:end) data.Comp2(6:end) data.Comp3(6:end)]; [0 0 0; 0 0 0; 0 0 0; 0 0 0]];
 if any(sum(Mdiff == 0 & Mdiff2 == 0 & Mdiff3 == 0 & Mdiff4 == 0 & Mdiff5 == 0)>.25*size(data,1)); error('CHECK MAGNETOMETER GRAPH, may have dropped an axis'); end
 
+disp('Can select tag on and tag off times, or press ctrl+c to excape');
 try
     if sum(data.Pressure>5)<fs*120; error('less than two minutes of dives below 5 m'); end
     tagon = gettagon(data.Pressure,fs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]);
     save([newfileloc file(1:end-3) 'mat'],'tagon','-append');
 catch
-    disp('No pressure data (or less than two minutes of dives below 5 m) or error in gettagon function, could not determine tag on time')
+    disp('No pressure data (or less than two minutes of dives deeper than 5 m) or error in gettagon function, could not determine tag on time')
 end
+

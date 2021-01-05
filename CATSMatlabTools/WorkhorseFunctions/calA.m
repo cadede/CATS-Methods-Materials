@@ -1,6 +1,6 @@
-function [At,Acal] = calA(data,tagondec,ofs,accHz,df,CAL,Depth,I)
+function [At,Acal] = calA(data,DN,tagondec,ofs,accHz,df,CAL,Depth,I)
 
-if nargin < 8
+if nargin < 9
     I = find(tagondec);
     % else, could limit I (e.g. I = [40000:60000 90000:100000];)
 end
@@ -14,13 +14,13 @@ end
 II = I; %find(tagondec);
 t1 = find(tagondec,1); t2 = find(tagondec,1,'last');
 At = [data.Acc1 data.Acc2 data.Acc3]; I = isnan(At); At = edgenans(At); %At = decdc(At,df); 
-At = decimateM(At,ofs,accHz,df,'accHz');
+At = decimateM(At,ofs,accHz,df,length(DN),'accHz');
 numrows = size(At,1);
 I = I(1:df:end,:); if size(I,1)<size(At,1); I(end,:) = I(end-1,:); else I = I(1:size(At,1),:); end; At = (At-repmat(aconst,[numrows,1]))*acal; At(I) = nan;
 At_mag=sqrt(sum(At.^2,2));
 axA = (acal./abs(acal)); axA(isnan(axA)) = 0;
 Att = [data.Acc1 data.Acc2 data.Acc3]*axA;
-Att = decimateM(Att,ofs,accHz,df,'accHz');
+Att = decimateM(Att,ofs,accHz,df,length(DN),'accHz');
 [~,Acalnew,~] = spherical_calwk(Att(II,:),1,'cross');
 Atnew = (Att*diag(Acalnew.poly(:,1))+repmat(Acalnew.poly(:,2)',[size(Att,1),1]))*Acalnew.cross;
 oi = norm2(Atnew); disp(std(oi)/mean(oi)); %clear Mtt;

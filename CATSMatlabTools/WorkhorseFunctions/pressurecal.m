@@ -19,15 +19,16 @@ if ~nopress %&& tagnum>5
     % end
     Depth = (data.Pressure-pconst)*pcal+polyval([pc.tcomp,pc.poly(2)],pressTemp-pc.tref);
     
-    Depth = decimateM(Depth,ofs,pHz,df,'pHz');
-    if length(Depth) == length(DN)+1; Depth(end) = []; end
+    Depth = decimateM(Depth,ofs,pHz,df,length(DN),'pHz');
+%     if length(Depth) == length(DN)+1; Depth(end) = []; end
 %     if abs(round(ofs/pHz)-ofs/pHz)>.01; error('pHz does not divide evenly into original sample rate'); end
 %     Depth = Depth(1:ofs/pHz:end);
 %     if abs(round(df/(ofs/pHz)) - df/(ofs/pHz)) > .01; error('decimation factor does not divide evenly into pHz'); end
 %     Depth = decdc(Depth,df/(ofs/pHz));
     
     figure(4); clf;
-    plot(DN,decdc((data.Pressure-pconst)*pcal,df),'b',DN,Depth,'g--');
+    oDepth = interp2length(decdc((data.Pressure-pconst)*pcal,df),ofs/df,ofs/df,length(DN));
+    plot(DN,oDepth,'b',DN,Depth,'g--');
     set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev');
     legend('Bench cal','In situ cal (animaltags.org method)');
     title('Examine data, then look at main screen to choose calibration method');
@@ -39,7 +40,7 @@ if ~nopress %&& tagnum>5
     Pchoice = input('bench cal (blue) = 1, in situ cal (green dashes) = 2, add an offset = 3. Which do you want to use? (Enter 1 or 2) ');
     switch Pchoice
         case 1
-            Depth = decdc((data.Pressure-pconst)*pcal,df);
+            Depth = oDepth;
             pc = [];
             disp('bench cal chosen');
         case 2
@@ -49,7 +50,7 @@ if ~nopress %&& tagnum>5
             offset = input('Linear offset (what you want to add to (+) or subtract from (-) the observed values: ');
             switch P2
                 case 2
-                    pc.poly(2) = pc.poly(2)+offset; Depth = decdc((data.Pressure-pconst)*pcal+polyval([pc.tcomp,pc.poly(2)],pressTemp-pc.tref),df);
+                    pc.poly(2) = pc.poly(2)+offset; Depth = interp2length(decdc((data.Pressure-pconst)*pcal+polyval([pc.tcomp,pc.poly(2)],pressTemp-pc.tref),df),ofs/df,ofs/df,length(DN));
                     disp('in situ cal chosen');
                 case 1
                     pconst = pconst - offset/pcal;
@@ -57,14 +58,15 @@ if ~nopress %&& tagnum>5
                     pc = [];
                     disp('bench cal chosen');
             end
-            figure(4); clf;  plot(DN,decdc((data.Pressure-CAL.pconst)*CAL.pcal,df),'b',DN,Depth,'g--'); set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev'); legend('original data','recalibrated pressure');
+            oDepth = interp2length(decdc((data.Pressure-CAL.pconst)*CAL.pcal,df),ofs/df,ofs/df,length(DN));
+            figure(4); clf;  plot(DN,oDepth,'b',DN,Depth,'g--'); set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'),'ydir','rev'); legend('original data','recalibrated pressure');
         otherwise
             disp('No calibration chosen, so in situ cal was used by default');
     end
 
 
 else
-    Depth = decdc((data.Pressure-pconst)*pcal,df); 
+    Depth = interp2length(decdc((data.Pressure-pconst)*pcal,df),ofs/df,ofs/df,length(DN)); 
     pc = [];
 end
 CAL.pconst = pconst;

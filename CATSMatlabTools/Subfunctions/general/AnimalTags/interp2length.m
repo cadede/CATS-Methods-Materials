@@ -3,6 +3,8 @@ function   y = interp2length(x,fsin,fsout,nout)
 %   y = interp2length(x,fsin,fsout,nout)
 %
 
+if size(x,1) == 1; x = x'; end
+
 if fsin==fsout,     % if sampling rates are the same, no need to interpolate,
                     % just make sure the length is right
    y = x ;

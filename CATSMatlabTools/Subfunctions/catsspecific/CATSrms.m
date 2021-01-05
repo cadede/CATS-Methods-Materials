@@ -24,8 +24,11 @@ if nov - (1-1/fs)*afs/df > .01 % if your bin size isn't an integer, you have a p
         intbins = false;
     end
 end
-
+if sum(aud.data(:,1)==0) == length(aud.data); disp('audiodata column 1 is empty, using audio channel 2');
+    x = aud.data(:,2);
+else
 x = aud.data(:,1); % just use one channel of the data
+end
 timeoffset = aud.totalDuration-length(x)/afs; %the amount of time after the start of the video that the audio starts
 xd = decdc(x,df); %x decimated
 RMS = ones(floor((aud.totalDuration-1)*fs),1);

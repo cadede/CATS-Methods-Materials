@@ -24,9 +24,18 @@ isimagql = ~cellfun(@isempty,cellfun(@(x) regexpi(x,'bmp'),Dql,'uniformoutput',f
 prhf = D{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),D,'uniformoutput',false))&~isimag};
 whaleName = prhf(1:regexp(prhf,' ')-1);
 isID = ~cellfun(@isempty,cellfun(@(x) regexpi(x,whaleName),D,'uniformoutput',false));
-try map = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),Dql,'uniformoutput',false))&isimagql};
-    map = ['QL\' map];
-catch; map = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),D,'uniformoutput',false))&isimag};
+cf = pwd; cd(fileloc);
+try
+    try map = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),Dql,'uniformoutput',false))&isimagql};
+        map = ['QL\' map];
+    catch; map = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),D,'uniformoutput',false))&isimag};
+    end
+    mapfl = fileloc; 
+catch; warning('Could not find map image, select map or press cancel to quit and put map image in folder.');
+    cd(fileloc);
+    [map,mapfl] = uigetfile('*.*','Select map image file');
+    cd(cf);
+    if isempty(mapfl); error('no file selected'); end
 end
 try prhi =  D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),D,'uniformoutput',false))&isimag}; catch; end
 try prhi =  Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),Dql,'uniformoutput',false))&isimagql}; prhi = ['QL\' prhi]; catch; end
@@ -36,17 +45,41 @@ try try tdr = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'tdr'),Dql,'uniformou
     end
 catch; try tdr = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'tdr'),D,'uniformoutput',false))&isimag}; catch; tdr = []; end
 end
-try kml = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),Dql,'uniformoutput',false))&isimagql};
-    kml = ['QL\' kml];
-catch; kml = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),D,'uniformoutput',false))&isimag};
+try
+    try kml = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),Dql,'uniformoutput',false))&isimagql};
+        kml = ['QL\' kml];
+    catch; kml = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),D,'uniformoutput',false))&isimag};
+    end
+    kmlfl = fileloc;
+catch; warning('Could not find kml image, select kml image or press cancel to quit and put kml image in folder.');
+    cd(fileloc);
+    [kml,kmlfl] = uigetfile('*.*','Select kml image file');
+    cd(cf);
+    if isempty(kmlfl); error('no file selected'); end
 end
-try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
-    gt = ['QL\' gt];
-catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
+try
+    try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
+        gt = ['QL\' gt];
+    catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
+    end
+    gtfl = fileloc;
+catch; warning('Could not find geotrack image, select geotrack file or press cancel to quit and put geotrack image in folder.');
+    cd(fileloc);
+    [gt,gtfl] = uigetfile('*.*','Select geotrack image file');
+    cd(cf);
+    if isempty(gtfl); error('no file selected'); end
 end
-try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
-    pt = ['QL\' pt];
-catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
+try
+    try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
+        pt = ['QL\' pt];
+    catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
+    end
+    ptfl = fileloc;
+catch; warning('Could not find ptrack image, select ptrack or press cancel to quit and put ptrack image in folder.');
+    cd(fileloc);
+    [pt,ptfl] = uigetfile('*.*','Select ptrack image file');
+    cd(cf);
+    if isempty(ptfl); error('no file selected'); end
 end
 try try cam = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),Dql,'uniformoutput',false))&isimagql};
         cam = ['QL\' cam];
@@ -55,21 +88,37 @@ try try cam = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),Dql,'uniformou
         try cam2 = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam2'),D,'uniformoutput',false))&isimag}; catch; cam2 = []; end
     end
     nocam = false;
-catch; nocam = true;
+catch; nocam = true; warning('No Camera images found (can put in QL folder labeled "cam"');
 end
 pfold = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'Pic'),D,'uniformoutput',false))&isDir};
 D = dir([fileloc pfold]); D = {D.name}';
+try
 ID = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ID_'),D,'uniformoutput',false))}];
+IDfl = fileloc;
+catch; warning('Could not find ID photo, select ID photo or press cancel to quit and put ID_ photo in pics folder.');
+    cd(fileloc);
+    [ID,IDfl] = uigetfile('*.*','Select ID photo');
+    cd(cf);
+    if isempty(IDfl); error('no file selected'); end
+end
+try
 TAG = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'TAG_'),D,'uniformoutput',false))}];
+TAGfl = fileloc;
+catch; warning('Could not find photo of tag on animal, select photo or press cancel to quit and put TAG_ photo in pics folder.');
+    cd(fileloc);
+    [TAG,TAGfl] = uigetfile('*.*','Select ID photo');
+    cd(cf);
+    if isempty(TAGfl); error('no file selected'); end
+    
+end
 if sum(~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))) > 0
     DRONE = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))}];
     [im,imc] = imread([fileloc DRONE]); try im = ind2rgb(im,imc); catch; end
     DRONE = im;
     drone = true;
-else drone = false;
+else drone = false; warning('No drone photo found, can put drone folder in "pics" folder');
 end
-
-[im,imc] = imread([fileloc map]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([mapfl map]); try im = ind2rgb(im,imc); catch; end
 map = im;
 if ~nocam
     [im,imc] = imread([fileloc cam]); try im = ind2rgb(im,imc); catch; end
@@ -86,15 +135,15 @@ if ~nocam
         end
     end
 end
-[im,imc] = imread([fileloc kml]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([kmlfl kml]); try im = ind2rgb(im,imc); catch; end
 kml = im;
-[im,imc] = imread([fileloc gt]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([gtfl gt]); try im = ind2rgb(im,imc); catch; end
 gt = im;
-[im,imc] = imread([fileloc pt]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([ptfl pt]); try im = ind2rgb(im,imc); catch; end
 pt = im;
-[im,imc] = imread([fileloc ID]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
 ID = im;
-[im,imc] = imread([fileloc TAG]); try im = ind2rgb(im,imc); catch; end
+[im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
 TAG = im;
 
 
@@ -108,7 +157,7 @@ catch
         [~,~,txt] = xlsread(TG);
         disp(['Read ' TG ' as TAG GUIDE']);
     catch
-        [filename2,fileloc2] = uigetfile('*.*','Select Tag Guide');
+        [filename2,fileloc2] = uigetfile('*.*','Select TAG GUIDE');
         [~,~,txt] = xlsread([fileloc2 filename2]);
     end
 end
@@ -140,12 +189,12 @@ tagtype = txt{row,col};
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Tag #'),txt(3,:),'uniformoutput',false)));
 tagnum = txt{row,col};
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Spec'),txt(3,:),'uniformoutput',false)));
-spec = txt{row,col}; switch spec; case 'bw'; genus = 'Balaenoptera'; spec = 'musculus'; case 'bs'; genus = 'Balaenoptera'; spec = 'borealis'; case 'bp'; genus = 'Balaenoptera'; spec = 'physalus'; case 'mn'; genus = 'Megaptera'; spec = 'Novaeangliae'; case 'oo'; genus = 'Orcinus'; spec = 'orca'; case 'er'; genus = 'Escrichtius'; spec = 'robustus'; case 'bb'; genus = 'Balaenoptera'; spec = 'bonaerensis'; case 'be'; genus = 'Balaenoptera'; spec = 'edeni'; case 'rt'; genus = 'Rhincodon'; spec = 'typus'; end
+spec = txt{row,col}; switch spec; case 'bw'; genus = 'Balaenoptera'; spec = 'musculus'; case 'bs'; genus = 'Balaenoptera'; spec = 'borealis'; case 'bp'; genus = 'Balaenoptera'; spec = 'physalus'; case 'mn'; genus = 'Megaptera'; spec = 'Novaeangliae'; case 'oo'; genus = 'Orcinus'; spec = 'orca'; case 'er'; genus = 'Escrichtius'; spec = 'robustus'; case 'bb'; genus = 'Balaenoptera'; spec = 'bonaerensis'; case 'be'; genus = 'Balaenoptera'; spec = 'edeni'; case 'rt'; genus = 'Rhincodon'; spec = 'typus'; otherwise; genus = 'Unk'; spec = 'sp'; end
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'PI Contact'),txt(3,:),'uniformoutput',false)));
 PI = txt{row,col};
 
-s = input('Make metadata file? 1 = yes, 2 = no ');
-if s == 1 || makemetadata
+% s = input('Make metadata file in ATN format? 1 = yes, 2 = no ');
+if makemetadata
     try
         filelocATN = fileloc(1:regexp(fileloc,'tag_data')-1);
         copyfile([filelocATN 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls'],'f');
@@ -198,7 +247,7 @@ catch %from vert2sxsprh
         set(gca,'children',[oi(2:end); oi(1)]);
         text(DN2(a1),0,labs(i,:),'verticalalignment','bottom','fontsize',10,'color','r')
     end
-    plot(DN2(a:b),p(a:b),'linewidth',1.5);
+    plot(DN2(a:b),p(a:b),'b','linewidth',1.5);
     scrn = get(0,'screensize');
     set(fig,'units','pixels','Position',[1,50,scrn(3),round(ysize*lowrat)]); % assumes 2560 frame size, which it should be
     set(gca,'xlim',[DN2(a) DN2(b)],'ylim',[0 max(p(a:b))],'fontsize',16);

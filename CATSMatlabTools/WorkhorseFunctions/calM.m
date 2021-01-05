@@ -1,10 +1,10 @@
-function [Mt,Mcalnew] = calM(data,tagondec,camondec,camon,nocam,ofs,magHz,df,CAL,Temp,b,I,resThresh)
-
-if nargin < 12 || isempty(I)
+function [Mt,Mcalnew] = calM(data,DN,tagondec,camondec,camon,nocam,ofs,magHz,df,CAL,Temp,b,I,resThresh)
+nout = length(DN);
+if nargin < 13 || isempty(I)
     I = find(tagondec);
     % else, could limit I (e.g. I = [40000:60000 90000:100000];)
 end
-if nargin<13
+if nargin<14
     resThresh = 0.05;
 end
 
@@ -16,7 +16,7 @@ t1 = find(tagondec,1); t2 = find(tagondec,1,'last');
 
 axM = (magcalon./abs(magcalon)); axM(isnan(axM)) = 0;
 Mt = fixgaps([data.Comp1 data.Comp2 data.Comp3])*axM; %applyMagcalfirst = false;
-Mt = decimateM(Mt,ofs,magHz,df,'magHz');
+Mt = decimateM(Mt,ofs,magHz,df,length(DN),'magHz');
 Mcalnew00.poly = [1 0; 1 0; 1 0;]; Mcalnew00.cross = diag([1 1 1]);
 % if you don't want to start with a previous calibration, comment out the next line
 if exist('Mcal3d0','var'); Mcalnew00 = Mcal3d0; else Mcalnew00.poly = [ones(3,1) (-magconstoffnew*axM)']; Mcalnew00.cross = axM^-1 * magcaloffnew; end 
@@ -96,6 +96,7 @@ if (std(oi)/mean(oi)>resThresh || isnan(std(oi)/mean(oi)) || axB<10) && ~nocam
     MtT = Mtnew;
     try delete(s4); catch; end
     try CAM = decdc(data.Camera,df);  disp('Assuming cam on indicator value is 14'); 
+        CAM = interp2length(CAM,ofs/df,ofs/df,nout);
         isCAM = logical(floor(runmean(CAM>=11.5 & CAM <= 24.5,1)));
         TRANS = ~isCAM&CAM>0;
         camonNTdec = isCAM;

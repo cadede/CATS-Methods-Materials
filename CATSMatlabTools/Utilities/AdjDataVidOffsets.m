@@ -1,5 +1,5 @@
 load([fileloc filename(1:end-4) 'Info.mat'],'tagondec');
-
+DB = flownoise;
 JJ = J; JJ(isnan(JJ)) = 0; JJ = runmean(JJ,fs);
 D = DB; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
 
@@ -78,10 +78,7 @@ for iii = 1:ofs/fs
     audon(iii:ofs/fs:length(audondec)*ofs/fs) = audondec;
 end    
     
-if sum(isnan(DB)) == length(DB);
     Jig = [JX JY JZ J];
-else
-    Jig= [JX JY JZ DB];
-end
 disp(['Mean offset: ' num2str(nanmean(offsets))]);
-save([fileloc filename(1:end-4) 'Info.mat'],'DB','camondec','audondec','camon','audon','vidDN','offsets','oldvar','Jig','-append');
+flownoise = DB;
+save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','camondec','audondec','camon','audon','vidDN','offsets','oldvar','Jig','-append');

@@ -63,7 +63,10 @@ if ((nargin > 4) && (ischar(varargin{1}) || isstring( varargin{1} )))
 end
 
 % Use 2015 epoch or catch numeric inputs for epoch
-if ((nargin < 5) || (varargin{1} == 2015))
+if ((nargin < 5) || (varargin{1} == 2020))
+    epoch = 2020;
+    load aerowmm2020;
+elseif (varargin{1} == 2015)
     epoch = 2015;
     load aerowmm2015;
 elseif (varargin{1} == 2010)
@@ -131,8 +134,8 @@ a4 = a2*a2;
 b4 = b2*b2;
 c4 = a4 - b4;
 
-rlon = convang( lon, 'deg','rad' );
-rlat = convang( lat, 'deg','rad' );
+rlon = deg2rad(lon); %convang( lon, 'deg','rad' );
+rlat = deg2rad(lat); %convang( lat, 'deg','rad' );
 srlon = sin(rlon);
 srlat = sin(rlat);
 crlon = cos(rlon);
@@ -243,7 +246,7 @@ Z = F*sin(DIP);
 XYZ = [X; Y; Z];
 
 H = F*cos(DIP);
-DEC = convang( DEC, 'rad','deg' );
-DIP = convang( DIP, 'rad','deg' );
+DEC = rad2deg(DEC); %convang( DEC, 'rad','deg' );
+DIP = rad2deg(DIP); %convang( DIP, 'rad','deg' );
 end
 
