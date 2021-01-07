@@ -13,7 +13,7 @@
 %% 1. Test the static accelerometer position
 % Inputs: xlsx sheet with calibration times, *.mat file with data
 % Outputs: "A" variable with acclerometer values.  To check if axis conventions are correct and units are in m/s^2,
-% A variable should be (approx):
+% Initial A variable should be (approx):
 % A = [9.8 0 0
 % -9.8 0 0
 % 0 9.8 0
@@ -97,7 +97,7 @@ end
 if strcmpi(tagtype(1:5),'TDR10')
     save([fileloc 'TDR10cal' num2str(tagnum) '.mat'],'acal','aconst');
 end
-
+disp('Step 1 successfully completed')
 %% 2.  Now enter files where gyro calibration is found (only run this cell if you have gyro data)
 % input: enter (or reenter) the mat file and xls file for the gyro cals
 % output: gycal gyconst.  Check plots ensure axes line up and values are as
@@ -314,7 +314,7 @@ gyconst = (axG*gyconst')'
 gycal = axG*diag(gycal)
 
 if sum(sum(isnan(gyconst))) == length(gyconst(:)); disp('No Gyros found'); gycal = nan(3); gyconst = nan(1,3); end
-
+disp('Step 2 successfully completed')
 %
 %% 3. magnetometers (load new files)
 % Ensure calibration period is properly identified with no spikes in data
@@ -324,7 +324,11 @@ if sum(sum(isnan(gyconst))) == length(gyconst(:)); disp('No Gyros found'); gycal
 % calibrations and represent an alternate method to the spherical
 % calibrations that end up being employed.
 % In figure 8 black line should be pretty close to upper red line.  All other axes
-% should be well constrained by red lines.
+% should be well constrained by red lines. Overall, it is okay if the black
+% line is not perfectly flat throughout, as in situ calibrations will end
+% up getting better values using spherical calibrations.  For now, it is
+% enough to be close so that the in situ calibration methods have an
+% approximately accurate starting place with correct axis orientations.
 
 cf = pwd; if ischar(fileloc); cd(fileloc); end
 [filename2,fileloc2]=uigetfile('*.mat', 'select magnetometer data file');
@@ -402,6 +406,7 @@ j = 1;
     cord = get(gca,'colororder');
     offon = {'OFF' 'ON'};
     %
+    p1 = cell(0);
     for k = 1:2
         if k == 2 && starts(k) == starts(1); continue;  end
         xs = [max(1,indoffon{k}(1)-30*fs) min(length(timescal),indoffon{k}(end)+30*fs)];
@@ -412,11 +417,11 @@ j = 1;
             ys = [min(comp(xs(1):xs(2),i)) max(comp(xs(1):xs(2),i))]; ys(1) = ys(1)-diff(ys)/5; ys(2) = ys(2)+diff(ys)/5;
             %             ys = [-1000 1000];
             ylim(ys);
-            p1 = cell(0);
+            
               for ii = 1:length(p1); try delete (p1{ii});catch; end; end;  clear p1;
              p1{1} = patch(timescal([ssI7(offs(j),:) ssI7(offs(j),[2 1])])',[ys(1) ys(1) ys(2) ys(2)],[255 255 100]/255);
             if k == 2;  for ii = 1:length(p2); try delete (p2{ii}); catch; end; end; clear p2; p2{1} = patch(timescal([ssI7(ons(j),:) ssI7(ons(j),[2 1])])',[ys(1) ys(1) ys(2) ys(2)],[175 238 238]/255); end;
-            title({'Press enter if no spikes and boundaries capture rotations,' 'else click start and end of rotation periods, excluding any abnormal spikes' '(must be an even number of clicks)'});
+            title({'Press enter if no spikes and boundaries capture rotations,' 'else click start and end of rotation periods, excluding any abnormal spikes, then press enter' '(must be an even number of clicks)'});
             ts = text(timescal(indoffon{k}(1)-30*fs),min(get(gca,'ylim')),[XYZ(i) ' cam ' offon{k} ' boundaries'],'verticalalignment','bottom');
             cs = plot(timescal(ind),comp(ind,i),'color',cord(i,:));
             goodbs = false;
@@ -498,13 +503,14 @@ j = 1;
 clear GPS elev
 GPS = benchdata(3:4,2);
 elev = benchdata(5,2);
-
+DV = datevec(data.Date(1)+data.Time(1));
 try 
     if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
     [~,~,~,~,b] = wrldmagm(elev,GPS(1),GPS(2),decyear(data.Date(1)),str); % Best guess for 2015 dates until they update the script
 catch
- disp('Go to https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm and enter the magnetic field strength (in nT) for the place where calibration was performed')
-    b = input('? ');
+   warning('''wrldmagm.m'' is not present or is throwing an error, input  magnetic field strength (nanoTeslas)');
+   disp('see, e.g.: https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm');
+   b = input('Total magnetic field strength? (in nT) '); 
 end
 b = b*10^-3;
 Mx = maxs{1}; Mn = mins{1};
@@ -549,7 +555,8 @@ ylim([-60 60]);
 for j = 1:length(ons)
     p2 = patch([ssI7(ons(j),:) ssI7(ons(j),[2 1])]',[-900 -900 900 900],[175 238 238]/255,'facealpha',.6);
 end
-%% 4. Add in spherical calibrations (Mark Johnson method) for magnetometer and accelerometer
+disp('Step 3 successfully completed')
+%% 4. Add in spherical calibrations (animaltags.org method) for magnetometer and accelerometer
 
 At = acc; % these are already calibrated 
 Mt = comp;
@@ -598,8 +605,8 @@ for k = 1:2
         Acal3d0cam = Acalnew;
     end
     try
-        try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
-        catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
+        try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
+        catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
         end
     catch
         disp('could not plot legend');
@@ -622,12 +629,12 @@ for k = 1:2
     elseif k == 2;
         Mcal3d0cam = Mcalnew;
     end
-     try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
-     catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','position','Eastoutside')
+     try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
+     catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
      end
          linkaxes([s1 s2],'x')
 end
-
+disp('Step 4 successfully completed')
 %% 5 save cal file
 % Can enter factory or other calibrations here for pressure, Temperature
 % etc.
@@ -655,3 +662,4 @@ end
 if exist('Mcal3d0','var') && ~isempty(Mcal3d0)
     save([fileloc(1:dirup) str 'cal' num2str(tagnum) '.mat'],'Mcal3d0','Mcal3d0cam','-append');
 end
+disp(['Step 5 successfully completed, cal file saved in folder: ' fileloc(1:dirup)])
