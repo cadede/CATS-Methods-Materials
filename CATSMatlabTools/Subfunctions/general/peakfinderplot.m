@@ -227,7 +227,7 @@ end
     if isempty(peakInds)
         disp('No significant peaks found')
     else
-        plot(1:len0,x0,'.-',peakInds,peakMags,'ro','linewidth',2);
+        plot(1:len0,x0,'b.-',peakInds,peakMags,'ro','linewidth',2);
     end
 % else
     varargout = {peakInds,peakMags};
