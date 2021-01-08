@@ -4,7 +4,6 @@ function [data,Adata,Atime,datagaps,ODN,fs,Afs] = truncatedata(data,Adata,Atime,
 % (i.e. most (or all) of the data before or after deployment)
 % looks for any gaps in data or potential bad data sections
 % saves truncated file in fileloc with [filename 'truncate.mat'];
-
 DN = data.Date+data.Time;
 % DV = datevec(data.Date+data.Time); %makes a datevec of the date and time
 fs = round(1./mean((data.Time(50:60)-data.Time(49:59))*24*60*60));
@@ -20,7 +19,7 @@ if sum(data.Pressure) == 0; disp('No pressure sensor'); data.Pressure(:) = 30; p
 else
     p = data.Pressure; nopress = false;
 end
-
+p = fixgaps(p); p(isnan(p)) = 0;
 
 pmin = median(p(1:fs*60)); % min p = median of the first minute;
 p = p-pmin; % adjust for an approximate 0 threshold

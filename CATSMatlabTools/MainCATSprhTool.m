@@ -176,7 +176,7 @@ disp('Section 3 finished');
 % If you are using the excel sheet to synch vids and data from animal surfacings (uncommon), it makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
-nocam = false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
+nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
 
 if CellNum<3; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -191,7 +191,7 @@ if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
 
 if nocam
-    camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1];
+    camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1]; vidDurs = [];
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to
@@ -241,7 +241,7 @@ disp('Section 5 done');
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox
 
-if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
+if ~exist('data','var');  load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
 load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress','CAL','tagon','camon','audon','tagslip','Hzs','Afs');
 
 if CellNum<5; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -483,7 +483,7 @@ end
 clear vars
 if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
 CellNum = 9.5;
-if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
+% if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
 disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  Makes a summary
@@ -532,8 +532,8 @@ figure; plotyy(DN,JJ,DN,D);
 legend('JiggleRMS','FlownoiseRMS')
 
 % should not have to run this
-maxoffset = 2.5; % set with what you think the max offset would be
-AdjDataVidOffsets;
+% maxoffset = 2.5; % set with what you think the max offset would be
+% AdjDataVidOffsets;
 %% 11. SPEED. Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % outputs:
 % speed (table with speed.FN, speed.JJ, speed.SP (OCDR from sine of pitch)

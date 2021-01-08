@@ -21,6 +21,8 @@ catch
     TempInternal = decimateM(data.TempDepthInternal,ofs,Hzs.TDIHz,df,nout);
     warning('No Temp1, used TempDepthInternal');
     catch
+        TempInternal = nan(size(Temp));
+        warning('No Temp1, TempInternal is nans');
     end
 end
 % Temp1 = decdc(data.Temp1,df);

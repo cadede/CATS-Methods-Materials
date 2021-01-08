@@ -19,7 +19,7 @@ Mt = fixgaps([data.Comp1 data.Comp2 data.Comp3])*axM; %applyMagcalfirst = false;
 Mt = decimateM(Mt,ofs,magHz,df,length(DN),'magHz');
 Mcalnew00.poly = [1 0; 1 0; 1 0;]; Mcalnew00.cross = diag([1 1 1]);
 % if you don't want to start with a previous calibration, comment out the next line
-if exist('Mcal3d0','var'); Mcalnew00 = Mcal3d0; else Mcalnew00.poly = [ones(3,1) (-magconstoffnew*axM)']; Mcalnew00.cross = axM^-1 * magcaloffnew; end 
+if exist('Mcal3d0','var'); Mcalnew00 = Mcal3d0; else Mcalnew00.poly = [ones(3,1) (-magconstoff*axM)']; Mcalnew00.cross = axM^-1 * magcaloff; end 
 
 Mt = (Mt*diag(Mcalnew00.poly(:,1))+repmat(Mcalnew00.poly(:,2)',size(Mt,1),1))*Mcalnew00.cross;  % apply old cal first or no cal
 

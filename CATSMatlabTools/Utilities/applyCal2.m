@@ -10,7 +10,10 @@ for ii = 1:length(names);
 end
 
 try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end
-Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,nout,'pHz');
+try Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,nout,'pHz');
+catch; Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal,ofs,Hzs.pHz,df,nout,'pHz');
+    disp('Bench pressure cal applied');
+end
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
 Temp = decimateM(Temp,ofs,Hzs.THz,df,nout,'THz');
 try Temp1 = decimateM(data.Temp1,ofs,Hzs.T1Hz,df,nout,'THz'); catch; Temp1 = nan(size(Temp)); end
@@ -23,16 +26,16 @@ try try Light = decimateM(data.Light,ofs,Hzs.lHz,df,nout,'lHz'); %decdc(data.Lig
     end % IR = infrared
 catch; Light = nan(size(Temp)); LightIR = nan(size(Light));
 end
+At = decimateM([data.Acc1 data.Acc2 data.Acc3],ofs,Hzs.accHz,df,nout,'accHz');
+try Mt = decimateM([data.Comp1 data.Comp2 data.Comp3],ofs,Hzs.magHz,df,nout,'magHz');
+catch; Mt = nan(size(Depth,1),3);
+    warning ('No magnetometer detected, Mt is nans');
+end
 try Gt = decimateM([data.Gyr1 data.Gyr2 data.Gyr3],ofs,Hzs.gyrHz,df,nout,'gyrHz');
 catch
     Gt = nan(size(Mt));
     warning('no gyros detected, Gt is nans');
     gyconst = zeros(1,size(Gt,2)); gycal = diag(ones(size(Gt,2),1));
-end
-At = decimateM([data.Acc1 data.Acc2 data.Acc3],ofs,Hzs.accHz,df,nout,'accHz');
-try Mt = decimateM([data.Comp1 data.Comp2 data.Comp3],ofs,Hzs.magHz,df,nout,'magHz');
-catch; Mt = nan(size(Depth,1),3);
-    warning ('No magnetometer detected, Mt is nans');
 end
 numrows = size(Gt,1);
 
