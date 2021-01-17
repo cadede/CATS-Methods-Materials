@@ -5,6 +5,7 @@ function [data,Adata,Atime,datagaps,ODN,fs,Afs] = truncatedata(data,Adata,Atime,
 % looks for any gaps in data or potential bad data sections
 % saves truncated file in fileloc with [filename 'truncate.mat'];
 DN = data.Date+data.Time;
+disp(['Original data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM:SS')]);
 % DV = datevec(data.Date+data.Time); %makes a datevec of the date and time
 fs = round(1./mean((data.Time(50:60)-data.Time(49:59))*24*60*60));
 if abs(round(fs)-fs)<.01; fs = round(fs); end
@@ -31,6 +32,7 @@ button = 3;
 
 while ~isempty(button);
     figure (2); clf;
+    set(gcf,'units','normalized','outerposition',[0 0 1 1]);
     s1 = subplot(2,1,1);
     plot(1:length(p),p); set(gca,'ydir','rev');
     xlabel('Sample number')

@@ -142,7 +142,7 @@ else
     if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
-    [data,Adata,Atimem,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename); % workhorse script in this section
+    [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename); % workhorse script in this section
           save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','-append');
     disp('Check to ensure these times are before tag on and after tag off (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
@@ -497,7 +497,9 @@ load([fileloc filename(1:end-4) 'Info.mat'],'Afs','CAL','fs','timedif','DN','flo
 if CellNum<9.5; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
-if ~exist('data','var') || ~exist('Adata','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
+if ~exist('data','var') || ~exist('Adata','var') || abs(data.Date(1)+data.Time(1)-Atime(1))>fs/24/60/60; load([fileloc filename(1:end-4) 'truncate.mat']); end
+if  abs(data.Date(1)+data.Time(1)-Atime(1))>fs/24/60/60; error('Atime does not seem to match data.Time, may need further investigation'); end
+
 names =fieldnames(CAL);
 for ii = 1:length(names)
     eval([names{ii} ' = CAL.' names{ii} ';']);
@@ -624,7 +626,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = 'Created for tutorial';
+notes = '';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -645,8 +647,8 @@ end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
-if ~exist('frameTimes','var'); load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
-if length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
+if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
+if exist('frameTimes','var') && length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
 
 if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes)); end
 if nocam; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; viddeploy = [];  if ~exist('speed','var'); speed = table(nan(size(p)),nan(size(p)),nan(size(p)),'VariableNames',{'JJ' 'FN','SP'}); end; end
@@ -675,7 +677,7 @@ try
     aa = strfind(path,'CATSMatlabTools');
     UTCfileloc = [path(1:aa+15) 'excel templates and files\'];
     INFO.UTC = getUTC(GPS(1),GPS(1,2),DN(1),UTCfileloc);
-    if UTC~=INFO.UTC; a = [a(1:end-1) ', getUTC function calculated it as ' num2str(INFO.UTC) ')']; error(''); end
+    if UTC~=INFO.UTC; a = [a(1:end-1) ', getUTC function calculated it as ' num2str(INFO.UTC) ')'];  error('er'); end
 catch
     INFO.UTC = input(['UTC offset (hours from GMT at time of deployment)? ' a]);
 end
@@ -695,7 +697,7 @@ save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','L
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
 %% 13a. 
-% construct pos file from ubx file, then run this code 
+% construct pos file from ubx file, or put GPS data from fastloc GPS in a "fastgps" folder then run this code 
 % if you have GPS data from another source, can skip this section in favor
 % of the next code
 
@@ -707,17 +709,29 @@ load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
+try
 addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
+catch
+    %note, to use addGPSfromFastloc, you will need to program your specific
+    %tagnums and fastloc ID#s into the script (or enter it when prompted)
+   disp('Error in using pos, looking for fastloc GPS folder');
+   addGPSfromFastloc(fileloc,INFO)
+end
+
 
 disp('GPS data added from pos file, could plot points using commented out script below or move to next step')% ting data (even if map doesn''t plot, you can move to 13b');
-% load([fileloc prhfile],'DN','GPS','tagon','p','fs');
-% mapfileloc = 'G:\My Drive\CATSworkshop2020\map files for Day 4\map files\';
-% [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
-% try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
-%     savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
-%     saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
-% catch
-% end
+try
+    load([fileloc prhfile],'DN','GPS','tagon','p','fs');
+    mapfileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\oldCATStools\map files\';
+    [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
+    try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
+        savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
+        saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
+    catch
+    end
+catch
+    disp('Error in plotting map files (likely a difference in folder structure). Can move on without plotting GpS, or can use a more robust/better mapping algorithm.  Below scripts generate kml files which may be more useful in making nice maps anyway.');
+end
 
 %% 13b Make a "GPShits.xlsx" file with Time, Lat, Long from any other manual locations (like deployment or focal follows or Argos)
 % If no manual hits exist, can press enter to just use tag on and recovery
@@ -837,7 +851,7 @@ makemetadata = true; % makes a metadatafile in ATN format (requires an ATN templ
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
-makeQuickLook(fileloc);
+makeQuickLook(fileloc,makemetadata);
 whaleID = INFO.whaleName;
 try copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data\Quicklook\' whaleID 'Quicklook.jpg']);
 catch; warning('Could not copy file to tag_data\Quicklook folder');

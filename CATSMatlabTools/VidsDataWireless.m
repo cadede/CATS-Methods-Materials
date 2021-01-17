@@ -171,7 +171,8 @@ xs = get(gca,'xlim');
 ys = get(gca,'ylim');
 text(xs(1),ys(2),'Full Deployment Record','fontsize',16 + adF,'verticalalignment','bottom');
 prhN = regexp(prhfile,' ')-1;
-saveas(fig,[prhloc prhfile(1:prhN) ' TDR' '.bmp']);
+if ~exist([prhloc 'QL\'],'dir'); mkdir([prhloc 'QL\']); end
+saveas(fig,[prhloc 'QL\' prhfile(1:prhN) ' TDR' '.bmp']);
 
 % make long prh graph
 fig5 = figure(5); clf; set(fig5,'color','w');
@@ -208,7 +209,7 @@ set(axp5,'xticklabel',oi,'fontsize',16 + adF);
 ys = get(axp5(1),'ylim');
 xs = get(axp5(1),'xlim');
 ltext = text(xs(1)-(xs(2)-xs(1))*.028,ys(1)-(ys(2)-ys(1))/40,'Local Time: ','parent',axp5(1),'verticalalignment','top','fontname',get(axp5(1),'fontname'),'fontsize',get(axp5(1),'fontsize'),'horizontalalignment','left');
-saveas(fig5,[prhloc prhfile(1:prhN) ' prh' '.bmp']);
+saveas(fig5,[prhloc 'QL\' prhfile(1:prhN) ' prh' '.bmp']);
 CONTINUE = false; % Should be false, but set to true if you want to continue a previously interrupted cycle.  FYI, best time to interrupt is when the graphs are blazing.
 startref = starttime; % for adjusting starttime for wireless videos
 
@@ -797,7 +798,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
 %             audA.times = vid.times(1); %audA.times(audI); audA.frames = audA.frames(audI);
 %         else audA = aud;
 %         end
-        if n>1 || j>5
+%         if n>1 || j>5
         if isinf(dur); mmwrite([filedest 'partial\' filename{dirN}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
             if oj ==1; tail = []; else tail = [num2str(dur*(j-2)+starttime(n)) 'sec']; end
             if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
@@ -805,7 +806,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
             if ci == 1 && oj == 1 && length(combos{c})>1; vN = [vN '-' vN2]; es = ' '; else es = ''; end
             mmwrite([filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\' filename{dirN}(1:end-4) '\' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
         end
-        end
+%         end
         %         catch err
         %             if isinf(dur); mmwrite([filedest 'partial\' filename{n}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
         %                 if j ==1; tail = []; else tail = [num2str(dur*(j-1)+starttime(n)) 'sec']; end

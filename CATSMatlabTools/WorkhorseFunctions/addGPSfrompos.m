@@ -18,6 +18,8 @@ posmatch = cellfun(@(x) strfind(x,'.pos'),F,'uniformoutput',false);
 posstat = cellfun(@(x) strfind(x,'.pos.stat'),F,'uniformoutput',false);
 posfastloc = cellfun(@(x) strfind(x,'Fastloc'),D,'uniformoutput',false);
 
+if all(cellfun(@(x) sum(cellfun(@isempty,x))==length(x),posmatch)); disp('No pos file found'); error('no pos file found'); end
+
 for j = 1:length(posmatch); posmatch{j} = ~cellfun(@isempty,posmatch{j})&cellfun(@isempty,posstat{j}); end
 pos = cell(size(posmatch));
 Dmatch = false(size(posmatch));

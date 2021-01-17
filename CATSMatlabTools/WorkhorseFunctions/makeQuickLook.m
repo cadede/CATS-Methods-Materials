@@ -58,26 +58,26 @@ catch; warning('Could not find kml image, select kml image or press cancel to qu
     if isempty(kmlfl); error('no file selected'); end
 end
 try
-    try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
+    try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
         gt = ['QL\' gt];
-    catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
+    catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
     end
     gtfl = fileloc;
-catch; warning('Could not find geotrack image, select geotrack file or press cancel to quit and put geotrack image in folder.');
+catch; warning('Could not find ptrack image, select ptrack file or press cancel to quit and put geotrack image in folder.');
     cd(fileloc);
-    [gt,gtfl] = uigetfile('*.*','Select geotrack image file');
+    [gt,gtfl] = uigetfile('*.*','Select ptrack image file');
     cd(cf);
     if isempty(gtfl); error('no file selected'); end
 end
 try
-    try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
+    try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
         pt = ['QL\' pt];
-    catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
+    catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
     end
     ptfl = fileloc;
-catch; warning('Could not find ptrack image, select ptrack or press cancel to quit and put ptrack image in folder.');
+catch; warning('Could not find geotrack image, select ptrack or press cancel to quit and put ptrack image in folder.');
     cd(fileloc);
-    [pt,ptfl] = uigetfile('*.*','Select ptrack image file');
+    [pt,ptfl] = uigetfile('*.*','Select geotrack image file');
     cd(cf);
     if isempty(ptfl); error('no file selected'); end
 end
@@ -461,7 +461,11 @@ end
 %note
 w = 1200+222-tx;
 tx = 1500; ty = 45;
-ll = 0; sp = [regexp(note,' ') length(note)];
+try ll = 0; sp = [regexp(note,' ') length(note)];
+catch warning('No note detected for display in quicklook, rerun in tag guide or enter here (use single quotes around statement): ');
+    note = input('note? ');
+    ll = 0; sp = [regexp(note,' ') length(note)];
+end
 sy = 256;
 %
 if nocam

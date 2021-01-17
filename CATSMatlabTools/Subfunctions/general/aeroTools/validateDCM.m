@@ -27,13 +27,17 @@ end
 validateattributes(tolerance,{'numeric'},{'real','nonempty','scalar', 'nonnegative'},'','Tolerance');
 
 actionoptions = {'None','Warning','Error'};
-if isstring(action) || ischar(action)
+try 
+if   ischar(action) || isstring(action)
     action = lower(validatestring(action, actionoptions,'','Action'));
 else
     validateattributes(action,{'numeric'},{'real','nonempty','scalar','<=', 3,'>=', 1},'','Action');
     action = lower(actionoptions{action});
 end
-
+catch
+     validateattributes(action,{'numeric'},{'real','nonempty','scalar','<=', 3,'>=', 1},'','Action');
+    action = lower(actionoptions{action});
+end
 
 if ~strcmp(action,'none')
     % Verify that rotation matrices are proper

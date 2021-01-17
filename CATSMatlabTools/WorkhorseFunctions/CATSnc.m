@@ -486,7 +486,7 @@ end
 try speedJJ.fit_r2 = speedstats.r2used.JJr2;
 catch; for ii = 1:size(speedstats.Fit,1); speedJJ.fit_r2(ii) = speedstats.Fit{ii,1}.rsquare; end
 end
-speedJJ.speed_jiggleRMS = speed.JRMS;
+try speedJJ.speed_jiggleRMS = speed.JRMS; catch; speedJJ.speed_jiggleRMS = speed.JJRMS; end
 speedJJ.start_offset = 0;
 speedJJ.history = 'sens_struct';
 speedJJ.author = 'Dave Cade, davecade@stanford.edu';
@@ -509,8 +509,13 @@ speedFN.sampling_rate = fs;
 try speedFN.speed_calibration_periods_end_times = round(speedstats.sections_end_index/fs); 
 catch; speedFN.speed_calibration_periods_end_times = INFO.tagslip.SpeedPeriods/fs;
 end
-try speedFN.fit_r2 = speedstats.r2used.FNr2;
-catch; for ii = 1:size(speedstats.Fit,1); speedJJ.fit_r2(ii) = speedstats.Fit{ii,2}.rsquare; end
+try
+    try speedFN.fit_r2 = speedstats.r2used.FNr2;
+    catch; for ii = 1:size(speedstats.ModelFits,1); speedJJ.fit_r2(ii) = speedstats.ModelFits{ii,2}.rsquare; end
+    end
+catch
+    warning('No R2 for speed from flownoise detected');
+    speedFN.fit_r2 = nan;
 end
 speedFN.speed_flownoiseRMS = flownoise;
 speedFN.start_offset = 0;
