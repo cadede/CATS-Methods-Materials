@@ -42,10 +42,11 @@ for i = 1:length(vidDN)
 end
 
 disp(offsets);
+% if okay with offsets, continue, else ctrl c to go back and fix them
+disp('If you''re okay with the observed offsets, press enter to continue and save the results, else press ctrl-c to go back and fix the offsets, prior versions saved in "oldvar" variable')
+
 pause;
 
-% if okay with offsets, continue, else ctrl c to go back and fix them
-disp('If you''re with the observed offsets, press enter to continue and save the results, else press ctrl-c to go back and fix the offsets, prior versions saved in "oldvar" variable')
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
 oldvar = struct('vidDN',vidDN,'camondec',camondec,'audondec',audondec,'DB',DB,'camon',camon,'audon',audon);
 for i = 1:length(vidDN)

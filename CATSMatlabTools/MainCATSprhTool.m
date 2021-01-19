@@ -533,9 +533,9 @@ D = flownoise; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
 figure; plotyy(DN,JJ,DN,D);
 legend('JiggleRMS','FlownoiseRMS')
 
-% should not have to run this
-% maxoffset = 2.5; % set with what you think the max offset would be
-% AdjDataVidOffsets;
+%% should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
+maxoffset = 2.5; % set with what you think the max offset would be
+AdjDataVidOffsets;
 %% 11. SPEED. Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % outputs:
 % speed (table with speed.FN, speed.JJ, speed.SP (OCDR from sine of pitch)
@@ -647,7 +647,8 @@ end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
-if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
+if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
+if ~exist('vidNam','var')&& ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
 if exist('frameTimes','var') && length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
 
 if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes)); end
@@ -772,8 +773,8 @@ sp = speed.JJ;
 % uncomment this part if you may have sleeping whales
 sp(isnan(sp)) = 0;
 sp(p<1) = 0.1; sp = runmean(sp,fs);
-
-[t,pt,newspeed,newhead] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[3 3 3],0);
+%
+[t,pt,newspeed,newhead] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0);
 
 % Use this code to make a ptrack if no geo information at all 
 % nhead = fixgaps(bodyhead); nhead(isnan(nhead)) = 0;
@@ -802,7 +803,7 @@ saveas(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.bmp']);
 savefig(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.fig']);
 saveas(102,[fileloc INFO.whaleName 'geotrack.bmp']);
 savefig(102,[fileloc 'QL\' INFO.whaleName 'geotrack.fig']);
-
+%
 prh2Acq(fileloc,prhfile);
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);

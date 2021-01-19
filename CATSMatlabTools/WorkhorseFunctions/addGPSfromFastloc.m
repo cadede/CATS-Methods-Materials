@@ -1,10 +1,15 @@
 %% 13. Combine fastGPS with PRH
 % based on Add_SDA_GPS by James Fahlbusch (c) 2019
 
-function addFastGPS(fileloc,INFO)
+function addGPSfromFastloc(fileloc,INFO)
 try D = dir([fileloc '/fastGPS']);
     D = {D.name}; D = D(3:end);
-    D = D(~isempty(cellfun(@(x) strcmp(x(end-3:end),'.csv'),D,'uniformoutput',false)));
+    iscsv = cellfun(@(x) strcmp(x(end-3:end),'.csv'),D,'uniformoutput',false);
+    if sum(cellfun(@isempty,iscsv)) == 0
+       D = D(cellfun(@(x) x,iscsv));
+    else
+        D = D(~isempty(iscsv));
+    end
     if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error(''); end
 catch
     [filenameGPS,filelocGPS] = uigetfile('*.csv','select fastGPS csv file for this deployment');

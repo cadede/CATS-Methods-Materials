@@ -20,7 +20,8 @@ speed = sp;
 figure(40); clf; ax = plotyy(DN,p,DN,sp);
 
 Gi = find(~isnan(GPS(:,1)));
-G0 = find(Gi<=find(tagon,1),1,'last');
+% G0 = find(Gi<=find(tagon,1),1,'last');
+[~,G0] = min(abs(Gi-find(tagon,1))); % find the closest GPS point to the start
 if isempty(G0) && Gi(1)-10*fs<=find(tagon,1); G0 = 1; end
 try [~,i] = min([abs(Gi(find(Gi<=find(tagon,1,'last'),1,'last'))-find(tagon,1,'last')),abs(Gi(find(Gi>=find(tagon,1,'last'),1,'first'))-find(tagon,1,'last'))]);
     if i == 1; Ginf = find(Gi<=find(tagon,1,'last'),1,'last'); else Ginf = find(Gi>=find(tagon,1,'last'),1,'first'); end

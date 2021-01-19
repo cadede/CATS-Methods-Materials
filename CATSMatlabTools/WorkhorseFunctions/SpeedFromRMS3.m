@@ -219,7 +219,9 @@ while restart
         fJ{length(speedper(:,1))+1,1} = fJtot; gofJ{length(speedper(:,1))+1,1} = gofJtot;
         fJ{length(speedper(:,1))+1,2} = fJtot2; gofJ{length(speedper(:,1))+1,2} = gofJtot2;
         %         sp1 = oi(end);  sp2 = oi(end-2); if strcmpi(get(sp2,'type'),'legend'); sp2 = oi(end-1); end
-        ylabs = arrayfun(@(x) get(get(x,'ylabel'),'string'),oi,'uniformoutput',false);
+        AX = cellfun(@(x) strcmp(x,'axes'),arrayfun(@(x) get(x,'type'),oi,'UniformOutput',false));
+        ylabs = cell(size(oi));
+        ylabs(AX) = arrayfun(@(x) get(get(x,'ylabel'),'string'),oi(AX),'uniformoutput',false);
         sp1 = oi(find(cellfun(@(x) strcmp(x,'Depth (m)'),ylabs)));
         sp2 = oi(find(cellfun(@(x) strcmp(x,'speed (m/s)'),ylabs)));
 

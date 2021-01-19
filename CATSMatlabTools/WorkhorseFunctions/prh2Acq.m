@@ -12,10 +12,10 @@ if ~iscell(filename); filename = {filename}; end
 
 for n = 1:length(filename)
    clearvars -except fileloc filename n
-   load([fileloc filename{n}]);
+   load([fileloc filename{n}],'roll','head','p','Aw','fs','pitch','speed','tagon','DN');
    % in 2020, I have to load pitch separately, apparently.
-   pitch = load([fileloc filename{n}],'pitch');
-   pitch = pitch.pitch;
+%    pitch = load([fileloc filename{n}],'pitch');
+%    pitch = pitch.pitch;
    try S = speed.JJ; S2 = speed.FN; catch; try S = speedFN; S2 = S; disp('No Jiggle Speed Found'); catch; S = nan(size(p)); S2 = S; disp('No Speed Found'); end; end
    S(isnan(S)) = 1;
    S = runmean(S,round(fs/2));
