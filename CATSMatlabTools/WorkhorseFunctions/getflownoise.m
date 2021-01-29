@@ -38,9 +38,16 @@ aud = struct();
 else noaud = false;
 end
 AUD = struct();
+audStart = 0;
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
+        vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
+            vidnum = str2num(vidnum(end-3:end));
+        if audStart>DN(find(tagondec,1,'last')) || ((vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var'))
+                warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
+                continue
+        end
         load([audiodir '' audiofiles(i).name]);
         AUD.rate = aud.rate;
         AUD.bits = aud.bits;
@@ -63,8 +70,7 @@ if ~nocam || ~noaud
 %              vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'_')+1:max(regexp(audiofiles(i).name,'\d'))));
 %              if isempty(vidnum); vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'C')+1:max(regexp(audiofiles(i).name,'\d')))); end
 %         elseif kitten
-            vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
-            vidnum = str2num(vidnum(end-3:end));
+           
             disp(['Video number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
 
 %         elseif tagnum<20 && tagnum>12

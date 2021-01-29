@@ -274,6 +274,11 @@ inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % inc is negative to match our 
 
 Depth = decdc(data.Pressure,df);
 DN = DNorig(1:df:end,:); DN = interp2length(DN,ofs/df,ofs/df,length(Depth));
+% this check put in because some old files had errors.  If you get this
+% error, some additional investigation is warranted into why and how this
+% error is being introduced.
+if any(diff(DN)<0 | diff(DN)>1/24/60/60/fs); error('Error in time order (DN variable or DNorig variable derived from data.Date and data.Time'); end
+
 % decimate pressure data and apply an in situ calibration based on water temp
 [Depth,CAL] = pressurecal(data,DN,CAL,nopress,ofs,df,tagon,Hzs.pHz);
 
@@ -345,7 +350,7 @@ if CellNum<7; x = input('Previous cell has not been completed, continue anyway? 
 end
 
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
-if ~exist('Depth','var') | ~ exist('At','var')
+if ~exist('Depth','var') || ~exist('At','var')
     [Depth,At,Mt,Gt] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
 end
 try load([fileloc filename(1:end-4) 'Info.mat'],'slips'); catch; end
@@ -493,7 +498,7 @@ disp('Section 10a finished');
 
 % Matlab packages required: Signal Processing Toolbox
 
-load([fileloc filename(1:end-4) 'Info.mat'],'Afs','CAL','fs','timedif','DN','flownoise','ofs','vidDN','vidDurs');
+load([fileloc filename(1:end-4) 'Info.mat'],'Afs','CAL','fs','timedif','DN','flownoise','ofs','vidDN','vidDurs','camondec','audondec','tagon','camon','audon');
 if CellNum<9.5; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
@@ -848,7 +853,7 @@ disp('Section 13 finished, prh file and INFO saved');
 
 % Matlab packages required: Robust Control Toolbos, Computer Vision Toolbox, 
 
-makemetadata = true; % makes a metadatafile in ATN format (requires an ATN template xls file).
+makemetadata = true; % makes a metadatafile in ATN format (requires an ATN template xls file). Set to false if you don't want this
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 

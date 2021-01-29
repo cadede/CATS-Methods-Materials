@@ -71,6 +71,7 @@ for i = 1:length(ssI7(:,1))
     n = n+1;
 end
 A
+disp('If axis are correctly oriented and calibrations were done in X,-X,Y,-Y,Z,-Z order, you should see that order reflected in the A matrix above');
 %
 tol = @(B) sum((sqrt(sum(B.^2,2))-1).^2);
 calaccCATS = @(inputs,A) tol((A-repmat(inputs(4:6),length(A(:,1)),1))./repmat(inputs(1:3),length(A(:,1)),1));
@@ -349,8 +350,10 @@ cd(cf);
     stops = benchdata(17:18,9);
     cameras = txtdata(18:19,7);
   times = data.Time;
-
-%
+  if isnan(starts(2)); starts(2) = starts(1); stops(2) = stops(1); end
+  warning('No Camera on magnetometer calibration noted, using the same data as for camera off');
+if ~exist('gycal','var'); gycal = [1 0 0; 0 1 0; 0 0 1]; gyconst = [0 0 0]; warning('No gyroscope calibration done'); end
+  
 timescal = data.Date + data.Time;
 
 fs = round(10/(median(diff(times*24*60*60))))/10  % sampling rate to the nearest hundredth of a second, then converted to Hz

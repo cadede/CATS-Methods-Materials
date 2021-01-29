@@ -128,9 +128,11 @@ ysize = round(2.15/14.3*vidH*14.3/10);%260;%215; % vertical pixel size of graph 
 xsize = round(21.5/17.7*vidW);
 if vidW > 1500; adF = 2; else adF = 0; end % adjust fontsize slightly
 scrn = get(0,'screensize');
+ % matlab 2015b and higher can sometimes misread the screensize for some reason?
 FIG = figure('position',scrn);
-tmp = getframe(FIG); scrn(3) = size(tmp.cdata,2);
-close(FIG); % matlab 2015b and higher can sometimes misread the screensize for some reason?
+tmp = getframe(FIG);xrat = scrn(3)/size(tmp.cdata,2); %yrat = scrn(4)/size(tmp.cdata,1);
+scrn(3) = size(tmp.cdata,2);
+close(FIG);
 if scrn(3)>1500; adF = adF - 3; if vidW > 1500; adF = adF + 1; end; end
 
 % basic top overall graph
@@ -151,14 +153,14 @@ for i = 1:length(viddeploy)
     %         a1 = round(a1+starttime(i)*fs);
     plot(DN2([a1 a1]),[-10 1000],'r','linewidth',2); hold on;
     ys = get(gca,'ylim');
-    b1 = a1 + min(round((et(i)-starttime(i))*fs),round((vidDurs(viddeploy(i))-starttime(i)) * fs)) -1;
+    b1 = min(a1 + min(round((et(i)-starttime(i))*fs),round((vidDurs(viddeploy(i))-starttime(i)) * fs)) -1,length(DN));
     nonpat(i) = rectangle('position',[DN2(a1) ys(1) DN2(b1)-DN2(a1) ys(2)],'facecolor',[255 192 203]/255);
     oi = get(gca,'children');
     set(gca,'children',[oi(2:end); oi(1)]);
     text(DN2(a1),0,labs(i,:),'verticalalignment','bottom','fontsize',10,'color','r')
 end
-plot(DN2(a:b),p(a:b),'linewidth',1.5);
-set(fig,'units','pixels','Position',[1,50,xsize,round(ysize*lowrat)]); % assumes 2560 frame size, which it should be
+plot(DN2(a:b),p(a:b),'b','linewidth',1.5);
+set(fig,'units','pixels','Position',[1,50,round(xsize*xrat),round(ysize*lowrat*xrat)]); % assumes 2560 frame size, which it should be
 set(gca,'xlim',[DN2(a) DN2(b)],'ylim',[0 max(p(a:b))],'fontsize',16 + adF);
 oi = datestr(DN(get(gca,'xtick')),'HH:MM:SS');
 set(gca,'xticklabel',oi,'ydir','rev');
@@ -173,6 +175,7 @@ text(xs(1),ys(2),'Full Deployment Record','fontsize',16 + adF,'verticalalignment
 prhN = regexp(prhfile,' ')-1;
 if ~exist([prhloc 'QL\'],'dir'); mkdir([prhloc 'QL\']); end
 saveas(fig,[prhloc 'QL\' prhfile(1:prhN) ' TDR' '.bmp']);
+
 
 % make long prh graph
 fig5 = figure(5); clf; set(fig5,'color','w');
@@ -194,7 +197,7 @@ ylabel('degrees (pitch)');
 %         leg = legend(hp6,'Gyros','location',legloc,'orientation','horizontal');
 set(get(axp5(2),'ylabel'),'string',{'degrees' '(roll and head)  '},'fontsize',16 + adF);
 set(get(axp5(1),'ylabel'),'fontsize',16 + adF);
-set(fig5,'units','pixels','Position',[1,70,xsize,round(ysize*lowrat)]);%fix this
+set(fig5,'units','pixels','Position',[1,70,round(xsize*xrat),round(ysize*lowrat*xrat)]);%fix this
 set(gca,'units','points'); % these four lines repeated to ensure it stretches out right
 pos = get(gca,'position'); pos(1) = 50;
 set(gca,'position',pos); set(gca,'units','normalized'); pos = get(gca,'position');
@@ -219,7 +222,7 @@ startref = starttime; % for adjusting starttime for wireless videos
  fig6 = figure(6); clf;
  dH = vidH - boxH - gap;
  dW = boxsize;
- set(fig6,'units','pixels','Position',[scrn(3)-2*dW,0,2*dW,min(2*dH,0.9*scrn(4))],'color','w');
+ set(fig6,'units','pixels','Position',[scrn(3)*xrat-2*dW*xrat,0,round(xrat*2*dW),min(round(2*dH*xrat),0.9*scrn(4))],'color','w');
  set(gca,'position',[.01 .01 .962 .98],'xtick',[],'ytick',[]);
  F = plot_3d_model;
  [fpk,q] = dsf(Aw(tagon,:),fs,fs); % determine dominant stroke frequency;
@@ -393,7 +396,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
         end
         if ymax == 0 || isnan(ymax); ymax = 1; end
         set(ax1(2),'ylim',[0 ymax],'nextplot','add');
-        set(fig1,'units','pixels','Position',[1,400,xsize,ysize]);
+        set(fig1,'units','pixels','Position',[1,400,round(xsize*xrat),round(ysize*xrat)]);
         %             set(fig,'units','normalized');
         %             p = get(fig,'position');
         %             set(fig,'units','normalized','Position',[0,.1,1,p(4)]);
@@ -501,7 +504,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
 %         leg = legend(hp6,'Gyros','location',legloc,'orientation','horizontal');
         set(get(axp(2),'ylabel'),'string',{'degrees' '(roll and head)  '},'fontsize',16 + adF);
         set(get(axp(1),'ylabel'),'fontsize',16 + adF);
-        set(fig3,'units','pixels','Position',[1,70,xsize,round(ysize*lowrat)]);%fix this
+        set(fig3,'units','pixels','Position',[1,70,round(xsize*xrat),round(ysize*lowrat*xrat)]);%fix this
         set(gca,'units','points'); % these four lines repeated to ensure it stretches out right
         pos = get(gca,'position'); pos(1) = 50;
         set(gca,'position',pos); set(gca,'units','normalized'); pos = get(gca,'position');
@@ -541,7 +544,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
             else
                 set(pat,'position',[DN2(a) ys(1) DN2(b)-DN2(a) ys(2)]);
             end
-            set(fig2,'units','pixels','Position',[1,50,xsize,ysize]);
+            set(fig2,'units','pixels','Position',[1,50,round(xsize*xrat),round(ysize*xrat)]);
             topM = getframe(fig2);
 %             scrn = get(0,'screensize');
             pos = get(gcf,'position');
@@ -588,7 +591,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
             if i == 1 || DNclose>=DNclose0+.99/24/60/60/Hz% .99 is the wiggle room for rounding errors with doubles
                  DNclose0 = DNclose;
                 fig4 = figure(4); clf;
-                set(fig4,'units','pixels','Position',[1,50,boxsize,boxH],'color','w');
+                set(fig4,'units','pixels','Position',[1,50,round(boxsize*xrat),round(boxH*xrat)],'color','w');
                 set(gca,'position',[.01 .01 .962 .98],'xtick',[],'ytick',[]);
                 box on;
                 [~,b2] = min(abs(DN-(istamp+1/24/60/60/Hz))); b2 = b2 -1;
@@ -679,7 +682,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
                 if vid.times(i)-vid.times(1) <= 3 && oj == 1 && ci == 1 && ~(ci == 1 && vid.times(end)<=3 && i>length(vid.times)/2)% first three seconds
                     fig = fig2;
                 end
-                set(fig,'units','pixels','Position',[1,50,xsize,ysize]);
+                set(fig,'units','pixels','Position',[1,50,round(xsize*xrat),round(ysize*xrat)]);
                 M = getframe(fig);
 %                 scrn = get(0,'screensize');
                 
@@ -704,7 +707,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
                 if vid.times(i)-vid.times(1) <= 3 && oj == 1 && ci == 1  && ~(ci == 1 && vid.times(end)<=3 && i>length(vid.times)/2)% first three seconds
                     figb = fig5;
                 end
-                set(figb,'units','pixels','Position',[1,50,xsize,round(lowrat*(ysize))]);
+                set(figb,'units','pixels','Position',[1,50,round(xsize*xrat),round(xrat*lowrat*(ysize))]);
                 Mp = getframe(figb);
 %                 scrn = get(0,'screensize');
                 pos = get(gcf,'position');
@@ -738,10 +741,10 @@ for n = startn:length(filename) %24:26 21:23 18:20]
             %             oi(1:vidH,vid.width+1:end,:) = vid.frames(i).cdata(vid.height/2+1:end,:,:);
             %             end
             %             if swapRL; OI = oi(1:vidH,1:size(oi,2)/2,:); oi(1:vidH,1:size(oi,2)/2,:) = oi(1:vidH,size(oi,2)/2+1:size(oi,2),:); oi(1:vidH,size(oi,2)/2+1:size(oi,2),:) = OI; end %swaps L and R frames
-            oi(vidH+gap+1:vidH+gap+ysize,:,:) = M.cdata;
-            oi(vidH+2*gap+1+ysize:end,:,:) = Mp.cdata;
+            oi(vidH+gap+1:vidH+gap+ysize,:,:) = M.cdata(1:ysize,1:xsize,:);
+            oi(vidH+2*gap+1+ysize:end,:,:) = Mp.cdata(1:round(ysize*lowrat),1:xsize,:);
             %             oi(vidH-boxH+1:vidH,xsize-boxsize+1:end,:) = Mbox.cdata;
-            oi(vidH-boxH+1:vidH,1:boxsize,:) = Mbox.cdata;
+            oi(vidH-boxH+1:vidH,1:boxsize,:) = Mbox.cdata(1:boxH,1:boxsize,:);
             if size(oi,1)/2 ~= round(size(oi,1)/2); oi = [oi; zeros(1,size(oi,2),3)]; end % if the video height isn't even
             % add dolphin
             oi(1:dH,1:dW,:) = Df.cdata;            

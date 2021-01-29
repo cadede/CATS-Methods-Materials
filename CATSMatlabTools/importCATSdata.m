@@ -76,6 +76,7 @@ DIR = dir(fileloccsv);
 
 disp('Can watch the csvs folder with partial files to gauge progress (the currently uploading file is a copy).');
 disp('When processing is complete, if not all files were read a copy of the last csv read will be left in the csvs folder.');
+warning('on','all')
 warning('off','MATLAB:textscan:AllNatSuggestFormat')
 % allows you to start the import at a file number above 0
 if regexp(filename(end-7:end-4),'_\d\d\d')
@@ -194,6 +195,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'Camera time'))) = {'CamTime'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC status'))) = {'CamOn'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC vid. '))) = {'VidSize'}; catch; end
+        try headers(~cellfun(@isempty,strfind(headers,'EC ['))) = {'EC'}; catch; end
         data.Properties.VariableNames = headers;
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
@@ -306,25 +308,50 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     oi2 = fixgaps(oi);
     oi(badrows,:) = oi2(badrows,:); clear oi2;
     d = diff(DN*24*60*60);
+    % account first for any drops in time stamp (happens in old tags)
+    if any(d<0); [DN,~,~,drops] = checkbadframes(DN);
+        if size(DN,2)>size(DN,1); DN = DN'; end
+        for ii = 1:length(drops(1,:))
+            warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows']);
+        end
+    end %from video processing, looks for out of order time stamps and adjust them
+     d = diff(DN*24*60*60);
+    
+    
+    
     skippeddata = find(d>1.5*1/accHz); %
     numgaps = 0;
-    while ~isempty(skippeddata)
-        b = skippeddata(1);
-        oi = [oi(1:b,:); nan(1,3); oi(b+1:end,:)];
-        oi2 = fixgaps(oi);
-        oi(b+1,:) = oi2(b+1,:); clear oi2;
-        DN = [DN(1:b); DN(b)+1/accHz/24/60/60; DN(b+1:end)];
-        dataT = [dataT(1:b,:); dataT(b+1,:); dataT(b+1:end,:)];
-        badrows(badrows>b) = badrows(badrows>b)+1;
-        numgaps=numgaps+1;
-        if numgaps>length(badrows)*5;
-            warning([num2str(numgaps) ' gaps in data fixed.  Stopping since more than 5x number of bad rows fixed.  Check data for inaccuracies']);
-            break;
+    if ~isempty(badrows); % if you're trying to fill gaps from bad rows;
+        while ~isempty(skippeddata)
+            b = skippeddata(1);
+            oi = [oi(1:b,:); nan(1,3); oi(b+1:end,:)];
+            oi2 = fixgaps(oi);
+            oi(b+1,:) = oi2(b+1,:); clear oi2;
+            DN = [DN(1:b); DN(b)+1/accHz/24/60/60; DN(b+1:end)];
+            dataT = [dataT(1:b,:); dataT(b+1,:); dataT(b+1:end,:)];
+            badrows(badrows>b) = badrows(badrows>b)+1;
+            numgaps=numgaps+1;
+            if numgaps>length(badrows)*5;
+                warning([num2str(numgaps) ' gaps in data fixed.  Stopping since more than 5 times number of bad rows were repeated in csv ' num2str(i) '.  Check data for inaccuracies. Remaining gaps will be filled with empty rows']);
+                d = diff(DN*24*60*60);
+                skippeddata = find(d>1.5*1/accHz); clear d;
+                lengths = DN(skippeddata+1)-DN(skippeddata);
+                disp([num2str(length(lengths)) ' remaining gaps, of length (in seconds):' num2str(lengths*24*60*60)]);
+                break;
+            end
+            d = diff(DN*24*60*60);
+            skippeddata = find(d>1.5*1/accHz); clear d;
         end
-        d = diff(DN*24*60*60);
-        skippeddata = find(d>1.5*1/accHz); clear d;
+        if numgaps>0; disp([num2str(numgaps) ' gaps in data filled with subsequent row']); end
     end
-    if numgaps>0; disp([num2str(numgaps) ' additional gaps in data filled']); end
+%      skippeddata = find(d>1.5*1/accHz); %
+%      for ii = 1:length(skippeddata)
+%          a = skippeddata(ii);
+%          
+%           oi = [oi(1:b,:); nan(1,3); oi(b+1:end,:)];
+%          
+%          
+%      end
     
     % this line ensures all data decimates to the right length, if there
     % are extra points, carry them to the next csv;
@@ -436,7 +463,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     DN = dataT.Date+dataT.Time;
     d = diff(DN*24*60*60);
     skippeddata = find(d>1.5*1/fs);
-    if ~isempty(badrows)
+    if ~isempty(badrows) || ~isempty(skippeddata)
         if ~isempty(skippeddata)
             disp(['Results in ' num2str(length(skippeddata)) ' gaps in downsampled data.  Should be fixed during prh process.']);
         else

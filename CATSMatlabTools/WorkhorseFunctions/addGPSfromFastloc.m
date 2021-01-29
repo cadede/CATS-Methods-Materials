@@ -10,9 +10,11 @@ try D = dir([fileloc '/fastGPS']);
     else
         D = D(~isempty(iscsv));
     end
-    if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error(''); end
+    if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error('can''t find file'); end
 catch
+    cdir = pwd; cd(fileloc);
     [filenameGPS,filelocGPS] = uigetfile('*.csv','select fastGPS csv file for this deployment');
+    cd (cdir);
 end
 % tag 70 is fastGPS 1231, 71 is 1232;
 if INFO.tagnum == 70; gpsID = 1231; elseif INFO.tagnum == 71; gpsID = 1232;

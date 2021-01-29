@@ -106,8 +106,9 @@ for i = length(skippeddata):-1:1
 end
 
 if ~isempty(baddata)
-    f = input('Fix gaps in bad data (may be bad idea if more than a few seconds of data)? 1 = yes, 2 = no   ');
-    if f == 1
+    ff1 = input('Fix gaps in bad data using linear interpolation? (may be bad idea if more than a few seconds of data)?');
+   ff = input(' 1 = yes, 2 = no   ');
+    if isempty(ff) || ff ~= 2
         disp('Fixing bad data');
         headers = data.Properties.VariableNames;
         fixcols = true(size(headers));
@@ -135,4 +136,5 @@ catch %v7.3 allows for bigger files, but makes a freaking huge file if used when
     save([fileloc newdatafile],'data','Adata','Atime','ODN','Hzs','datagaps','-v7.3');
     disp('Made a version 7.3 file in order to include all data (files were large)');
 end
+
 

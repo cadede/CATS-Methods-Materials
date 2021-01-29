@@ -186,7 +186,15 @@ vidNam = oi;
 %
 % frameTimes = cell(max(movN),1); oframeTimes = frameTimes;
 if exist('vidNums','var') && ~isempty(vidNums) % if you signaled to only read a couple of the videos, load all the videos first
-    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN','vidDurs'); catch; warning('No old frameTimes found, resulting frameTimes file will only be for indicated videos'); end
+    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN','vidDurs'); disp('existing movietimes file loaded');
+    catch
+        try
+            load([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','oframeTimes','vidDN','vidDurs');
+            disp('movieTimesTEMP file loaded');
+        catch
+            disp('WARNING: No old frameTimes found, resulting frameTimes file will only be for indicated videos'); 
+        end
+    end
     for n = 1:length(vidNums)
         frameTimes{vidNums(n)} = []; oframeTimes{vidNums(n)} = [];
     end
@@ -305,6 +313,7 @@ end
 
 if timestamps && ~simpleread % if vid start time is read from the time stamps.
     for n = 1:length(movies)
+        if isempty(intersect(movN(n),vidNums)); continue; end
         if ~strcmp(movies{n}(end-2:end),'raw') && n<= mlast;
             DAY = floor(datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS'));
             vidDN(movN(n)) = DAY+vidDN(movN(n))-floor(vidDN(movN(n)));
@@ -318,6 +327,7 @@ end
 figure; hold on; I = 1; numrepeats = zeros(size(vidDN));
 title('Plot of frameTimes.  Red stars indicate a jump in time (if no red stars, you should be good)');
 for i = 1:length(frameTimes); 
+    if isempty(frameTimes{i}); continue; end
     plot(I:I+length(frameTimes{i})-1,vidDN(i)+frameTimes{i}/24/60/60); 
     if ~isempty(frameTimes{i}); text(I,frameTimes{i}(1)/24/60/60+vidDN(i),num2str(i)); end; 
     oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < -median(diff(frameTimes{i})));% mark if it's a whole frame backward
@@ -336,7 +346,7 @@ for i = 1:length(frameTimes);
         title('zoom in and check red stars, may have to check videos files and adjust frameTimes and vidDN if there is an error');
     end
     I = I+length(frameTimes{i});
-    if ~simpleread || badvidDN(i); disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]); end
+    if (~simpleread || badvidDN(i))&&~isnan(vidDN(i)); disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]); end
     if simpleread && viddifs(i)>timewarn; disp(['end frame of movie #' num2str(i) ' appears to be ' num2str(viddifs(i)) ' s off from video''s time stamp']); end
     if simpleread && numrepeats(i)~=0; disp(['movie #' num2str(i) ' appears to have ' num2str(numrepeats(i)) ' repeated frames']); end
 end; xlabel('Frame #'); 
@@ -344,7 +354,7 @@ set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));
 
 
 frameSize = [vid.width vid.height];
-vidDurs(mlast+1:end) = []; frameTimes(mlast+1:end) = []; vidDN(mlast+1:end) = []; vidNam(mlast+1:end) = []; oframeTimes(mlast+1:end) = [];
+vidDurs(movN(mlast)+1:end) = []; frameTimes(movN(mlast)+1:end) = []; vidDN(movN(mlast)+1:end) = []; vidNam(movN(mlast)+1:end) = []; oframeTimes(movN(mlast)+1:end) = [];
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize');
 if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end
 disp('movieTimes file saved successfully, truncated to only include on whale files. Can delete movieTimesTEMP if movieTimes is finalized (i.e. no errors).');
