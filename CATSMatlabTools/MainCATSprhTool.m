@@ -485,10 +485,10 @@ if sum(isnan(flownoise)) ~= length(flownoise)
     %             plot(tag1:tag2,DB(tag1:tag2),'s');
     %         end
 end
-clear vars
+% clear vars
 if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
 CellNum = 9.5;
-% if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
+if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
 disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  Makes a summary
@@ -551,6 +551,9 @@ AdjDataVidOffsets;
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Curve Fitting Toolbox
 
+% if there are not enough points to calibrate speed using steep ascents and
+% descents, look at the end of this section for the option to apply the
+% speed calibration values from a different animal or tank calibration
 
 load([fileloc filename(1:end-4) 'Info.mat'],'speedper','Jig','CAL','fs','timedif','DN','camondec','ofs','Hzs','df','W','slips','tagondec','flownoise');
 if CellNum<10; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -618,8 +621,16 @@ CellNum = 11;
 disp('Section 11 (speed) finished');
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
 
-
-
+% %% if you want to apply speed using speed calibrations from another section,
+% uncomment this section
+% 
+% [speedfile,speedloc] = uigetfile('*.mat','Select mat file with speedstats that list the calibration values to apply');
+% [speed,speedstats] = applySpeed(Jig,'JJ',flownoise,'FN',tagondec,Depth,pitch,roll,fs,[speedloc speedfile]);
+% X = Jig(:,1); Y = Jig(:,2); Z = Jig(:,3); Mag = Jig(:,4);
+% JigRMS = table(X, Y, Z, Mag);
+% disp('Section 11 (speed) finished');
+% CellNum = 11;
+% save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
 
 %% 12.
 % save prh file.  At this point, basic orienation and motion data can be calculated, but after this step there are a few more steps
@@ -631,7 +642,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = '';
+notes = 'no steep ascents/descents, speed applied from mn190624-47';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');

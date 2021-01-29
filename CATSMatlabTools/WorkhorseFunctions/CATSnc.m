@@ -504,7 +504,10 @@ end
 
 speedFN.depid = prefix ;
 speedFN.creation_date = datestr(now,'dd-mmm-yyyy HH:MM:SS');
+try
 speedFN.data = speed.FN;
+catch; speedFN.data = nan(size(speedJJ));
+end
 speedFN.sampling_rate = fs;
 try speedFN.speed_calibration_periods_end_times = round(speedstats.sections_end_index/fs); 
 catch; speedFN.speed_calibration_periods_end_times = INFO.tagslip.SpeedPeriods/fs;

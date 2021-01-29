@@ -1,4 +1,4 @@
-function speed = applySpeed(JigRMS,label1,flownoise,label2,tagon,p,pitch,roll,fs,speedstatsfilepath)
+function [speed,speedstats] = applySpeed(JigRMS,label1,flownoise,label2,tagon,p,pitch,roll,fs,speedstatsfilepath)
 % JigRMS,flownoise and speedstats are required (flownoise or JigRMS can be
 % all nans)
 % the third input can either be the speedstats variable or a file path from
@@ -19,9 +19,12 @@ end
 if speedstats.sections_end_index(end) == find(tagon,1,'last');
     disp(['Applying ' num2str(length(speedstats.sections_end_index)) ' speed calibration periods']);
     speedper = [[find(tagon,1); speedstats.sections_end_index(1:end-1)] speedstats.sections_end_index];
+    plotnewspeed = false;
 else
-    disp('Applying whole calibration from speedstats to this deployment in a single speedperiod');
+    disp('Applying whole calibration from speedstats to this deployment in a single speedperiod (from speedperiod 1 of the example file)');
     speedper = [find(tagon,1) find(tagon,1,'last')];
+    speedstats.sections_end_index = find(tagon,1,'last');
+    plotnewspeed = true;
 end
 
 dd = runmean(p,round(speedstats.Thresh.filterSize/2*fs)); %smooth depth to the same filterSize size as your RMS data
@@ -31,7 +34,8 @@ spitch = [circ_mean([spitch(1:end-1) spitch(2:end)],[],2); nan]; % average each 
 speedSP = -dd./sin(spitch)*fs;
 minPitch =speedstats.Thresh.minPitch; if length(minPitch) == 1; minPitch = minPitch*ones(size(speedper,1),1); end
 minDepth =speedstats.Thresh.minDepth; if length(minDepth) == 1; minDepth = minDepth*ones(size(speedper,1),1); end
-maxDepth =speedstats.Thresh.maxDepth; if length(maxDepth) == 1; maxDepth = maxDepth*ones(size(speedper,1),1); end
+try maxDepth =speedstats.Thresh.maxDepth; catch; maxDepth = max(p); end
+    if length(maxDepth) == 1; maxDepth = maxDepth*ones(size(speedper,1),1); end
 maxRR =speedstats.Thresh.maxRollRate; if length(maxRR) == 1; maxRR = maxRR*ones(size(speedper,1),1); end
 rollrate = abs(runcirc_mean(wrapToPi([diff(roll); 0]),round(fs/2))*180/pi)*fs;
 
@@ -100,11 +104,23 @@ if numRMS == 2
     speed = table(speedSP, speedJJ, JRMS(:,1),P68, P95, C95, R2(:,1), speedFN,flownoise,P682, P952, C952, R2(:,2),section,sectionUsed,...
         'VariableNames',{'SP',label1,'JRMS',[label1 'P68'],[label1 'P95'],[label1 '95'],[label1 'r2'],label2,[label2 'RMS'],[label2 'P68'],[label2 'P95'],[label2 'C95'],[label2 'r2'],'section','sectionUsed'});
 else
-    speed = table(speedSP, speedJJ(:,1), JRMS(:,1), P68, P95, C95, R2(:,1),section,sectionUsed, ...
-        'VariableNames',{'SP',label1,[label1 'RMS'],[label1 'P68'],[label1 'P95'],[label1 '95'],[label1 'r2'],'section','sectionUsed'});
+    speed = table(speedSP, speedJJ(:,1), JRMS(:,1), P68, P95, C95, R2(:,1),nan(size(speedSP)),section,sectionUsed, ...
+        'VariableNames',{'SP',label1,[label1 'RMS'],[label1 'P68'],[label1 'P95'],[label1 '95'],[label1 'r2'],'FN','section','sectionUsed'});
 end
 
 if useFN; speed.FNsection = FNsection; speed.FNsectionUsed = FNsectionUsed; end % only if there was a separate FN section used
+
+if plotnewspeed
+    speedstats.Models = speedstats.Models(1);
+    speedstats.ModelFits = speedstats.ModelFits(1,:);
+    speedstats.r2used = speedstats.r2used(1,:); for ii = 1:size(speedstats.r2used,2)-1; speedstats.r2used{1,ii} = nan; end
+    speedstats.info = ['Used speed calibration from ' speedstatsfilepath];
+    speedstats.multiModels = speedstats.multiModels{1};
+    I = 1:length(p);
+    figure(30); clf; ax = plotyy(I,p,I,speed.JJ);
+    set(ax(1),'ydir','rev'); ylabel('Depth');
+    ylabel('SpeedJJ','parent',ax(2));
+end
 
 end
         
