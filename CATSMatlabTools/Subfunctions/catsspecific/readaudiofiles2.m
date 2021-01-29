@@ -42,7 +42,7 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
             if aud.nrChannels == 2 && sum(aud.data(:,2)==0) == length(aud.data(:,2)); aud.data(:,2) = []; aud.nrChannels = aud.nrChannels - 1; end
             totalDuration = aud.totalDuration;
             if size(aud.data(:,1),1) == 0 || vid.totalDuration - aud.totalDuration > .5;
-                warning(['Video ' num2str(movieNum) ' duration is ' num2str(vid.totalDuration) ', while its wav file is ' num2str(aud.totalDuration); 's']);
+                warning(['Video ' num2str(movieNum) ' duration is ' num2str(vid.totalDuration) ', while its wav file is ' num2str(aud.totalDuration) 's']);
                 sm = movN(n);
             end
         else

@@ -250,7 +250,7 @@ end
 
 disp(['New Sampling Rate: ' num2str(ofs/df);]);
 if ofs/df ~= 10; warning('Final sampling rate does not equal 10 Hz'); end
-
+fs = ofs/df;
 DV = datevec(DNorig(1));
 if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 if isnan(GPS(1,1)) || isnan(GPS(1,2)); error('No GPS location (needed to calculate magnetic field'); end
@@ -277,7 +277,7 @@ DN = DNorig(1:df:end,:); DN = interp2length(DN,ofs/df,ofs/df,length(Depth));
 % this check put in because some old files had errors.  If you get this
 % error, some additional investigation is warranted into why and how this
 % error is being introduced.
-if any(diff(DN)<0 | diff(DN)>1/24/60/60/fs); error('Error in time order (DN variable or DNorig variable derived from data.Date and data.Time'); end
+if any(diff(DN)<0 | diff(DN)>1.5/24/60/60/fs); error('Error in time order (DN variable or DNorig variable derived from data.Date and data.Time'); end
 
 % decimate pressure data and apply an in situ calibration based on water temp
 [Depth,CAL] = pressurecal(data,DN,CAL,nopress,ofs,df,tagon,Hzs.pHz);
