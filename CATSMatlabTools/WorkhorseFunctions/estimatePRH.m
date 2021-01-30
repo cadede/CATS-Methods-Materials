@@ -208,6 +208,7 @@ warning('"slips" variable will be overwritten with new slips upon successful fun
 
 
 function [x,button,s1,pitch,roll] = mainGraph(At,Aw,Mw,DN,Depth,tagslip,tocal,a,b,instructions,surfs,dives,titl,dec) %a,b are the zoom factors
+if a<1; a = 1; end; if b>length(Depth); b = length(Depth); end
 figure(100); clf
 s1 = subplot(3,6,1:5);
 p1 = plot(DN,Depth); hold on; set(gca,'ydir','rev','ylim',[-7,max(Depth(a:b))]);

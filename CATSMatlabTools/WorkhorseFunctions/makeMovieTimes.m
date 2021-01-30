@@ -147,7 +147,7 @@ if  ripAudio %gettagnum(datafile) == 45 || gettagnum(datafile) >= 48
 else
     disp('no audio was extracted from vids');
 end
-
+warning('on','all');
 %
 D = dir([movieloc '*.mp4']); % get the total lengths of the other files as well as the stored file time
 if isempty(D); D = dir([movieloc '*.mov']); end
@@ -206,8 +206,27 @@ end
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
     try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
-    catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will need to try to read from timestamps or adjust using surfacings'])
+    catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
         badvidDN(movN(n)) = true;
+         d = regexp(movies{n},'-');
+        if ~strcmp(movies{n}(end-2:end),'raw')
+            day = datenum(movies{n}(d(1)+1:d(2)-1),'yyyymmdd');
+            starttime = 0; endtime = dur; videoL = dur+1; DAY = 0; badmovie = false;
+            readwirelessvideo2;
+            oi = checkbadframes(vid.times);
+            if any(diff(oi)<0 | diff(oi)>2.5*median(diff(oi))); dur0 = dur; dur = round(dur/3); readwirelessvideo2; oi = checkbadframes(vid.times); dur = dur0; end
+            if ~any(diff(oi)<0 | diff(oi)>2.5*median(diff(oi)));
+                vidDN(movN(n)) = day + vid.times(1);
+                disp(['Video ' num2str(movN(n)) ' calculated to start at ' datestr(vidDN(movN(n)),'yyyy-mmm-dd HH:MM:SS.fff')]);
+                badvidDN(movN(n)) = false;
+            end
+        else
+            try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
+            disp(['Audio file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
+            badvidDN(movN(n)) = false;
+            catch; warning('Could not read audio time stamp');
+            end
+        end
     end
     if strcmp(movies{n}(end-2:end),'raw') || n > mlast;
         vidNam{movN(n)} = movies{n};
@@ -229,7 +248,7 @@ for n = 1:length(movies)
                 movefile([movieloc movies{n}], [movieloc 'bad movies\' movies{n}]);
                 frameTimes{vidNum(n)} = []; oframeTimes{vidNum(n)} = []; vidDN(vidNum(n)) = nan;
             end
-        else %simpleread and timestamps
+        else %simpleread and timestamps, all simple read where
             vid = mmread([movieloc movies{n}], [],[starttime endtime],false,true);
             flag = true; iii = -1;
             while flag && iii<100 % try 100 frames until you get a good read

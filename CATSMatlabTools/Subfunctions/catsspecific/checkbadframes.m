@@ -63,7 +63,7 @@ while i<=length(drops)
     %     [~,dir] = min([abs(drops(i)-sectstart),abs(drops(i)-sectend)]); % assumes that the drop is associated with the shorter of the section of the drop to the edge or to the drop in the opposite direction
 %     if vidframes(drops(i)+1)<meanvid(drops(i)); dir = 2; else dir = 1; end
     [~,dir] = max(abs(vidframes(drops(i):drops(i)+1)-meanvidloc(drops(i):drops(i)+1)));
-%     xs = max(drops(i)-5000,1):min(drops(i)+5000,length(vidframes));  figure; subplot(211); plot(I,meanvidloc,'--',I,vidframeso,'m',I,vidframes); xlim([min(xs) max(xs)]); ylim([min([vidframeso(xs) vidframes(xs)]) max([vidframeso(xs) vidframes(xs)])]);
+%     xs = max(drops(i)-100,1):min(drops(i)+100,length(vidframes));  figure; subplot(211); plot(I,meanvidloc,'--',I,vidframeso,'m',I,vidframes); xlim([min(xs) max(xs)]); ylim([min([vidframeso(xs) vidframes(xs)]) max([vidframeso(xs) vidframes(xs)])]);
     if dir == 1; vidframes(sectstart:drops(i)) = vidframes(sectstart:drops(i)) - ldif - fdif;
         badsect = badsect+(drops(i)-sectstart)+1;
         if isnan(DROP(2,i)) || DROP(2,i)<drops(i); DROP(2,i) = drops(i); end
@@ -80,8 +80,8 @@ while i<=length(drops)
     % use this and above plot line to examine individual changes in the
     % frame data
 %     subplot(212); plot(I,meanvidloc,'--',I,vidframeso,'m',I,vidframes); xlim([min(xs) max(xs)]); ylim([min([vidframes(xs) vidframes(xs)]) max([vidframes(xs) vidframes(xs)])]);
-    i = i+1;
 %     pause
+    i = i+1;
 end
     
 
