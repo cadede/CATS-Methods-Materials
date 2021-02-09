@@ -24,10 +24,14 @@ x = 1; y = 2; z = 3;
 % in here, put what each column actually is (that is, the [y -x z] implies
 % that data in the 1 column is actually y, and data in the second column is
 % actually negative x
-if strcmpi(tagtype,'Wireless') || strcmpi(tagtype,'motus') || strcmpi(tagtype,'acousonde')
+if strcmpi(tagtype,'Wireless') || strcmpi(tagtype,'motus') || strcmpi(tagtype,'acousonde') %note: the acousonde tag type appears to be for tags made before 2011, after 2011 they may correspond to the "data" type below, but recommend double checking
     axAo = [x y z];
     axMo = [x y z];
     axGo = [x y z]; % no gyros in acousonde
+elseif strcmpi(tagtype,'Beacon')
+   axAo = [-y x z];
+   axMo = [-y x z];
+   axGo = [-y x z];
 elseif strcmpi(tagtype,'platypus')
 axAo = [x -y -z];
 axMo = [-x -z y];

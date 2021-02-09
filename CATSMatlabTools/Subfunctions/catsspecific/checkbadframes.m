@@ -61,9 +61,12 @@ while i<=length(drops)
         meanvidloc(II) = fun(II);
     end
     %     [~,dir] = min([abs(drops(i)-sectstart),abs(drops(i)-sectend)]); % assumes that the drop is associated with the shorter of the section of the drop to the edge or to the drop in the opposite direction
-%     if vidframes(drops(i)+1)<meanvid(drops(i)); dir = 2; else dir = 1; end
+    %     if vidframes(drops(i)+1)<meanvid(drops(i)); dir = 2; else dir = 1; end
     [~,dir] = max(abs(vidframes(drops(i):drops(i)+1)-meanvidloc(drops(i):drops(i)+1)));
-%     xs = max(drops(i)-100,1):min(drops(i)+100,length(vidframes));  figure; subplot(211); plot(I,meanvidloc,'--',I,vidframeso,'m',I,vidframes); xlim([min(xs) max(xs)]); ylim([min([vidframeso(xs) vidframes(xs)]) max([vidframeso(xs) vidframes(xs)])]);
+    %     xs = max(drops(i)-100,1):min(drops(i)+100,length(vidframes));  figure; subplot(211); plot(I,meanvidloc,'--',I,vidframeso,'m',I,vidframes); xlim([min(xs) max(xs)]); ylim([min([vidframeso(xs) vidframes(xs)]) max([vidframeso(xs) vidframes(xs)])]);
+    if sectstart == 1 && sectend == length(vidframes);
+       dir = 2; % if it's the whole length with just a drop, assume it started right. 
+    end
     if dir == 1; vidframes(sectstart:drops(i)) = vidframes(sectstart:drops(i)) - ldif - fdif;
         badsect = badsect+(drops(i)-sectstart)+1;
         if isnan(DROP(2,i)) || DROP(2,i)<drops(i); DROP(2,i) = drops(i); end

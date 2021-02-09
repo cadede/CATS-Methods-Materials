@@ -196,6 +196,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'CC status'))) = {'CamOn'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC vid. '))) = {'VidSize'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'EC ['))) = {'EC'}; catch; end
+        try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
         data.Properties.VariableNames = headers;
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
@@ -309,10 +310,24 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     oi(badrows,:) = oi2(badrows,:); clear oi2;
     d = diff(DN*24*60*60);
     % account first for any drops in time stamp (happens in old tags)
-    if any(d<0); [DN,~,~,drops] = checkbadframes(DN);
-        if size(DN,2)>size(DN,1); DN = DN'; end
-        for ii = 1:length(drops(1,:))
-            warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows']);
+    if any(d<0); 
+        if sum(d<0) == 1 && all(DN(find(d<0,1)+1:end)<DN(1))
+            dd = find(d<0);
+            
+            warning(['Appears like there is ' num2str((length(DN)-dd)/fs) 's of old data at the end of this file, starting ' datestr(DN(dd),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(dd) ' of csv ' num2str(i)]);
+            disp('Delete old data (should probably only choose yes if this is the last csv file)? ');
+            ddd = input('1 = yes, 2 = no (choosing 2 treats like an error in the timestamp)');
+            if ddd == 1 
+                DN = DN(1:dd); oi = oi(1:dd,:); dataT = dataT(1:dd,:);
+            end
+        else ddd = 2;
+        end
+        if ddd == 2
+            [DN,~,~,drops] = checkbadframes(DN);
+            if size(DN,2)>size(DN,1); DN = DN'; end
+            for ii = 1:length(drops(1,:))
+                warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows']);
+            end
         end
     end %from video processing, looks for out of order time stamps and adjust them
      d = diff(DN*24*60*60);

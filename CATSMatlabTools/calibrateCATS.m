@@ -350,8 +350,8 @@ cd(cf);
     stops = benchdata(17:18,9);
     cameras = txtdata(18:19,7);
   times = data.Time;
-  if isnan(starts(2)); starts(2) = starts(1); stops(2) = stops(1); end
-  warning('No Camera on magnetometer calibration noted, using the same data as for camera off');
+  if isnan(starts(2)); starts(2) = starts(1); stops(2) = stops(1); 
+  warning('No Camera on magnetometer calibration noted, using the same data as for camera off'); end
 if ~exist('gycal','var'); gycal = [1 0 0; 0 1 0; 0 0 1]; gyconst = [0 0 0]; warning('No gyroscope calibration done'); end
   
 timescal = data.Date + data.Time;
@@ -409,7 +409,7 @@ j = 1;
     cord = get(gca,'colororder');
     offon = {'OFF' 'ON'};
     %
-    p1 = cell(0);
+    p1 = cell(0); p2 = p1;
     for k = 1:2
         if k == 2 && starts(k) == starts(1); continue;  end
         xs = [max(1,indoffon{k}(1)-30*fs) min(length(timescal),indoffon{k}(end)+30*fs)];
