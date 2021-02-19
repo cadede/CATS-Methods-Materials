@@ -1,5 +1,5 @@
-function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums)
-
+function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums,audioonly)
+dbstop if error;
 % timestamps- signals whether to read embedded timestamps on the video or
 % just read the encoded timestamps (i.e. if timestamps do not exist )
 % folder - optional.  Can set a default folder to select a tag guide or check for videos.
@@ -9,6 +9,8 @@ function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whale
 % interupted and needed to be restarted).
 % vidNums - optional.  if not present, looks at all videos.  If it is
 % present, look for an existing movieTimes file and fill in the videos listed in "vidnums"
+% audioonly- optional, reads audio start times from wav files and converts
+% to audio data if no videos exist
 
 if nargin<6 || isempty(timewarn); timewarn = 0.1; end
 if nargin<5 || isempty(ripAudio); ripAudio = true; end
@@ -16,11 +18,12 @@ if nargin<4 || isempty(folder);  folder = 'E:\CATS\'; end
 if nargin<3 || isempty(simpleread); simpleread = true; end
 if nargin<2 || isempty(timestamps); timestamps = true; end
 if nargin<1 || isempty(dur); dur = 15; end
+if ~exist('audioonly','var') || isempty(audioonly); audioonly = false; end
 
 cf = pwd; try cd(folder); catch; end
 [movies,movieloc] = uigetfile('*.*','select FIRST movie (or audio) file from deployment','multiselect','off');
 cd(movieloc);
-[datafile,dataloc] = uigetfile('*.bin','select .bin, .txt or .ubx file (just for the name)','multiselect','off');
+[datafile,dataloc] = uigetfile('*.*','select .bin, .txt or .ubx file (just for the name)','multiselect','off');
 cd(cf);
 if ischar(movies); movies = {movies}; end
 
@@ -41,7 +44,7 @@ end
 %
 disp(['ID = ' whaleID]);
 % grab the movie files from the directory
-m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
+m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||(strcmp(m2{i}(end-2:end),'wav')&&audioonly)||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
 % these try catch help choose which files to import
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
@@ -90,6 +93,7 @@ for n = 1:length(movies)
     lastnum = regexpi(movies{n},'.mp4');
     if isempty(lastnum); lastnum = regexpi(movies{n},'.mov'); end
     if isempty(lastnum); lastnum = regexpi(movies{n},'.raw'); end
+     if isempty(lastnum)&&audioonly; lastnum = regexpi(movies{n},'.wav'); end
     movN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     else audN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     end
@@ -151,6 +155,7 @@ warning('on','all');
 %
 D = dir([movieloc '*.mp4']); % get the total lengths of the other files as well as the stored file time
 if isempty(D); D = dir([movieloc '*.mov']); end
+if isempty(D) && audioonly; D = dir([movieloc '*.wav']); end
 % some other code if you need to restrict what movies it finds
 % todel = [];
 % for i = 1:length(D); if length(D(i).name) ~= 10; todel = [todel; i]; end; end % in case you've made any SxS files already or something silly
@@ -159,12 +164,12 @@ if isempty(D); D = dir([movieloc '*.mov']); end
 % for i = 1:length(D2); if length(D2(i).name) ~= 12; todel = [todel; i]; end; end % in case you've made any SxS files already or something silly
 % D2(todel) = [];
 % D = [D; D2]; % new 2ks have longer file names and start with CATS
-
 vidDN = vertcat(D.datenum); vidDN = vidDN - floor(vidDN(1)); % dates don't match, just worry about the time (but this way keeps track of if the video goes to the next day)
+
 
 k = 1; vidNam = {}; vidNum = [];
 for i = 1:length(movies)
-    if ~strcmp(movies{i}(end-2:end),'raw')
+    if ~strcmp(movies{i}(end-2:end),'raw') && ~strcmp(movies{i}(end-2:end),'wav')
         vid = mmread([movieloc movies{i}],[1 10]); % just read a few frames to get the total duration
         if isnan(vidDurs(movN(i)))
             vidDurs(movN(i)) = vid.totalDuration;
@@ -174,6 +179,10 @@ for i = 1:length(movies)
     else
         load([DIR movies{i}(1:end-4) 'audio.mat'],'totalDuration');
         vidDurs(movN(i)) = totalDuration;
+        if audioonly
+            vidNam(k,1) = movies(i);
+            vidNum(k,1) = str2num(vidNam{k}(end-7:end-4)); k = k+1;
+        end
     end
 end
 oi = nan(size(vidDurs));
@@ -205,6 +214,7 @@ end
  badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
+    if audioonly; vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff'); continue; end
     try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
         badvidDN(movN(n)) = true;
@@ -330,7 +340,7 @@ if ~timestamps && sum(badvidDN)>= length(movN)
     end
 end
 
-if timestamps && ~simpleread % if vid start time is read from the time stamps.
+if timestamps && ~simpleread  && ~audioonly% if vid start time is read from the time stamps.
     for n = 1:length(movies)
         if isempty(intersect(movN(n),vidNums)); continue; end
         if ~strcmp(movies{n}(end-2:end),'raw') && n<= mlast;
@@ -342,7 +352,7 @@ if timestamps && ~simpleread % if vid start time is read from the time stamps.
 end
 
 % if exist('shortmovies','var') && ~isempty(shortmovies); disp(['Audio lengths are slightly off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible.']); end
-
+if ~audioonly
 figure; hold on; I = 1; numrepeats = zeros(size(vidDN));
 title('Plot of frameTimes.  Red stars indicate a jump in time (if no red stars, you should be good)');
 for i = 1:length(frameTimes); 
@@ -373,6 +383,9 @@ set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));
 
 
 frameSize = [vid.width vid.height];
+else
+    frameSize = [nan nan];
+end
 vidDurs(movN(mlast)+1:end) = []; frameTimes(movN(mlast)+1:end) = []; vidDN(movN(mlast)+1:end) = []; vidNam(movN(mlast)+1:end) = []; oframeTimes(movN(mlast)+1:end) = [];
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize');
 if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end

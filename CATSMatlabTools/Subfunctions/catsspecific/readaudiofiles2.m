@@ -29,7 +29,16 @@ if aud.rate == 96000; warning('audio rates higher than 48 kHz may have problems,
 for n = 1:length(movies) %for some reason if this is in with the next for loop it messes up
     clear aud; clear totalDuration;
     wavfile = []; sm = [];
-    if ~strcmp(movies{n}(end-2:end),'raw')
+    if audioonly && strcmp(movies{n}(end-2:end),'wav')
+        wavfile = movies{n};
+    [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+    if size(aud.data,2) == 2 && all(aud.data(:,2) == 0); aud.data = aud.data(:,1); aud.nrChannels = 1; 
+    elseif size(aud.data,2) == 2 && all(aud.data(:,1) == 0); aud.data = aud.data(:,2); aud.nrChannels = 1;
+    else aud.nrChannels = size(aud.data,2);
+    end
+    aud.totalDuration = size(aud.data,1)/aud.rate;
+     totalDuration = aud.totalDuration;
+    elseif ~strcmp(movies{n}(end-2:end),'raw')
         movieNum = movN(n);
         if ~checkaudiofs; audioend = movies{n}(end-2:end); end
         if ~isempty(wavstr); wavfile = wavstr{cellfun(@(x) strcmp(movies{n}(1:end-3),x(1:end-3)),wavfiles)}; end
@@ -110,8 +119,8 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
         end
     catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
         save([DIR movies{n}(1:end-4) 'audio.mat'],'aud','totalDuration','-v7.3');
-        disp(['Made a version 7.3 file (audio ' movies{n}(1:end-4) ' was big)']);
+        disp(['Made a version 7.3 file (audio ' movies{n}(1:end-4) ' was a large file)']);
     end
 end
-disp('Check wav files for accuracy/length, then they can be deleted (keep the .mat files for audio analysis).');%  If the wav files are the wrong length, reimport the audio files.  The frametimes etc. should still be accurate and should not need to be redone.');
+if ~audioonly; disp('Check wav files for accuracy/length, then they can be deleted (keep the .mat files for audio analysis).'); end%  If the wav files are the wrong length, reimport the audio files.  The frametimes etc. should still be accurate and should not need to be redone.');
 if ~isempty(shortmovies); disp(['Audio lengths are off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible. This message will repeat.']); end

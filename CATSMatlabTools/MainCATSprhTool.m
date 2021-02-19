@@ -44,6 +44,7 @@ folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start lo
 readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
 % these will be less commonly adjusted
+audioonly = false; % set to true for tags that do not have video (currently only works if you have wav files, if you only have ".raw" versions of audio files and no video files, we will have to make some adjustments still to ensure data is converted at the right sample rate.
 readtimestamps = true; % if there are embeded timestamps on the video.  If simpleread, only read timestamps at the end of a section and compare to the video time
 simpleread = true; % newer videos with accurate initial timestamps (to the ms). If false, reads timestamps from every frame and tries to estimate the bad frame reads
 timewarn = 0.1; % since typical data is downsampled to 10 Hz, use this as a threshold for accuracy of the video timestamps
@@ -52,7 +53,7 @@ redovids = []; % set this if you are trying to re-read specific video numbers
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
 
-makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids); %workhorse script
+makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly); %workhorse script
 disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section, then can jump to any previously completed
@@ -133,8 +134,10 @@ end
 df = decfac;
 if exist([fileloc filename(1:end-4) 'truncate.mat'],'file') 
     disp('Using truncated file'); load([fileloc filename(1:end-4) 'truncate.mat']);
+    load([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs');
 elseif ~isempty(strfind(filename,'truncate'))
     disp('Using truncated file'); load([fileloc filename]);
+     load([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs');
     filename = filename([1:end-12 end-3:end]); % filename without the truncate label
 else
     load([fileloc filename]);
@@ -441,6 +444,11 @@ disp('Section 8.2 done');
 % Matlab packages required: Signal Processing Toolbox
 
 vars = load([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','vidNum','fs','ofs','camondec','tagondec','nocam','nopress','df','CAL','Hzs','DN');
+if isempty(vars.vidDN) 
+    try load([fileloc filename(1:end-4) 'movieTimes.mat']); vars.vidDN = vidDN; vars.vidDurs = vidDurs; save([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','-append'); %vars.vidNam = v2.vidNum;
+    catch; warning('vidDN variable is empty (no timestamps from video files), will try assuming audio files start at start of data files'); 
+    end
+end
 if CellNum<8; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
@@ -487,7 +495,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
 end
 % clear vars
 if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
-CellNum = 9.5;
+CellNum = 10;
 if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
 disp('Section 10a finished');
 
@@ -499,7 +507,7 @@ disp('Section 10a finished');
 % Matlab packages required: Signal Processing Toolbox
 
 load([fileloc filename(1:end-4) 'Info.mat'],'Afs','CAL','fs','timedif','DN','flownoise','ofs','vidDN','vidDurs','camondec','audondec','tagon','camon','audon');
-if CellNum<9.5; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
+if CellNum<10; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
 if ~exist('data','var') || ~exist('Adata','var') || abs(data.Date(1)+data.Time(1)-Atime(1))>fs/24/60/60; load([fileloc filename(1:end-4) 'truncate.mat']); end
@@ -518,15 +526,20 @@ if exist('Acal','var') && ~isempty(Acal)
 else
     A = (Adata-repmat(aconst,size(Adata,1),1))*acal;
 end
-
+try 
 JX = TagJiggle(A(:,1),Afs,fs,[10 90],.5,Atime+timedif/24,DN); % 10 and 90 are the high-pass and low-pass filter frequencies. The higher number will have to be < .5* Afs.
 JY = TagJiggle(A(:,2),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
 JZ = TagJiggle(A(:,3),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
 J = TagJiggle(A,Afs,fs,[10 90],.5,Atime+timedif/24,DN);
+Jig = [JX JY JZ J];
+catch
+    warning('Error running TagJiggle, perhaps acc sample rate is lower than 180?  Can adjust high-pass filter in above lines to try again');
+    Jig = nan(length(Depth),4);
+end
 
 % speedP = Paddles; speedP(speedP == 0) = nan;
-Jig = [JX JY JZ J];
-CellNum = 10;
+
+CellNum = 10.5;
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Jig','-append');
 disp('Section 10b finished');
 %
@@ -539,8 +552,8 @@ figure; plotyy(DN,JJ,DN,D);
 legend('JiggleRMS','FlownoiseRMS')
 
 %% should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
-maxoffset = 2.5; % set with what you think the max offset would be
-AdjDataVidOffsets;
+% maxoffset = 2.5; % set with what you think the max offset would be
+% AdjDataVidOffsets;
 %% 11. SPEED. Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % outputs:
 % speed (table with speed.FN, speed.JJ, speed.SP (OCDR from sine of pitch)
@@ -583,15 +596,19 @@ if sum(isnan(flownoise)) == length(flownoise)
 else
     RMS2 = flownoise; lab = 'FN';
 end
-
-[~,speed,speedstats] = SpeedFromRMS3(Jig(:,1:3),'JJ',RMS2,lab,fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
-X = Jig(:,1); Y = Jig(:,2); Z = Jig(:,3); Mag = Jig(:,4);
-JigRMS = table(X, Y, Z, Mag);
-
 if ~exist([fileloc 'SpeedPlots\'],'dir'); mkdir([fileloc 'SpeedPlots\']); end
-for fig = [1 301:300+size(speedstats.r2used,1)]
-    saveas(fig,[fileloc 'SpeedPlots\fig' num2str(fig) '.bmp']);
+if exist('Jig','var') && sum(isnan(Jig(:,1)))~=length(Jig(:,1))
+    [~,speed,speedstats] = SpeedFromRMS3(Jig(:,1:3),'JJ',RMS2,lab,fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
+    X = Jig(:,1); Y = Jig(:,2); Z = Jig(:,3); Mag = Jig(:,4);
+    for fig = [1 301:300+size(speedstats.r2used,1)]
+        saveas(fig,[fileloc 'SpeedPlots\fig' num2str(fig) '.bmp']);
+    end
+else
+    JJ = nan(size(Depth)); speed=table(JJ);
+    X = nan(size(Depth)); Y = X; Z = X; Mag = X; 
 end
+    JigRMS = table(X, Y, Z, Mag);
+
 
 
 if sum(isnan(flownoise)) ~= length(flownoise)
@@ -599,6 +616,9 @@ if sum(isnan(flownoise)) ~= length(flownoise)
     if s == 1
         disp('Can quit out of this and start cell again later if the results don''t seem to be improving');
         [~,speedFN,speedstatsFN] = SpeedFromRMS3(flownoise,'FN',[],'',fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
+        if sum(isnan(JigRMS.X)) == length(JigRMS.X)
+            speedstats = speedstatsFN;
+        end
         oi = speedFN.Properties.VariableNames;
         oi(cellfun(@(x) strcmp('section',x), oi)) = {'FNsection'};
         oi(cellfun(@(x) strcmp('sectionUsed',x), oi)) = {'FNsectionUsed'};
@@ -621,7 +641,7 @@ CellNum = 11;
 disp('Section 11 (speed) finished');
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
 
-% %% if you want to apply speed using speed calibrations from another section,
+% %% if you want to apply speed using speed calibrations from another tag,
 % % uncomment this section
 % 
 % [speedfile,speedloc] = uigetfile('*.mat','Select mat file with speedstats that list the calibration values to apply');

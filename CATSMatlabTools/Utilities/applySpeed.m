@@ -73,7 +73,9 @@ for i = 1:length(speedper(:,1))
     C95(I,:) = [C(1,1)*exp(C(1,2)*JRMS(I,1)) C(2,1)*exp(C(2,2)*JRMS(I,1))];
     section(I) = i*ones(size(section(I)));
     speed.sectionUsed(I,1) = cellstr(repmat(speedstats.r2used.sectionUsed{i},size(size(section(I)))));
-    R2(I,1) = speedstats.r2used.([label1 'r2'])(i)*ones(size(section(I)));
+    try R2(I,1) = speedstats.r2used.([label1 'r2'])(i)*ones(size(section(I)));
+    catch; disp ('no JJR2 variable');
+    end
 end
     
 sectionUsed = speed.sectionUsed;

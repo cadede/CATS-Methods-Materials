@@ -71,7 +71,7 @@ for i = 1:length(ssI7(:,1))
     n = n+1;
 end
 A
-disp('If axis are correctly oriented and calibrations were done in X,-X,Y,-Y,Z,-Z order, you should see that order reflected in the A matrix above');
+disp('If axes are correctly oriented and calibrations were done in X,-X,Y,-Y,Z,-Z order, you should see that order reflected in the A matrix above');
 %
 tol = @(B) sum((sqrt(sum(B.^2,2))-1).^2);
 calaccCATS = @(inputs,A) tol((A-repmat(inputs(4:6),length(A(:,1)),1))./repmat(inputs(1:3),length(A(:,1)),1));

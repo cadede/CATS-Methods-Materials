@@ -56,6 +56,8 @@ if ~nocam || ~noaud
             DBdf = 7; %7 is the decimation factor that allows for integer subsampling bins
         elseif aud.rate == 48000 || aud.rate == 12000 || aud.rate == 24000
             DBdf = 15;
+        elseif aud.rate == 96000
+            DBdf = 30;
         elseif aud.rate == 25811
             DBdf = 53;
         else error('new sampling rate, check your decimation factor to ensure an integer bin');
