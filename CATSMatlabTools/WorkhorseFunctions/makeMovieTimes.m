@@ -34,7 +34,7 @@ if ~exist('whaleID','var') || isempty(whaleID);
         try
             if strcmp(movieloc(slashes(i)+9),'-')
                 datenum(movieloc(slashes(i)+3:slashes(i)+8),'yymmdd');
-                whaleID = movieloc(slashes(i)+1:slashes(i)+11);
+                whaleID = movieloc(slashes(i)+1:min(slashes(i)+11,slashes(i+1)-1));
             end
         catch
             continue
@@ -52,6 +52,7 @@ try % find all movies in the water to get all relevant audio
     rootDIR = folder; loc1 = strfind(movieloc,'CATS'); if ~isempty(loc1); rootDIR = movieloc(1:loc1+4); end
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch; [filename, fileloc] = uigetfile('*.xls*','Get Tag Guide to find tag off and recovery times'); [~,~,txt] = xlsread([fileloc filename]); end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
+    if isempty(rows); error('Could not find whaleID in TAG GUIDE'); end
     if length(rows)>1; let = input('letter of interest? (1 = a, 2 = b, 3 = c, etc.) '); lets = 'abcdefghijklmnopqrstuvwxyz'; whaleID = [whaleID lets(let)]; rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false))); end
     col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Recover_Time'),txt(3,:),'uniformoutput',false)));
     RecTime = max(datenum(txt(rows,col)));
