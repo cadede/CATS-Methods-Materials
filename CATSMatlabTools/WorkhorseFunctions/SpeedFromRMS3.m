@@ -149,6 +149,7 @@ for iii = 1:length(threshes); eval([threshes{iii} '(todel) = [];']); end
 restart = true;
 while restart
     Ospeedper = round(speedper*bin);
+    Ospeedper(Ospeedper>length(OJigRMS)) = length(OJigRMS);
     fJ = cell(size(speedper,1),numRMS); gofJ = fJ;
     c = cell(size(speedper,1),1);
     m = c;
