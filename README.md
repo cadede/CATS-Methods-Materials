@@ -1,7 +1,5 @@
 # CATS-Methods-Materials
 
-Suggest edit
-
 Biologging tags are capable of capturing high-resolution data from cryptic species that spend a significant portion of their lives in remote or inaccessible environments, such as below the sea surface. The advancement of biologging technologies over the last ~30 years has lead to an explosion of research into the hidden lives of these elusive animals. Information about locomotion, feeding, migratory patterns, reproduction, and metabolism have all been determined using data obtained with biologging tags. CATS (customized animal tracking solutions) tags are one of the newest platforms for this type of research and integrate high-resolution video with a suite of inertial and environment sensors.
 
 For the last 5 years, we as members of the Goldbogen lab at Stanford University's Hopkins Marine Station have been using CATS tags to study the biomechanics and behavior of large baleen whale species. In the course of this work, we have tested and streamlined a workflow and set of tools to integrate multiple streams of raw sensor data into a simple data packet that can be used for further analyses.
