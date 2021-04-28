@@ -326,7 +326,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             [DN,~,~,drops] = checkbadframes(DN);
             if size(DN,2)>size(DN,1); DN = DN'; end
             for ii = 1:length(drops(1,:))
-                warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows']);
+                warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows. These will be accounted for in the truncate data process (cell 3) of the prh process, but recommend further investigation of csv files and data files to determine the scale of the problem.']);
             end
         end
     end %from video processing, looks for out of order time stamps and adjust them

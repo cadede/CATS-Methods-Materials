@@ -49,15 +49,20 @@ while ~isempty(button);
     set([s1 s2],'xlim',[1 length(p)])
     set(s2,'xticklabel',datestr(DN(get(s2,'xtick')),'HH:MM:SS'));
     xlabel('Time (labels reset after pressing enter)');
-    ylabel('Acc (raw units)');
+    ylabel('Acc (raw units, tag axes conventions)');
     pat(2) = patch([p1 p2 p2 p1],[min(get(gca,'ylim')) min(get(gca,'ylim')) max(get(gca,'ylim')) max(get(gca,'ylim'))],'y');
     oi = get(s2,'children'); oi=[oi(2:end); oi(1)];
     set(s2,'children',oi);
     linkaxes([s1 s2],'x');
+    legend('x','y','z');
     z1 = zoom(s1); set(z1,'enable','on'); set(z1,'Motion','horizontal');
     z2 = zoom(s2); set(z2,'enable','on','Motion','both');
     pause;
-    set(s2,'xticklabel',datestr(DN(get(s2,'xtick')),'HH:MM:SS'));
+    try set(s2,'xticklabel',datestr(DN(get(s2,'xtick')),'HH:MM:SS'));
+    catch % if your tick marks are beyond the length of the data
+        exDN = [DN; (DN(end)+1/fs/24/60/60:1/fs/24/60/60:DN(end)+(DN(end)-DN(1)))'];
+        set(s2,'xticklabel',datestr(exDN(get(s2,'xtick')),'HH:MM:SS'));
+    end
     set(gcf,'CurrentAxes',s1)
     title('Now press enter to accept truncated boundaries or align cursor and press 1 to set beginning boundary or 2 to press end boundary');
     [x1,~,button] = ginput(1);
@@ -80,6 +85,9 @@ for i = length(skippeddata):-1:1
     numnew = length(DN)-numnew;
     oi = array2table(nan(numnew,size(data,2)));
     oi.Properties.VariableNames = data.Properties.VariableNames;
+    numcols = cellfun(@(x) size(data.(x),2), data.Properties.VariableNames); % if any datatable entries have more than column
+    colsI = find(numcols>1);
+    for ii = 1:length(colsI); oi.(colsI(ii)) = nan(numnew,numcols(colsI(ii))); end
     data = [data(1:skippeddata(i),:); oi; data(skippeddata(i)+1:end,:)];
     baddata(i) = numnew;
     skippeddata(i+1:end) = skippeddata(i+1:end) + numnew;
@@ -106,8 +114,8 @@ for i = length(skippeddata):-1:1
 end
 
 if ~isempty(baddata)
-    ff1 = input('Fix gaps in bad data using linear interpolation? (may be bad idea if more than a few seconds of data)?');
-   ff = input(' 1 = yes, 2 = no   ');
+   ff1 = input('Fix gaps in bad data using linear interpolation? (press enter to bring up prompts)');
+   ff = input(' 1 = yes, 2 = no   (may lead to inaccuracies if more than a few seconds of data are missing)');
     if isempty(ff) || ff ~= 2
         disp('Fixing bad data');
         headers = data.Properties.VariableNames;

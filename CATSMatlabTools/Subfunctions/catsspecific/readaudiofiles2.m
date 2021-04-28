@@ -3,8 +3,9 @@ shortmovies = [];
 if ~isempty(wavfiles)
     aud = struct();
     [aud.data,aud.rate,aud.bits] = wavread(wavstr{1},[1 10]);
-else
+elseif ~isempty(find(~cellfun(@(x) strcmp(x(end-2:end),'raw'),m2),1))
     [~,aud] = mmread([movieloc m2{find(~cellfun(@(x) strcmp(x(end-2:end),'raw'),m2),1)}],[],[3 4],true);
+else aud = struct(); aud.rate = input('Input sample rate of .raw files (in Hz): ');
 end
 audrate = aud.rate;
 if aud.rate == 96000; warning('audio rates higher than 48 kHz may have problems, suggesting downsampling the audio using a different software first'); end
@@ -31,13 +32,13 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
     wavfile = []; sm = [];
     if audioonly && strcmp(movies{n}(end-2:end),'wav')
         wavfile = movies{n};
-    [aud.data,aud.rate,aud.bits] = wavread(wavfile);
-    if size(aud.data,2) == 2 && all(aud.data(:,2) == 0); aud.data = aud.data(:,1); aud.nrChannels = 1; 
-    elseif size(aud.data,2) == 2 && all(aud.data(:,1) == 0); aud.data = aud.data(:,2); aud.nrChannels = 1;
-    else aud.nrChannels = size(aud.data,2);
-    end
-    aud.totalDuration = size(aud.data,1)/aud.rate;
-     totalDuration = aud.totalDuration;
+        [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+        if size(aud.data,2) == 2 && all(aud.data(:,2) == 0); aud.data = aud.data(:,1); aud.nrChannels = 1;
+        elseif size(aud.data,2) == 2 && all(aud.data(:,1) == 0); aud.data = aud.data(:,2); aud.nrChannels = 1;
+        else aud.nrChannels = size(aud.data,2);
+        end
+        aud.totalDuration = size(aud.data,1)/aud.rate;
+        totalDuration = aud.totalDuration;
     elseif ~strcmp(movies{n}(end-2:end),'raw')
         movieNum = movN(n);
         if ~checkaudiofs; audioend = movies{n}(end-2:end); end
@@ -95,7 +96,7 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
         clear y;
     end
     
-    if isempty(wavfile)
+%     if isempty(wavfile)
         try wavwrite(aud.data,aud.rate,aud.bits,[DIR movies{n}(1:end-4) '.wav'])
         catch %assumes the error was that the file was too large
             for i = 1:aud.totalDuration/60/60+1 % save one hour increment files
@@ -105,8 +106,8 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
                 wavwrite(aud.data((i-1)*aud.rate*60*60+1:i*aud.rate*60*60,:),aud.rate,aud.bits,[DIR fname])
             end
         end
-    else try movefile(wavfile,[DIR movies{n}(1:end-4) '.wav']); catch; warning(['could not move file ' movies{n}(1:end-4) '.wav into audioData directory']); end
-    end
+%     else try movefile(wavfile,[DIR movies{n}(1:end-4) '.wav']); catch; warning(['could not move file ' movies{n}(1:end-4) '.wav into audioData directory']); end
+%     end
 %     if audrate>70000
 %         aud.data = decdc(aud.data,2); % decimate to make them reasonable
 %         aud.rate = aud.rate/2;

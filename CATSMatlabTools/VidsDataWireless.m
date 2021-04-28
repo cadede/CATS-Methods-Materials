@@ -236,17 +236,22 @@ startref = starttime; % for adjusting starttime for wireless videos
  prh(~tagon,:) = nan;
  
  
-%% 
+%% Section 2- start cycling through videos
 global movieNum
 tagnum = gettagnum(prhfile);
 % if tagnum>4 && tagnum < 40; T = nan(size(T)); Light = nan(size(Light)); end
 if CONTINUE; startn = n; j = max(1,j-1); else startn = 1; end % lastVideo = length of last video % lastVideo = 0;
 clear doublebits;
 
-% some new files had audio trouble.  If they are remade, this helps fine
-% them
+% some new files had audio trouble.  If they are remade, this helps find
+% them.  You will want to move your wav files 
 if exist([fileloc 'for audio\'],'dir'); audioloc = [fileloc 'for audio\']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
-else audioloc = fileloc; checkaudiofs = false; end
+elseif exist([fileloc 'wavfiles\'],'dir'); audioloc = [fileloc 'wavfiles\']; checkaudiofs = true; audioend = 'wav';
+elseif exist([fileloc(1:end-4) 'AudioData\'],'dir'); audioloc = [fileloc 'AudioData\']; checkaudiofs = true; audioend = 'wav';
+else audioloc = fileloc; checkaudiofs = false;
+end
+
+% if checkaudiofs; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end); end
 
 for n = startn:length(filename) %24:26 21:23 18:20]
     if ~CONTINUE || n>startn || j == 1

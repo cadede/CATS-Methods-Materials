@@ -177,6 +177,8 @@ disp('Section 3 finished');
 % This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
 % for pre-wireless data:
 % If you are using the excel sheet to synch vids and data from animal surfacings (uncommon), it makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
+%NOTE: this cell can sometimes take a long time to run if there is a large
+%data file
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
@@ -443,7 +445,7 @@ disp('Section 8.2 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-vars = load([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','vidNum','fs','ofs','camondec','tagondec','nocam','nopress','df','CAL','Hzs','DN');
+vars = load([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','vidNum','fs','ofs','camondec','tagondec','nocam','nopress','df','CAL','Hzs','DN','whaleName');
 if isempty(vars.vidDN) 
     try load([fileloc filename(1:end-4) 'movieTimes.mat']); vars.vidDN = vidDN; vars.vidDurs = vidDurs; save([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','-append'); %vars.vidNam = v2.vidNum;
     catch; warning('vidDN variable is empty (no timestamps from video files), will try assuming audio files start at start of data files'); 
@@ -471,6 +473,8 @@ end
 
 if s == 1
     [flownoise,AUD] = getflownoise(audiodir,vars);
+    disp('Now making full deployment audio file');
+    stitchaudio([fileloc 'AudioData\'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc);
 end
 
 tag1 = find(vars.tagondec,1);
@@ -497,6 +501,7 @@ end
 if ~exist('flownoise','var') || isempty(flownoise); warning('no audio files detected, flownoise is all nans'); flownoise = nan(size(Depth)); end
 CellNum = 10;
 if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNum','-append'); end
+
 disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  Makes a summary
@@ -554,6 +559,8 @@ legend('JiggleRMS','FlownoiseRMS')
 %% should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
 % maxoffset = 2.5; % set with what you think the max offset would be
 % AdjDataVidOffsets;
+% disp('Now remaking full deployment audio file');
+% stitchaudio([fileloc 'AudioData\'],vars.whaleName,DN(1),vidDN,fileloc);
 %% 11. SPEED. Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % outputs:
 % speed (table with speed.FN, speed.JJ, speed.SP (OCDR from sine of pitch)
@@ -629,6 +636,9 @@ if sum(isnan(flownoise)) ~= length(flownoise)
         speedstats.FN.Thresh = speedstatsFN.Thresh;
         speedstats.FN.r2used = speedstatsFN.r2used;
         speedstats.FN.sections_end_index = speedstatsFN.sections_end_index;
+        for fig = [1 301:300+size(speedstats.r2used,1)]
+            saveas(fig,[fileloc 'SpeedPlots\flownoisefig' num2str(fig) '.bmp']);
+        end
     end
 else
     speed.FN = nan(size(speed.JJ));

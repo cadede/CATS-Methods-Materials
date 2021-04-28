@@ -9,12 +9,12 @@ if nargin<4 || isempty(UTCloc)
         curdir = pwd;
         oi = strfind(curdir,'MATLAB');
         [D2,F2] = subdir(curdir(1:oi+5));
-        oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\excel templates and files\'),D2,'uniformoutput',false))==0);
+        oi = find(cellfun(@isempty,cellfun(@(x) strfind(x,'CATSMatlabTools\templates\'),D2,'uniformoutput',false))==0);
         Fnum = find(cellfun(@(y) y==1,cellfun(@(x) strcmp(x,'UTC location spreadsheet.xlsx'),F2{oi(1)},'uniformoutput',false)));
         fileloc = [D2{oi(1)} '\']; filename =  F2{oi(1)}{Fnum};
         [cityGPS,citytext]= xlsread([fileloc filename],'cities');
     catch
-        fileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\CATSMatlabTools\excel templates and files\';
+        fileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\CATSMatlabTools\templates\';
         filename = 'UTC location spreadsheet.xlsx';
         try    [cityGPS,citytext]= xlsread([fileloc filename],'cities');
         catch

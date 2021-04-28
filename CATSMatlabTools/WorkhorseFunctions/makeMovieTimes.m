@@ -82,7 +82,7 @@ try % find all movies on whale to get frameTimes
     disp(['Got last movie file from Tag Off time, last file on whale is ' LastOnMovie]);
 catch
     cd(movieloc);
-    [mlast,movieloc] = uigetfile('*.*','No tag off time in Tag Guide, select last MOVIE before tag fell off whale (to get movie times)','multiselect','off');
+    [mlast,movieloc] = uigetfile('*.*','No tag off time in Tag Guide, select last movie or audio before tag fell off whale (to get movie times)','multiselect','off');
     mlast = find(cellfun(@(x) strcmp(x,mlast), m2));
     LastOnMovie = m2{mlast};
     disp(['last file selected on whale is ' LastOnMovie]);
@@ -148,7 +148,7 @@ if  ripAudio %gettagnum(datafile) == 45 || gettagnum(datafile) >= 48
     for i = 1:length(movies); if strcmp(movies{i}(end-2:end),'raw'); disp([movieloc movies{i}]); end; end
     readaudiofiles2;
     disp(['Check that audio files were successfully written, then if you''re sure, you can delete files after ' LastOnMovie]);
-    disp('Any premade wav files were moved to AudioData directory');
+    disp('Any premade wav files were read and left in their original directory');
 else
     disp('no audio was extracted from vids');
 end
@@ -156,7 +156,9 @@ warning('on','all');
 %
 D = dir([movieloc '*.mp4']); % get the total lengths of the other files as well as the stored file time
 if isempty(D); D = dir([movieloc '*.mov']); end
-if isempty(D) && audioonly; D = dir([movieloc '*.wav']); end
+if isempty(D) && audioonly; D = dir([movieloc '*.wav']); 
+   if isempty(D) && audioonly; D = dir([DIR '*.wav']); end
+end
 % some other code if you need to restrict what movies it finds
 % todel = [];
 % for i = 1:length(D); if length(D(i).name) ~= 10; todel = [todel; i]; end; end % in case you've made any SxS files already or something silly
@@ -215,7 +217,10 @@ end
  badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
-    if audioonly; vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff'); continue; end
+    if audioonly; vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff'); 
+        try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
+        continue; 
+    end
     try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
         badvidDN(movN(n)) = true;

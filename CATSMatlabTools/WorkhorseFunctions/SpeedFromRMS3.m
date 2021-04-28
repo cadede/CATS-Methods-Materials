@@ -13,9 +13,10 @@ if nargin <15 || isempty(minDepth); minDepth = 5; end
 if nargin <14 || isempty(filterSize); filterSize = 1; end
 if nargin <13 || isempty(binSize); binSize = 1/fs; end
 if nargin <12 || isempty(tagon); tagon = true(size(p)); end
-if nargin <11 || isempty(speedper); speedper = length(p); end
-if nargin <10 || isempty(DN); DN = (0:length(p)-1)'/24/60/60/fs; end
-if nargin < 9; help SpeedFromRMS; error('Must have 9 inputs, RMS2 can be empty'); end
+if nargin <11 || isempty(tagslip); tagslip = [[1 find(tagon,1,'last')]' [1 find(tagon,1,'last')]']; end
+if nargin <10 || isempty(speedper); speedper = tagslip(:,1)'; end
+if nargin < 9 || isempty(DN); DN = (0:length(p)-1)'/24/60/60/fs; end
+if nargin < 8; help SpeedFromRMS; error('Must have 8 inputs, RMS2 can be empty'); end
 if length(DN) == 1; DN = (DN:1/fs/24/60/60:DN+((length(p)-1)/fs)/24/60/60)'; end %if DN is just a starttime
 
 warning('off','stats:nlinfit:IllConditionedJacobian');
@@ -60,6 +61,9 @@ OJigRMS = RMS1; Ospeedper = speedper; Otagon = tagon; ODN = DN; Op = p;
 OFNRMS = RMS2;
 
 %depth deviation
+if any(isnan(p)); warning(['Replacing ' num2str(sum(isnan(p))) ' nans in depth data']);
+    p = fixgaps(p); p(isnan(p)) = 0;
+end
 dd = runmean(p,round(filterSize/2*fs)); %smooth depth to the same filterSize size as your RMS data
 dd = [diff(dd); 0];
 spitch = runcirc_mean(pitch,round(filterSize*2*fs)); %smoothed pitch

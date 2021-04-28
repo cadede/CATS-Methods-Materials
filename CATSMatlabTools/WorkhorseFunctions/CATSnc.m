@@ -435,9 +435,11 @@ catch
 end
 
 %Get Provider details from DataProviders tab of TagGuide
-[num,txt,raw] = xlsread(fullfile(fileloc,filename), 'DataProviders');
+try [num,txt,raw] = xlsread(fullfile(fileloc,filename), 'DataProviders');
 ak=strmatch('provider email',txt(1,:));
 row = strmatch(info.provider_email,txt(:,ak));
+catch; txt = {'oi'}; row = [];
+end
 if isempty(row)
     disp(['Check DataProviders Tab in TagGuide, ' info.provider_email ' not found']); 
 end

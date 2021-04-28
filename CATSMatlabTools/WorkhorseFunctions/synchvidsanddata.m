@@ -3,7 +3,7 @@ global fileloc filename
 if nargin<11; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
 
-try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status'); end
+try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status'); nocam = nan; end
  times = cell2mat(headers(7:end,2:3));
 %if no movie files
 if nocam

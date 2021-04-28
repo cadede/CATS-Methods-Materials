@@ -614,7 +614,7 @@ for k = 1:2
     catch
         disp('could not plot legend');
     end
-        title (['Cam ' offon{k} ' cal'],'fontsize',14);
+        title (['Acc. Cam ' offon{k} ' cal'],'fontsize',14);
     
        [~, Mcalnew,~] = spherical_calwk(Mt(I,:),b,'cross');
     Mtnew = (Mt*diag(Mcalnew.poly(:,1))+repmat(Mcalnew.poly(:,2)',size(Mt,1),1))*Mcalnew.cross;
@@ -632,9 +632,11 @@ for k = 1:2
     elseif k == 2;
         Mcal3d0cam = Mcalnew;
     end
-     try legend([camp calp ap' am],'Cam on','Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
-     catch; legend([calp ap' am],'Calibration period','X','Y','Z','Magnitude','location','Eastoutside')
+    pm = plot(get(gca,'xlim'),b*ones(1,2),'m');
+     try legend([camp calp ap' am pm],'Cam on','Calibration period','X','Y','Z','Magnitude','Magnetic field strength','location','Eastoutside')
+     catch; legend([calp ap' am pm],'Calibration period','X','Y','Z','Magnitude','Magnetic field strength','location','Eastoutside')
      end
+     title (['Magnet. Cam ' offon{k} ' cal'],'fontsize',14);
          linkaxes([s1 s2],'x')
 end
 disp('Step 4 successfully completed')
