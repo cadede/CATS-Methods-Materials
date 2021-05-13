@@ -8,6 +8,8 @@ elseif ~isempty(find(~cellfun(@(x) strcmp(x(end-2:end),'raw'),m2),1))
 else aud = struct(); aud.rate = input('Input sample rate of .raw files (in Hz): ');
 end
 audrate = aud.rate;
+% some warnings below.  Currently this processing is not set up to handle
+% very high sample rate acoustic files.
 if aud.rate == 96000; warning('audio rates higher than 48 kHz may have problems, suggesting downsampling the audio using a different software first'); end
 %     disp('Recalculating audio rate, 96000 seems more than it can handle');
 %     if median(cellfun(@length, aud.frames(40:end-40))) == mean(cellfun(@length, aud.frames(40:end-40)))
@@ -22,12 +24,9 @@ if aud.rate == 96000; warning('audio rates higher than 48 kHz may have problems,
 % %     aud.rate = round(sum(cellfun(@length, aud.frames(40:end-40)))/4/sum(diff(aud.times(40:end-39)))); audrate = aud.rate
 % end
 
-% LOOK AT videos from 4k to see if zeros are being added unncessarily to
-% those files.
-
  audioloc = movieloc; 
  checkaudiofs = false; % may have to enable this flag if audio sample rates are funny
-for n = 1:length(movies) %for some reason if this is in with the next for loop it messes up
+for n = 1:length(movies) 
     clear aud; clear totalDuration;
     wavfile = []; sm = [];
     if audioonly && strcmp(movies{n}(end-2:end),'wav')
@@ -108,10 +107,7 @@ for n = 1:length(movies) %for some reason if this is in with the next for loop i
         end
 %     else try movefile(wavfile,[DIR movies{n}(1:end-4) '.wav']); catch; warning(['could not move file ' movies{n}(1:end-4) '.wav into audioData directory']); end
 %     end
-%     if audrate>70000
-%         aud.data = decdc(aud.data,2); % decimate to make them reasonable
-%         aud.rate = aud.rate/2;
-%     end
+
     lastwarn('');
     try
         save([DIR movies{n}(1:end-4) 'audio.mat'],'aud','totalDuration');

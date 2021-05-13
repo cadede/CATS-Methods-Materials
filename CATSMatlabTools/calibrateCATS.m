@@ -19,7 +19,8 @@
 % 0 9.8 0
 % 0 -9.8 0
 % 0 0 9.8
-% 0 0 -9.8];  Eventually we will reduce these to be "1" instead of 9.8.
+% 0 0 -9.8];  Eventually we will reduce these to be "1" instead of 9.8
+% (e.g., accelerometers are relative to gravity)
 % Also check that the displayed tagnum, tagtype and fs (sampling rate) are correct
 % then check the plots to see if the accelerometer magnitude is close to 1
 % throughout the length of the cal file
@@ -319,11 +320,12 @@ disp('Step 2 successfully completed')
 %
 %% 3. magnetometers (load new files)
 % Ensure calibration period is properly identified with no spikes in data
-% that could mess up calibraton
+% that could create errors in the calibraton
 % input: enter (or reenter) the mat file and xls file for the gyro cals
 % output: magcalon magconston, magcaloff magconstoff. These are initial
-% calibrations and represent an alternate method to the spherical
-% calibrations that end up being employed.
+% calibrations tha account for axis conventions and an initial guess at the calibration,
+% and represent an alternate method to the spherical
+% calibrations that end up being utilized.
 % In figure 8 black line should be pretty close to upper red line.  All other axes
 % should be well constrained by red lines. Overall, it is okay if the black
 % line is not perfectly flat throughout, as in situ calibrations will end
@@ -643,7 +645,7 @@ disp('Step 4 successfully completed')
 %% 5 save cal file
 % Can enter factory or other calibrations here for pressure, Temperature
 % etc.
-% for older plug in tags:
+% for older tags with a USB port:
 % pcal = 100/32768/.0980665; pconst = 16384;
 % Tconst = - 21*333.87; Tcal = 1/333.87;
 % acal =   1 / 8192  ; % * 9.80665; % last term for gravity

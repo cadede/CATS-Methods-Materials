@@ -15,9 +15,7 @@ if nocam
     end
  vidDN = nan; vidDurs = 0;
 else
-   
-    useold = false;
-    nocam = false;
+     nocam = false;
     
     names =fieldnames(viddata);
     for ii = 1:length(names)
@@ -33,18 +31,10 @@ else
             vidDN = vidDN + data.Date(1)+timedif/24;
         else vidDN = vidDN + timedif/24;
         end
-%         vidDN = vidDN-timedif/24;
         if sum(vidDN<DN(1)) + sum(vidDN>DN(end))>1; warning('multiple vidDN are outside range of data. This may be okay if more videos are included in movieTimes outside of those on whale (so just continue), but check that any timedif in xls header file should apply to both data and video.  If, for example, data were downloaded on a computer in a different timezone than for which the tag was programmed, video and data will be offset by different amounts and will have to be adjused for, potentially by unhighlighting the line above this one'); end
     end
     
-    if useold; try load([fileloc filename(1:end-4) 'Info.mat']); catch; end; end
-    if isempty (frameTimes); error('Put frametimes from movies in the same folder as the movies'); end
-    % if ~(exist('GPS','var') && exist('vidDN','var')&&exist('camon','var') && exist('tagslip','var')) % if you've saved previous versions in the Info file, just use those
-    if useold && exist('vidDN','var') && exist('camon','var')
-        videonum = cell2mat(headers(7:end,1)); todel = find(~isnan(videonum),1,'last')+1:length(videonum);
-        videonum(todel) = [];
-    else
-%         GPS = cell2mat(headers(2,2:3)); %from above file
+      if isempty (frameTimes); error('Put frametimes from movies in the same folder as the movies'); end
         whaleName = char(headers(1,2));
         timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
         try
@@ -244,7 +234,7 @@ else
                 end
             end
         end
-        if  ~synchusingvidtimestamps %~kitten ||
+        if  ~synchusingvidtimestamps
             for ii = 1:length(FIX)
                 i = FIX(ii);
                 ADJ = find(abs(vidDN(i+1:end)-vidDNorig(i+1:end))>0,1,'first')+i; % if there have been any adjustments, use them, else will have to use the next one.
@@ -269,7 +259,6 @@ else
             camon(sI:eI) = true; %min(eI,length(p))) = true;
         end
         
-    end
     if any(isnan(vidDN(~cellfun(@isempty,vidNam)))) || any(diff(vidDN(~cellfun(@isempty,vidNam)))<0) || any(isnan(vidDurs(~cellfun(@isempty,vidNam))))
         error('Check vidDN and vidDurs!  Nans found.  Likely there are video files in the raw folder that are before or after the deployment, so you may need to open "movieTimes" in a different matlab version and add nans or empty cells to where the movies that are not part of the deployment should be.  Another thing to check is "videonum".  If "videonum" is longer than your # of videos, you may need to adjust your excel header files to ensure that any blanks spaces are actually deleted.');
     end

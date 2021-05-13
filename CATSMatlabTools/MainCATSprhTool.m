@@ -58,22 +58,25 @@ disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section, then can jump to any previously completed
 % section.  If running a file for the first time, start here and move
-% sequentially through each cell.
+% sequentially through each cell. Do not skip any subsequent cells as they
+% create necessary dummy variables even if that cell does not seem
+% applicable.
 % 
 % imports file names and reads the header file
 % output: "headers" and "tagnum" variables in workspace
 %
 
 % Prerequisites:
-% 1) run importCATSdata (or similar for other tag types) to convert raw tag
-% outputted data into a .mat file with variables "data" (a table), "Adata" (a matrix) and
+% 1) run importCATSdata (or similar for other tag types) to convert data downloaded
+% from a tag into a .mat file with variables "data" (a table), "Adata" (a matrix) and
 % "Atime" (a vector). See "importCATSdata" script for details.  This script
 % also creates a "Hzs" structure that has the sample rate of all original
 % data (i.e. the rate at which data was sampled on the tag)
-% 2) in the same folder as the *.mat file, there should be a header file
-% "spYYMMDD-tag#.xls" with whale name & tag number & GPS location of tagon, as well as 
-% times of tag slips (if they can be seen in the videos) and surfacing times 
-% (necesary only if videos do not have time stamps embedded)
+% 2) in the same folder as the *.mat file, create a header file
+% "spYYMMDD-tag#.xls" with whale name & tag number & GPS location of where the tag went on the whale
+% Optional but helpful for accuracy is to add in the times of tag slips (if they can be seen in the videos)
+% If videos do not have time stamps embedded, you can also input times of surfacings here
+% to synchronize the videos and data in step 4
 % 3) run cell 1 with "makeMovieTimes" script above if there are videos associated with
 % the data.  This should create a "movieTimes.mat" file.
 % 4) set: "decfac" below.  Ending with 10 Hz files is probably a good goal.
@@ -82,29 +85,28 @@ disp('Section 1 completed');
 
 % variables to set
 decfac = 5; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
-
 % Can set "folder" below to start looking for files in a specific place on your computer
-
 folder = 'e:/CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users\Dave\Documents\Programs\MATLAB\Tagging\CATS cal';%
+
+% import files
 global fileloc filename
 cf = pwd; try cd([vol ':\' folder]); catch; end
 [filename,fileloc]=uigetfile('*.mat', 'select CATS data (imported mat file)'); 
 cd(fileloc);
-
 [headerfile,headerloc]=uigetfile('*xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
 cd(cf);
-
 [~,~,headers]= xlsread([headerloc headerfile]);
-tagnum = cell2mat(headers(4,2))
+tagnum = cell2mat(headers(4,2)) %displays the tag number, necessary to be correct to import the correct calibration file
 
-
-% look for progress Index in info file, tell you cell to continue on 
+% look for progress Index in info file, tell you cell to continue to 
 warning('off','MATLAB:load:variableNotFound');
 if ~isempty(strfind(filename,'truncate'))
     disp('Using truncated file');
     filename = filename([1:end-12 end-3:end]); % filename without the truncate label
 end
 
+% if an INFO file already exists, tell the user where to start, else create
+% an INFO file
 try load([fileloc filename(1:end-4) 'Info.mat'],'CellNum');
     disp(['Prhfile created through step number ' num2str(CellNum) ' (can start at subsequent step)']);
 catch
@@ -116,7 +118,12 @@ end
 disp('Section 2 finished');
 
 clearvars -except fileloc filename decfac folder tagnum headers CellNum
-%% 3. Create a truncated file (or load it) and rename variables
+%% 3. Create a truncated file (or load it) and rename variables. This step 
+% shortens the data to be closer to the length of the deployment.  It is not
+% necessary at this stage to trim all the way to only be for the deployment, 
+% sometimes it can be beneficial for smoothing data etc. to have some data on 
+% either end, but for tags that run before deployment and have a lot of floating 
+% data, this can reduce file sizes and processing times.
 % 
 % output: *truncate.mat files.  Truncate reduces file size by
 % cutting out time not on the whale.
@@ -131,6 +138,9 @@ if CellNum<2; x = input('Previous cell has not been completed, continue anyway? 
     if x~=1; error('Previous cell has not been completed'); end
 end
 
+% Follow the prompts at the top of the plot, will need to press enter twice
+% to accept the default selection, or follow prompts to choose the location
+% to truncate
 df = decfac;
 if exist([fileloc filename(1:end-4) 'truncate.mat'],'file') 
     disp('Using truncated file'); load([fileloc filename(1:end-4) 'truncate.mat']);
@@ -172,13 +182,16 @@ cd(cf);
 
 disp('Section 3 finished');
    CellNum = 3;
+   % at the end of every cell, these are the new variables that are needed
+   % to move forward and are saved in the INFO file. See tag wiki on github site for
+   % descriptions of each variable.
       save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','-append');
 %% 4. adjust video times to match data times 
 % This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
 % for pre-wireless data:
 % If you are using the excel sheet to synch vids and data from animal surfacings (uncommon), it makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
 %NOTE: this cell can sometimes take a long time to run if there is a large
-%data file
+% data file
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
@@ -208,7 +221,7 @@ end
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
 disp('Section 4 done');
 %% 5. get tagon and tagoff times 
-% id tagon and tagoff times by zooming in and selecting the boundaries of
+% choose tagon and tagoff times by zooming in and selecting the boundaries of
 % time on the whale.
 % output: tagon index of when the tag is on animal
 % After finishing this, recommend updating a TAG GUIDE with the actual tag on and tag off

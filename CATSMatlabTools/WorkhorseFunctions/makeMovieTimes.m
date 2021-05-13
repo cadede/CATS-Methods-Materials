@@ -136,7 +136,7 @@ if timestamps; oframeTimes = frameTimes; end
 
 warning('off','all');
 %
-if  ripAudio %gettagnum(datafile) == 45 || gettagnum(datafile) >= 48 
+if  ripAudio 
     % see if there are any wavfiles
     [D,F] = subdir(dataloc);
     wavfiles = cell(0,1);
@@ -195,7 +195,11 @@ oi = cell(size(vidDurs));
 oi(vidNum) = vidNam;
 vidNam = oi;
 
-%
+% may need to restart here if there was an error somewhere along the way.
+% Next line recreates an empty frameTimes and original frameTimes
+% (oframeTimes).  oframeTimes is the time embedded in the frame metadata (the output from mmread,
+% but if there were any skips in data this can be off, so frameTimes reads
+% the timestamp written on the frame.
 % frameTimes = cell(max(movN),1); oframeTimes = frameTimes;
 if exist('vidNums','var') && ~isempty(vidNums) % if you signaled to only read a couple of the videos, load all the videos first
     try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN','vidDurs'); disp('existing movietimes file loaded');
@@ -264,7 +268,7 @@ for n = 1:length(movies)
                 movefile([movieloc movies{n}], [movieloc 'bad movies\' movies{n}]);
                 frameTimes{vidNum(n)} = []; oframeTimes{vidNum(n)} = []; vidDN(vidNum(n)) = nan;
             end
-        else %simpleread and timestamps, all simple read where
+        else %simpleread and timestamps.  This only reads some of the timecodes from the video frame, and compares it to what is read from mmread
             vid = mmread([movieloc movies{n}], [],[starttime endtime],false,true);
             flag = true; iii = -1;
             while flag && iii<100 % try 100 frames until you get a good read
@@ -296,12 +300,7 @@ for n = 1:length(movies)
             vidDN(movN(n)) = frameTimes{movN(n)}(1);
         end
             frameTimes{movN(n)} = (frameTimes{movN(n)} - frameTimes{movN(n)}(1))*24*60*60;
-            %         frameTimes{movN(n)} = round(frameTimes{movN(n)}*30)/30; %easier to read if closer to 1/30 rate?
-            if n>1 && vidDN(movN(n)) < vidDN(movN(n-1)); vidDN(movN(n)) = vidDN(movN(n))+1; DAY = DAY+1; end
-            % oi = find(diff(vidDN)<0)+1; %find the changes from one day to the next
-            %             for ii = 1:length(oi)
-            %                 vidDN(oi:end) = vidDN(oi:end)+1;
-            %             end
+             if n>1 && vidDN(movN(n)) < vidDN(movN(n-1)); vidDN(movN(n)) = vidDN(movN(n))+1; DAY = DAY+1; end
 
         vidDurs(movN(n)) = frameTimes{movN(n)}(end)+median(diff(frameTimes{movN(n)}));
     end
@@ -309,33 +308,6 @@ for n = 1:length(movies)
     save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','vidDN','videoL','vidDurs');
     if timestamps; save([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'oframeTimes','-append'); end
 end
-
-% for i = 1:length(frameTimes)
-%     if isempty(frameTimes{i}) || strcmp(m2{movN == i}(end-2:end),'raw'); continue; end
-%     fr = median(diff(frameTimes{i}));
-%     smallpoints = find(diff(frameTimes{i})<fr/2);
-%     if ~isempty(smallpoints)
-%         smallpoints
-%         disp(['In movie # ' num2str(i)]);
-%     end
-%     if ~isempty(smallpoints)    
-%         [s, e] = consec(smallpoints);
-%         for ii = 1:length(s)
-%             if e(ii)+2>length(frameTimes{i})||isnan(e(ii)+2)
-%                 frameTimes{i}(s(ii):e(ii)+1) = frameTimes{i}(s(ii)):fr:frameTimes{i}(s(ii))+(e(ii)-s(ii)+1)*fr;
-%             else
-%                 diff2 = frameTimes{i}(e(ii)+3:end)-frameTimes{i}(e(ii)+1:end-2);
-%                 nextgood = find(diff2>fr*1.6&diff2<fr*2.2,1)+2+e(ii);
-%                 if diff(frameTimes{i}([s(ii) nextgood])) == 0; nextgood = nextgood + 1; end
-%                 frameTimes{i}(s(ii):nextgood) = frameTimes{i}(s(ii)):diff(frameTimes{i}([s(ii) nextgood]))/(nextgood-s(ii)):frameTimes{i}(nextgood);
-%             end
-%         end
-%     end
-%     
-%     if sum([isnan(frameTimes{i}) diff(frameTimes{i})<=0]) >0 || (i>1&&~isempty(frameTimes{i})&&~isempty(frameTimes{i-1}) && any(frameTimes{i-1}/24/60/60+vidDN(i-1)>frameTimes{i}(1)/24/60/60+vidDN(i)))
-%         disp(['Check movie #' num2str(i)]);
-%     end
-% end
 
 if ~timestamps && sum(badvidDN)>= length(movN)
     disp('Using metadata timestamps from video files (times could not be read from video name)')
@@ -357,7 +329,8 @@ if timestamps && ~simpleread  && ~audioonly% if vid start time is read from the 
     end
 end
 
-% if exist('shortmovies','var') && ~isempty(shortmovies); disp(['Audio lengths are slightly off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible.']); end
+% make some plots to check if there are any potential errors in the frame
+% reads
 if ~audioonly
 figure; hold on; I = 1; numrepeats = zeros(size(vidDN));
 title('Plot of frameTimes.  Red stars indicate a jump in time (if no red stars, you should be good)');
@@ -373,8 +346,6 @@ for i = 1:length(frameTimes);
     oi2 = find((diff(frameTimes{i}) < 0 & diff(frameTimes{i}) > -median(diff(frameTimes{i}))));
     frameTimes{i}(oi2+1) = frameTimes{i}(oi2)+.001;
     if ~isempty(oi); 
-%         frameTimes{i} = checkbadframes(frameTimes{i},true,true,i);
-%         oi = find(diff(frameTimes{i})>5*median(diff(frameTimes{i})) | diff(frameTimes{i}) < 0);
         plot(I+oi-1,vidDN(i)+frameTimes{i}(oi)/24/60/60,'r*','markersize',8); hold on;
         df = round(1000*diff(frameTimes{i}))/1000;
         for ii = 1:length(oi); text(I+oi(ii)-1,vidDN(i)+frameTimes{i}(oi(ii))/24/60/60,[num2str(df(oi(ii))) ' s jump at vidFrame ' num2str(oi(ii))],'rotation',90,'verticalalignment','bottom'); end
