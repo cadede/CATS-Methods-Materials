@@ -6,6 +6,11 @@ function [Aw,Mw,Gw] = applyW(W,startsI,endsI,At,Mt,Gt,skipempty)
 % whale frame variables come out with nans where W is not applied. (e.g.
 % off whale)
 
+% this applies a rotation matrix, W, that rotates the tag frame
+% sensor data to the whale's frame of reference between the given indices of  startsI
+% and endsI.  W is a cell the length of startsI and endsI with a separate rotation matrix in each cell.
+
+
 if ~exist('skipempty','var') || isempty(skipempty); skipempty = false; end
 if length(W)~=length(startsI); error('check length W'); end
 Aw = nan(size(At)); Mw = Aw; Gw = Aw;

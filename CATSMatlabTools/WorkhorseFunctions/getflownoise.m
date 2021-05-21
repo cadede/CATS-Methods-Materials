@@ -1,5 +1,9 @@
 function [DB,AUD] = getflownoise(audiodir,vars)
 
+% reads wav files in a directory and converts them to low-frequency
+% flownoise, bandpass filtered between 66 and 94 Hz using the script
+% CATSrms
+
 names = fieldnames(vars);
 for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);

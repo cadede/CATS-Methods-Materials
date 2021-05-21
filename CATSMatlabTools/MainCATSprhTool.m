@@ -1,15 +1,17 @@
 % David Cade
-% version 1.1.2021
+% version 5.19.2021
 % UC Santa Cruz
 % Stanford University
 
 
 % Before running through the steps in this file, run importCATSdata;
-% this saves a *.mat file with data at 40 or 50 Hz, and Adata with raw
-% accelerometer files, and will be needed starting in step 2.
+% this saves a *.mat file with data at the original sampling rate of non-accelerometer data,
+% and Adata with raw accelerometer data at the sampling rate, and will be needed starting in step 2.
 % Run section 1 before you want to start making the prh file as it takes a long time (up to a day or more depending on number of videos).
-% Also prepare an xls file like spYYMMDD-tag#.xls with any observed tagslip times, GPS
-% location of tagon, and, if there are not timestamps on the video surfacing times for each video 
+% Also prepare a deployment-specific xls file like spYYMMDD-tag#.xls with any observed tagslip times, GPS
+% location of tagon, and, uncommonly, if the video starttimes are not known
+% precisely,
+% then the times of surfacings for each video for later synchronization
 
 dbstop if error;
 disp('Section completed')
@@ -252,9 +254,9 @@ disp(['Original data start time: ' datestr(ODN,'mm/dd/yy HH:MM:SS')]);
    CellNum = 5;
       save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
 disp('Section 5 done');
-%% 6.
-%Makes some variables (calibrated and decimated tag frame matrices Gt, At, Mt). 
-% Also calibrates and decimates pressure by using the internal temperature 
+%% 6.Calibrate pressure and decimate and apply bench cals to other sensors
+% Makes some variables (calibrated and decimated tag frame matrices Gt, At, Mt). 
+% Pressure is adjusted using the internal temperature 
 
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox
@@ -286,9 +288,7 @@ inc = -inc*pi/180; dec = dec*pi/180; b= b*10^-3; % inc is negative to match our 
 % calibrations also orient the axes to be North-East-Down (right-hand
 % rule), all angles counter clockwise rotations when looked at from the
 % positive side of the third axis. decdc decimates the files by the
-% decimation factor df.  filterCATS removes data spikes up to width 1/8 second in the original data bigger than 5% of
-% the max-min difference of the smoothed data (window of 1 second to each
-% side)
+% decimation factor df.  
 
 Depth = decdc(data.Pressure,df);
 DN = DNorig(1:df:end,:); DN = interp2length(DN,ofs/df,ofs/df,length(Depth));
@@ -300,19 +300,21 @@ if any(diff(DN)<0 | diff(DN)>1.5/24/60/60/fs); error('Error in time order (DN va
 % decimate pressure data and apply an in situ calibration based on water temp
 [Depth,CAL] = pressurecal(data,DN,CAL,nopress,ofs,df,tagon,Hzs.pHz);
 
-% get original cats cal values, but will likely be replaced in in situ
-% cals.  Inspect for major errors but At and Mt will be recalibrated next.
+% get original calibration files from the bench calibration, and also applies axis orientions
+% The calibrations will likely be replaced by in situ cals next.
+% Inspect the plots for major errors but At and Mt will be recalibrated next.
 % This uses bench cals acal, magcal, gycal to orient the axes to NED
 [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
 CellNum = 6;
 save([fileloc filename(1:end-4) 'Info.mat'],'DN','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
 disp('Section 6 done');
 %% 7a.  In situ cals
-% Test an in situ calibration of acclerometer using spherical cal.
-% you want the median value to be close to 1, but there should not be too
-% much difference between the two of them.  Choose either the bench test or
-% the in situ calibration.  If in situ doesn't converge (flat lines with 0
-% residual), try limiting II.
+% Test an in situ calibration of acclerometer using spherical_cal script from animaltags.org.
+% You want the median value to be close to 1, but there should not be too
+% much difference between the two of them (which would suggest a potential error).
+% Choose either the bench test or the in situ calibration.  
+% If in situ doesn't converge (flat lines with 0 residual), try limiting I
+% (the index of where to look for values appropriate to calibrate).
 
 % Matlab packages required: Signal Processing Toolbox
 
@@ -328,7 +330,8 @@ if ~exist('Depth','var')
     Temp = decimateM(Temp,ofs,Hzs.THz,df,length(DN),'THz');
 end
 
-[At,Acal] = calA(data,DN,tagondec,ofs,Hzs.accHz,df,CAL,Depth); % can input a sixth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data or really high acc somewhere that is throwing off the in situ cal.
+I = tagondec; % the identified tag on period (decimated to fs)
+[At,Acal] = calA(data,DN,I,ofs,Hzs.accHz,df,CAL,Depth); % can input a sixth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data or really high acc somewhere that is throwing off the in situ cal.
 At_mag = sqrt(sum(At.^2,2));
 CAL.Acal = Acal;
 CellNum = 6.5;
@@ -337,8 +340,9 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','CAL','-append');
 disp('Section 7a done');
 %% 7b Calibrate Mag using spherical cal from animaltags.org 
 % First tries spherical cal method using whole tag on time, then tries a
-% temperature related calibration, then tries different cal on/ cal off
-% periods.  Choose which one is best (flattest overall magnitude line closest to the magnetic
+% temperature related calibration, then tries different cal periods for camera on and off times.
+% If residual is < 5%, one method will be chosen automatically.  Else 
+% choose which one is best (flattest overall magnitude line closest to the magnetic
 % field line).  If calibration does not converge (flat lines with 0
 % residual), try restricting I or try using the pre-calibrated Mt to start.
 
@@ -347,7 +351,8 @@ if CellNum<6.5; x = input('Previous cell has not been completed, continue anyway
 end
 
 % Matlab packages required: Signal Processing Toolbox
-[Mt,Mcal] = calM(data,DN,tagondec,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
+I = tagondec;
+[Mt,Mcal] = calM(data,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
 
 CAL.Mcal = Mcal;
 Mt_mag = sqrt(sum(Mt.^2,2));
@@ -494,7 +499,7 @@ tag1 = find(vars.tagondec,1);
 tag2 = find(vars.tagondec,1,'last');
     disp('Done importing, check out figure 300 to examine data for outliers');
 % plot data.  Look for outliers, may have to remove data above a threshold
-% if there are spikes
+% if there are spikes (sometimes happens at start and end of recordings)
 if sum(isnan(flownoise)) ~= length(flownoise)
     figure(300); clf; set(300,'windowstyle','docked');
     ax = plotyy(vars.DN(tag1:tag2),Depth(tag1:tag2),vars.DN(tag1:tag2),flownoise(tag1:tag2));
@@ -517,9 +522,12 @@ if s == 1; save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','AUD','CellNu
 
 disp('Section 10a finished');
 
-%% 10b calculates tag jiggle RMS across all three axes.  Makes a summary
-% variable with three axes and the flownoise as the fourth (or the
-% magnitude of the overall Jiggle if no flow noise) for comparison in the next step
+%% 10b calculates tag jiggle RMS across all three axes.  
+% Makes a summary variable with the amplitude of vibrations (tag jiggle) as
+% measured by high frequency accerlometers, filtered from 10-90 Hz.  If the
+% sample rate is < 180 Hz, only a high pass filter at 10 Hz is used.
+% The fourth column of J is themagnitude of the overall Jiggle for
+% comparison in the next step.
 % see Cade et al 2018 Determining forward speed from accelerometer jiggle in aquatic environments. Journal of Experimental Biology, 221, jeb170449.
 
 % Matlab packages required: Signal Processing Toolbox
@@ -574,8 +582,13 @@ legend('JiggleRMS','FlownoiseRMS')
 % AdjDataVidOffsets;
 % disp('Now remaking full deployment audio file');
 % stitchaudio([fileloc 'AudioData\'],vars.whaleName,DN(1),vidDN,fileloc);
-%% 11. SPEED. Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
-% outputs:
+%% 11. Speed calibrated vs relationship with Orientation corrected depth rate (OCDR)
+% Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
+% NOTE: in newer versions of matlab, a known bug is that if figure 1 is maximized in the display it will not display properly 
+% if speed calibration does not look good, one recommendation is to press
+% ctrl-c to quit and then reset the thresholds set below.
+
+%outputs:
 % speed (table with speed.FN, speed.JJ, speed.SP (OCDR from sine of pitch)
 % speedstats (structure with thresholding and R2 information)
 % JigRMS (jiggle for each axes used in the multivariate correlation)
@@ -605,8 +618,8 @@ end
 
 
 % set threshold parameters
-minDepth = 5;
-minPitch = 40;
+minDepth = 1;
+minPitch = 20;
 % speedEnds = speedper(:,2);
 minSpeed = 1;
 % speedEnds([1 4 5 end-1:end]) = [];
@@ -675,17 +688,17 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % CellNum = 11;
 % save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
 
-%% 12.
-% save prh file.  At this point, basic orienation and motion data can be calculated, but after this step there are a few more steps
+%% 12.Save basic prh file
+% At this point, basic orienation and motion data can be calculated, but after this step there are a few more steps
 % to add GPS data and make the QuickLook file
-% saves the variables listed below in **prh file.  Lists the frequency you used 
-% Adjust "notes" below to add any notes about the prh file.
+% saves the variables listed below, including calibration data, in **prh file.  Lists the frequency you used 
+% Adjust "notes" and "creator" below to add any notes about the prh file.
 
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes ='';
+notes ='Speed unreliable.  Tag likely knocked off by interaction with conspecific';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -756,10 +769,10 @@ prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
-%% 13a. 
-% construct pos file from ubx file, or put GPS data from fastloc GPS in a "fastgps" folder then run this code 
+%% 13a. Adds tag GPS data to data structure. 
+% User: first construct a pos file from ubx file using Ublox conversion or similar, or put GPS data from fastloc GPS in a "fastgps" folder then run this code 
 % if you have GPS data from another source, can skip this section in favor
-% of the next code
+% of the next section
 
 % Matlab packages required: Mapping toolbox
 
@@ -779,7 +792,7 @@ catch
 end
 
 
-disp('GPS data added from pos file, could plot points using commented out script below or move to next step')% ting data (even if map doesn''t plot, you can move to 13b');
+disp('GPS data added from pos file, could plot points using script below or move to next step')% ting data (even if map doesn''t plot, you can move to 13b');
 try
     load([fileloc prhfile],'DN','GPS','tagon','p','fs');
     mapfileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\oldCATStools\map files\';
@@ -793,8 +806,14 @@ catch
     disp('Error in plotting map files (likely a difference in folder structure). Can move on without plotting GpS, or can use a more robust/better mapping algorithm.  Below scripts generate kml files which may be more useful in making nice maps anyway.');
 end
 
-%% 13b Make a "GPShits.xlsx" file with Time, Lat, Long from any other manual locations (like deployment or focal follows or Argos)
-% If no manual hits exist, can press enter to just use tag on and recovery
+%% 13b Import non-tag GPS hits (e.g. focal follow, tag on/tag recover positions)
+% also creates a pseudotrack, geo-referenced pseudotrack, and a kml file
+% that you can use to examine your points before saving the file prh file
+% and track
+
+% Needs: User shold make a "GPShits.xlsx" file (see template) with Time, Lat, Long 
+% from any other manual locations (like deployment or focal follows or Argos)
+% If no manual hits exist, can press cancel to just use tag on and recovery
 % locations from tag guide
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
@@ -807,7 +826,6 @@ close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
 manualGPS2prh(fileloc,prhfile); %catch; disp('No GPS file found or error in adding manual GPS hits'); end
-% Run this file to check georeferenced pseudotracks.  May have to rerun this cell to adjust points more once you see the track
 load([fileloc prhfile]);
 
 % get declination to recalculate head
@@ -821,21 +839,22 @@ end
 AA = Aw;
 % eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
 for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
-[fpk,q] = dsf(AA(tagon,:),fs,fs); % determine dominant stroke frequency;
+[fpk,q] = dsf(AA(tagon,:),fs,fs); % determine dominant stroke frequency (from animaltags.org)
 disp(['dominant stroke frequency: ' num2str(fpk) ' quality: ' num2str(q)]);
-[bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses Johnson method and then rotates back to normal axis orientation.
+[bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses method from animaltags.org (allows for filtering) and then rotates back to normal axis orientation.
 bodyhead = wrapToPi(m2h([Mw(:,1:2) -Mw(:,3)],[AA(:,1:2) -AA(:,3)],fs,fpk/2)+dec);
 
 sp = speed.JJ;
 % can use regular pitch or head if bodypitch or bodyhead have errors.
 % Bodypitch and bodyhead are just smoothed versions of pitch and head
-% uncomment this part if you may have sleeping whales
-sp(isnan(sp)) = 0;
-sp(p<1) = 0.1; sp = runmean(sp,fs);
+% uncomment this part if you may have sleeping whales (or slow moving
+% whales at the surface)
+% sp(isnan(sp)) = 0;
+% sp(p<1) = 0.1; sp = runmean(sp,fs);
 %
 [t,pt,newspeed,newhead] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0);
 
-% Use this code to make a ptrack if no geo information at all 
+% Use this code to make a ptrack if there is no lat/long information at all 
 % nhead = fixgaps(bodyhead); nhead(isnan(nhead)) = 0;
 % pthresh = 5; sp = speed.JJ; sp2 = sp; sp2(isnan(sp2)) = min(sp2); sp2 = runmean(sp2,2*fs); sp2(p<=pthresh) = nan; sp2 = fixgaps(sp2); sp(p<=pthresh) = sp2(p<=pthresh); sp = fixgaps(sp); sp(isnan(sp)) = min(sp); 
 % PT = ptrack(bodypitch(tagon),nhead(tagon),p(tagon),fs,[],sp(tagon));
@@ -854,7 +873,13 @@ gI = find(~isnan(GPS(:,1)));
 [~,b] = min(abs(gI-t1)); gI = gI(b);
 gtrack2kml(geoPtrack,tagon,fs,DN,1/60,GPS(gI),GPS(gI,2),INFO.UTC,INFO.whaleName,fileloc)
 
-%% 13c Once you have a good track, run this file to save all the results, including trackplot and kml file
+%% 13c Save tracks and images of the plots, makes a trackplot file and a netCDF (.nc) file, as well as an Acqknowledge file (a text file with data),
+%
+% Also, see line at the end of the cell that can be used to generate
+% lat/longs from the geoPtrack (useful for import into other formats).
+% Currently, this line is run automatically and a geoPtrackLatLong csv file
+% is written at 1Hz and truncated to tag on
+author = 'Dave Cade, davecade@stanford.edu'; % change user as appropriate
 % Matlab packages required: Audio Toolbox,
 
 save([fileloc prhfile],'geoPtrack','Ptrack','-append');
@@ -869,9 +894,11 @@ rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 % copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data\prh\' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
 
 t1 = find(~isnan(Ptrack(:,1)),1)+1; t2 = find(~isnan(Ptrack(:,1)),1,'last')-1;
-% uncomment line if you have nans before and after tag on;
+% This line accounts for the posisbility of nans before and after tag on;
 head(isnan(head)) = 0; pitch(isnan(pitch)) = 0; roll(isnan(roll)) = 0; Ptrack(1:t1,:) = repmat(Ptrack(t1,:),t1,1); Ptrack(t2:end,:) = repmat(Ptrack(t2,:),length(p)-t2+1,1); geoPtrack(1:t1,:) = repmat(geoPtrack(t1,:),t1,1); geoPtrack(t2:end,:) = repmat(geoPtrack(t2,:),length(p)-t2+1,1);
-% these try/catches are just about putting the files in the correct folder
+% these try/catches are just about putting the files in a trackplot folder
+% if it exists, since trackplot files need to be in the folder with the
+% trackplot program to be run.
 try
     % first option makes just the DMA file, second option uses the pseudotrack,
     % third option uses the geocorrected pseudotrack.
@@ -883,7 +910,9 @@ catch
     CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
 end
 
-author = 'Dave Cade, davecade@stanford.edu';
+% netcdf format needs meta data so that it is portable to other
+% applications.  If you have a TAG GUIDE, it can read info directly from
+% that, else it will prompt the use for needed values.
 try
     CATSnc([fileloc prhfile],[rootDIR 'TAG GUIDE.xlsx'],[],author);
 catch
@@ -893,21 +922,43 @@ end
 try copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\prh\nc\' INFO.whaleName '_prh' num2str(fs) '.nc']);
 catch; disp('Could not copy file to tag_data\prh\nc\ folder, nc file is only in working directory.');
 end
-% Can use this code to get lats and longs from geoPtrack, run:
-% Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
+% Can use this code to get lats and longs from geoPtrack:
+Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
+% Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
+% truncated to tagon time
+DN2 = DN(tagon);
+T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),'VariableNames',{'Time','Lat','Long'});
+writetable(T,[fileloc INFO.whaleName '_1HzgeoPtrackLatLong.csv']);
+
 
 CellNum = 13;
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','-append');
 disp('Section 13 finished, prh file and INFO saved');
 
-%% 14 needs images generated from above script as well as:
-% pics&vids folder with ID_... labeled and TAG_.... labeled. (and drone_... labeled if applicable) 
-% Also needs  spyymmdd-tag#kml.jpg and spyymmdd-tag#map.jpg from google earth plot
-% and up to two tag video still jpgs (spyymmdd-tag#cam.jpg and spyymmdd-tag#cam2.jpg) in the QL folder.  
+%% 14 Make a quicklook file
+% needs the images generated from above script (ptrack.jpg and geoptrack.jpg) as well as the following to run this script.
+% If you do not have all the following pieces, can make dummy files with a blank screen.
+% Folder set-up: pics&vids folder with the data that has two pictures specifically labeled:
+% One picture should be labeled ID_..., and one labeled TAG_.....  If ID or
+% tag photos are not available, can label other pictures with those labels just to put 
+% something there.  If you have a UAV image, also label a picture with
+% drone_... The drone photo will replace one of the maps in the bottom
+% left.
+% It will also look for a file in the QL folder labeled spyymmdd-tag#kml.jpg and spyymmdd-tag#map.jpg, which are typically
+% screenshots from a google earth plot of the kml file at low and high
+% spatial resolution, and it will also look for up to two tag video still jpgs 
+% (spyymmdd-tag#cam.jpg and spyymmdd-tag#cam2.jpg) that should be placed in the QL folder. These two are optional and will be left blank if they are not present 
+
+% Also requires a TAG GUIDE that stores metadata about the deployment.
+% The first column of the TAG GUIDE must have a row that matches the whaleName entry of the INFO structure of your prh file
+% Oher Necessary column headers for the TAG GUIDE are:
+% Animal ID, First Seen, Genetic Sex, Study Area, Total Data Time, Total
+% Video Time, Drone, Lat_On, Long_On, Tag Type, Tag #, Species, PI contact
+% note that the "Drone" column is for "Droned Length"
 
 % Matlab packages required: Robust Control Toolbos, Computer Vision Toolbox, 
 
-makemetadata = true; % makes a metadatafile in ATN format (requires an ATN template xls file). Set to false if you don't want this
+makemetadata = true; % Also creates a metadatafile in ATN format (requires an ATN template xls file from the "templates" folder). Set to false if you don't want this
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 

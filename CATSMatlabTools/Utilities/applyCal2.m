@@ -1,6 +1,10 @@
 function [Depth,At,Mt,Gt,Temp,Temp1,Light,LightIR] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df)
 nout = length(DN);
 
+%inputs the data table created from importCATSdata (or other import) as
+%well as a cal structure and outputs the axis oriented and in situ
+%calibrated sensor matrices
+
 if nargin<5; df = 1; end
 % if you don't need to decimate, assume df = 1;
 

@@ -1,4 +1,11 @@
 function [camon,audon,vidDN,vidDurs,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+
+% this function looks to see if any adjustment is needed for the video and
+% data times, based on inputs from the meta data xls file, and then also
+% provides the option to synch videos and data using surfacing behavior
+% data or some other marker of time from the videos that can be matched
+% with data.
+
 global fileloc filename
 if nargin<11; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
@@ -27,6 +34,7 @@ else
         vidDNorig = vidDN;
         if data.Date(1)<datenum([2017 09 01]) % old versions of tag where time stamps were in UTC
             vidDN = vidDN + data.Date(1)+UTC/24+timedif/24;
+            disp('Old file detected, assuming time stamps are in UTC');
         elseif vidDN(find(~isnan(vidDN),1))<10 % confirm that new vidDN takes into account full date
             vidDN = vidDN + data.Date(1)+timedif/24;
         else vidDN = vidDN + timedif/24;

@@ -8,6 +8,13 @@ function M = decimateM(M,ofs,sHz,df,nout,name,removenans)
 % name = name of sample rate to list if there is an error (optional)
 % by default, this function remmoves nans (linearly interpolates), then
 % puts them back in
+
+% This function accounts for the original sampling rates of the data.  So,
+% for instance, if pressure was sampled at 10 Hz, then upsampled to 50 Hz
+% during import, downsampling to 10 Hz is just sampling the data.  But if
+% the magnetometer was sampled at 50 Hz, then downsampling involves a
+% loss-less decimation using dec_dc from animaltags.org
+
 if nargin<7; removenans = true; end
 
 if removenans

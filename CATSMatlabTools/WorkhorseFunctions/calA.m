@@ -1,5 +1,8 @@
 function [At,Acal] = calA(data,DN,tagondec,ofs,accHz,df,CAL,Depth,I)
 
+% this function performs an in situ calibration on the accelerometer data,
+% based on the spherical_cal scripts at animaltags.org
+
 if nargin < 9
     I = find(tagondec);
     % else, could limit I (e.g. I = [40000:60000 90000:100000];)

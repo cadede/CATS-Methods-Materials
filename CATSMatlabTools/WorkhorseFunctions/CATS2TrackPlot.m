@@ -16,6 +16,7 @@ function CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,track,isgeo,whaleName,FS,fil
 % FS- final sampling rate (1.25 is good)
 % filedest- folder location for the final file
 
+% this function creates a trackplot file from prh file data.
 
 folder = '';
 if nargin<1 || isempty(head);

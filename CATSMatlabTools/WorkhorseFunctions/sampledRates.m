@@ -1,7 +1,8 @@
 function [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file)
 
-% this looks for the txt file that has information about sample rates
-% sometimes txt file doesn't exactly match csv filename with a slightly different time, so find
+% this looks for the txt file that has information about sample rates and
+% reports the sample rate of each sensor.
+% sometimes the txt file doesn't exactly match csv filename with a slightly different time, so find
 % the one that matches the best
 try
     % first try to automatically import text file

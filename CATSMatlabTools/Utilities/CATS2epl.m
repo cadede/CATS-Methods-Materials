@@ -1,4 +1,9 @@
 % function CATS2epl(geoPtrack, DN, fs, speedJJ, tagon, ID, FS,filedest) %,starttime, endtime 
+
+% uncomment aboe to run this script like a function. This inputs data from a prh
+% file and outputs an epl file suitable for plotting animal tracks in
+% echoview, including feeding events.
+
 % for n = [1:4 6:length(D)];
 % set filedest where your prh file is and filedest2 where you want the
 % final epl file

@@ -1,5 +1,5 @@
 function [time,flag] = gettimestampSEC(frame)
-%% %
+%%
 % figure(1); clf;
 I = frame(1054:1064,1730:1796,:);
 I = 255-I;

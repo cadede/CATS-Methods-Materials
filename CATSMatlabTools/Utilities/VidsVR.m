@@ -5,15 +5,11 @@
 % Stanford University
 
 %64-bit full version (with graph)
-% rearranges tag videos into side x side format.  Cuts the video into
-% chunks of length "dur" (in seconds).  Makes a new folder to put the cut pieces in.
-% includes audio and video with the same frame rate as the original.  File
-% sizes are much larger than the original.  If you want to play around with different
-% compressors that may give lower file sizes or allow for the whole video
-% to be written as one file, type "list = mmwrite('','ListAviVideoEncoders')" at a >> prompt to see your
-% compressor options.  Then change "comp" to a number corresponding to the
-% compressor you want to try.  Or download "freemake" video software and
-% just splice together the resulting clips
+%This is based on vidsdatawireless, but it imports the raw VR files, plus a
+%user-created "quad" file that is an unwrapped version of the VR video.
+%More information available by contacting the authors.
+
+
 tic;
 
 firststart = 5*60+25; % enter starttime of the first video you want to render (in seconds).  0 if the whole video, something else if you want to cut some off

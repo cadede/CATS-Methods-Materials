@@ -1,4 +1,8 @@
 function [fs,Mt,At,Gt,DN,Temp,Light,LightIR,TempInternal,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip)
+
+% this function facilitates stopping and starting of the prh process by
+% applying in situ cals and decimation factors to the variables in "data"
+
 nout = length(Depth);
 
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end

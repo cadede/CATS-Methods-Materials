@@ -2,6 +2,11 @@ function [speedJJ,speedTable,speedstats] = SpeedFromRMS3(RMS1,lab1,RMS2,lab2,fs,
 
 global label1 label2 numRMS minPitch minDepth maxDepth maxRR% only used in the context of this function
 label1 = lab1; label2 = lab2; minPitch = minPitch0; minDepth = minDepth0;
+
+% Regresses a metric of speed (e.g. RMS flow noise or the amplitude of tag
+% vibrations) against orientation corrected depth rate and applies that
+% regression to the entire data series.
+
 % Based on and available with Cade et al. 2018, Determining forward speed from
 % accelerometer jiggle in aquatic environments, Journal of Experimental
 % Biology, http://jeb.biologists.org/lookup/doi/10.1242/jeb.170449

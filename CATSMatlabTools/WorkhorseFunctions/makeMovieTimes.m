@@ -1,5 +1,12 @@
 function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums,audioonly)
 dbstop if error;
+
+% this function reads the time off each video frame.  For HD CATS cams, it
+% has the option to read the timestamp embedded on the video frame, but for
+% most applications it is sufficient to use the "simpleread" flag which
+% just reads the metadata off the file name (and compares with the embedded
+% timestamps for HD CATS data).
+
 % timestamps- signals whether to read embedded timestamps on the video or
 % just read the encoded timestamps (i.e. if timestamps do not exist )
 % folder - optional.  Can set a default folder to select a tag guide or check for videos.
@@ -248,9 +255,9 @@ for n = 1:length(movies)
             end
         end
     end
-    if strcmp(movies{n}(end-2:end),'raw') || n > mlast;
+    if strcmp(movies{n}(end-2:end),'raw') || n >  mlast-m1+1;
         vidNam{movN(n)} = movies{n};
-       if movN(n)>movN(mlast); vidNam{movN(n)} = []; vidDurs(movN(n)) = nan; end
+       if movN(n)>movN(mlast-m1+1); vidNam{movN(n)} = []; vidDurs(movN(n)) = nan; end
        continue; 
     end
     starttime = 0;
@@ -321,7 +328,7 @@ end
 if timestamps && ~simpleread  && ~audioonly% if vid start time is read from the time stamps.
     for n = 1:length(movies)
         if isempty(intersect(movN(n),vidNums)); continue; end
-        if ~strcmp(movies{n}(end-2:end),'raw') && n<= mlast;
+        if ~strcmp(movies{n}(end-2:end),'raw') && n<=  mlast-m1+1;
             DAY = floor(datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS'));
             vidDN(movN(n)) = DAY+vidDN(movN(n))-floor(vidDN(movN(n)));
             continue;
@@ -363,7 +370,7 @@ frameSize = [vid.width vid.height];
 else
     frameSize = [nan nan];
 end
-vidDurs(movN(mlast)+1:end) = []; frameTimes(movN(mlast)+1:end) = []; vidDN(movN(mlast)+1:end) = []; vidNam(movN(mlast)+1:end) = []; oframeTimes(movN(mlast)+1:end) = [];
+vidDurs(movN(mlast-m1+1)+1:end) = []; frameTimes(movN( mlast-m1+1)+1:end) = []; vidDN(movN( mlast-m1+1)+1:end) = []; vidNam(movN( mlast-m1+1)+1:end) = []; oframeTimes(movN( mlast-m1+1)+1:end) = [];
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize');
 if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end
 disp('movieTimes file saved successfully, truncated to only include on whale files. Can delete movieTimesTEMP if movieTimes is finalized (i.e. no errors).');

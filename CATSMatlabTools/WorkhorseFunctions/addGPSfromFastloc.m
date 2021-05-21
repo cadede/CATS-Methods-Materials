@@ -1,4 +1,4 @@
-%% 13. Combine fastGPS with PRH
+%% 13. Combine fastGPS data with PRH file
 % based on Add_SDA_GPS by James Fahlbusch (c) 2019
 
 function addGPSfromFastloc(fileloc,INFO)

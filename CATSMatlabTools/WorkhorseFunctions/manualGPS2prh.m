@@ -1,5 +1,8 @@
 function [GPS,GPSerr] = manualGPS2prh (prhloc, prhfile)
 % Choose a prhfile and a GPS file (with date/time column, lat, long)
+% Plots GPS data acquired from non-tag sources (e.g. tag on positions,
+% focal follows, extra sensors) and allows the user to filter any bad
+% positions.
 
 if nargin<2
     try cd(prhloc);

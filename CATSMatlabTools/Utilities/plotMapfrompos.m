@@ -1,7 +1,7 @@
 function [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc,edges)
    global fileloc
-%plots a coastline map and the GPS points in GPS up to the boundary of
-%edges.  Default is 10 km.
+%plots a rudimentary coastline map and the GPS points in GPS variable up to the boundary of
+% the edges variable.  Default is 10 km.  
 if nargin<7; edges = 10; end
 %
 try

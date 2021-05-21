@@ -1,3 +1,9 @@
+% This uses the RMS flownoise with the RMS jiggle and tries to line up
+% peaks in the signal, treating each audio file separately.  This is for a
+% sweet of time when the CATS tags had a video offset time from the data
+% that needed to be accounted for.
+
+
 load([fileloc filename(1:end-4) 'Info.mat'],'tagondec');
 DB = flownoise;
 JJ = J; JJ(isnan(JJ)) = 0; JJ = runmean(JJ,fs);

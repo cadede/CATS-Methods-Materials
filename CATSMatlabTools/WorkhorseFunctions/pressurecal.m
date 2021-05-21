@@ -1,5 +1,8 @@
 function [Depth,CAL] = pressurecal(data,DN,CAL,nopress,ofs,df,tagon,pHz)
     
+% calibrates the pressure sensor using the internal temperature sensor,
+% based on fix_pressure from animaltags.org
+
 try pconst = CAL.pconst; pcal = CAL.pcal;
 catch
     CAL.pconst = 0; CAL.pcal = 1;

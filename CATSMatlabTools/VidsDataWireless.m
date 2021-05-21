@@ -1,19 +1,32 @@
-%
 % David Cade
-% version 9.29.15
+% version 9.29.19
 % Goldbogen Lab
 % Stanford University
 
 %64-bit full version (with graph)
-% rearranges tag videos into side x side format.  Cuts the video into
-% chunks of length "dur" (in seconds).  Makes a new folder to put the cut pieces in.
-% includes audio and video with the same frame rate as the original.  File
-% sizes are much larger than the original.  If you want to play around with different
-% compressors that may give lower file sizes or allow for the whole video
-% to be written as one file, type "list = mmwrite('','ListAviVideoEncoders')" at a >> prompt to see your
-% compressor options.  Then change "comp" to a number corresponding to the
-% compressor you want to try.  Or download "freemake" video software and
-% just splice together the resulting clips
+% Writes data onto video.  Cuts the video into
+% chunks of length "dur" (in seconds).  Makes a new folder (partial) to put the partial videos in.
+% Final video will have audio and video with the same frame rate and video resolution as the original.  File
+% sizes are much larger than the original. To make a final video, videos will need to be synched together
+% using Adobe Media Encoder or similar (perahps try "freemake" video software, though 
+% as of 2017, resolution of final videos using freemake was not maintained).
+% If you want to play around with different
+% compressors that may give lower partial file sizes, type "list = mmwrite('','ListAviVideoEncoders')" 
+% at a >> prompt to see your compressor options.  Then change "comp" to a number corresponding to the
+% compressor you want to try.  
+
+% 3D orientation of dolphin panel created via scripts from animaltags.org
+
+% this software runs in two cells.  Cell 1 sets up the data and makes
+% preliminary graphs.  Cell 2 starts the write process.  If the process
+% gets interupted at any point, you do not need to restart from the
+% beginning, but it is recommended to restart cell 2 by setting "startn" at
+% the start of a video sequence. That is, if it was currently making videos
+% 10-12 stitched together, set n so that it restarts on video 10.  Note
+% that n may not be 10, as the first video of the deployment may not be 1.
+% e.g., if the first video is 5, n in this example would be 6. To check
+% this, type filename{6} and the name of video 10 would be displayed.
+
 tic;
 
 autocrop = true; % if you want to automatically crop the video to 60 seconds before tag on and 30 seconds after tagon, if false enter start, end below
@@ -21,33 +34,24 @@ autocrop = true; % if you want to automatically crop the video to 60 seconds bef
 
 firststart = 0; % if autocrop is false, enter starttime of the first video you want to render (in seconds).  0 if the whole video, something else if you want to cut some off
 lastend = 30000;% if autocrop is false, enter a big number if you want to do the whole last video (anything longer than the length of the file- generally 100 hours in seconds to be bigger than the weird reading wireless videos)
+% not relevant for single video cameras:
 swapRL = false; % set to true if you want R and L cameras to be reversed (good for fro-back deployments on the right side of the animal).
 
-justflownoise = true; % set to true if you want to display one speed metric instead of the composite speed
+justflownoise = true; % Recommended to set to true to display one speed metric.  False uses a composite speed metric that has not been shown to be more useful
 justjiggle = true; % set to true if you want to use jiggle instead of flow noise
-combinesmall = true; % set to 0 if you do NOT want files to be combined into the previous video.  Default settings are 30 minute videos as long as gaps are less than 3 minutes
-smallfont = false; %processors seem to handle font size differently.  For some newer videos need to set this to true to keep the font reasonable in the data box
+combinesmall = true; % set to 0 if you do NOT want small video files to be combined into one larger video.  Default settings are 40 minutes of total video time as long as gaps between videos are less than 20 minutes.  Search for "combinesmall" below to change these defaults.
+smallfont = false; %processors seem to handle font size differently.  For some newer videos you may need to set this to true to keep the font reasonable in the data box
 dur = 15; % how much of the video (s) to read each iteration.  inf = make the whole video.  if you're having memory problems, I feel bad for you, son.  Try lowering the duration
 comp = 5; % 0 means, use the last listed video compressor.  Change this number to use a different one.  run the "list" line later to see all compresors, MJPEG seems to work well
 % boxP = 300/2560;  % proportion of the bottom graph you want to be the data box
 boxsize = 0; %boxP*2560; %size of data box in pixels.  300 works for current font size and height
 filtspeed = true; % if you want to smooth the speed
-% withgraph = 1;  % 0 = no graph, 1 = platypus data, 2 = dtag data
-% withprh = 1; % adds pitch, roll, heading, but you need the file
-% threegraphs = 1; % when you have prh, also includes the whole dive profile.
 
-Hz = 10; %refresh rate of graph
+Hz = 10; %refresh rate of graph (good idea to match this with your sample rate of your data)
 gap = 2; %pixels between video and graph
-% calibrate = 0; %if you want to automatically calibrate the timcal (only works if you have the first video file recorded)
 lowrat = 1; % the ratio of the size of the lower graph to the upper one
-% leftres = 1280; % if your left side monitor is lower res than your main monitor (assuming your main monitor isn't ~=2560).  Put nan if it's the same.
-% makenew = true;
 
-% a = getdrives;
-% for i = 1:length(a)
-%     [~,vol]=system(['vol ' a{i}(1) ':']);
-%     if strfind(vol,'CADE2'); vol = a{i}(1); break; end
-% end
+% set the default axes colors to matlab 2014a for consistency in plotting.
 co = [0 0 1;
       0 0.5 0;
       1 0 0;
@@ -57,7 +61,7 @@ co = [0 0 1;
       0.25 0.25 0.25];
 set(groot,'defaultAxesColorOrder',co);
 
-cf = pwd; try cd('D:\'); catch; end %cd([vol ':\CATS']);
+cf = pwd; %try cd('D:\'); catch; end
 [filename,fileloc]=uigetfile('*.*', 'select video files from one deployment','multiselect','on'); % can do multiple files successively
 if ischar(filename); filename = {filename}; end
 cd(fileloc); try cd('\\GOLDTERA1\lab\TEMP\prhs'); catch; end %cd(
@@ -76,24 +80,27 @@ if autocrop
     end
     lastend = round(min(vidDurs(viddeploy(end))+10,24*60*60*(DN(find(tagon,1,'last')) - vidDN(viddeploy(end))) + 30));
 end
+if Hz ~=fs; disp('WARNING: graph refresh rate (the "Hz" variable set) does not match the prh sample rate, may consider changing Hz to match'); end
 
 starttime = [firststart zeros(1,length(filename)-1)]; %zeros(size(filename)); % can adjust these if you don't want to render the whole videos
 et = [100*60*60*ones(1,length(filename)-1) lastend];
-if INFO.tagnum>=40 && ~ismember(INFO.tagnum,[50 51])
-    kitten = true; else kitten = false;
-end
+
+% legacy switch based on tag number, now assumes all videos are wireless
+% style
+% if INFO.tagnum>=40 && ~ismember(INFO.tagnum,[50 51])
+%     wireless = true; else wireless = false;
+% end
 
 
-% if kitten
-    try D = dir(fileloc(1:end-4)); D = {D.name}'; load([fileloc(1:end-4) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
-    catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
-        catch; try D = dir(prhloc(1:end)); D = {D.name}'; load([prhloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
-            catch; [framename,frameloc]=uigetfile('*.*', 'select movieTimes file for wireless videos'); load([frameloc framename],'frameTimes','oframeTimes','frameSize');
-            end
+
+try D = dir(fileloc(1:end-4)); D = {D.name}'; load([fileloc(1:end-4) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
+catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
+    catch; try D = dir(prhloc(1:end)); D = {D.name}'; load([prhloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
+        catch; [framename,frameloc]=uigetfile('*.*', 'select movieTimes file for wireless videos'); load([frameloc framename],'frameTimes','oframeTimes','frameSize');
         end
     end
-    if ~kitten; oframeTimes = frameTimes; end
-% end
+end
+if ~wireless; oframeTimes = frameTimes; end
 
 if ~exist('speed','var');
     speed = table(speedFN, cell(size(speedFN)),'VariableNames',{'comp','type'});  speed.type(:) = {'FN'};
@@ -218,7 +225,7 @@ saveas(fig5,[prhloc 'QL\' prhfile(1:prhN) ' prh' '.bmp']);
 CONTINUE = false; % Should be false, but set to true if you want to continue a previously interrupted cycle.  FYI, best time to interrupt is when the graphs are blazing.
 startref = starttime; % for adjusting starttime for wireless videos
 
-% make dolphin figure
+% make dolphin figure using rot_3D_model from animaltags.org
  boxsize = xsize-vidW -gap;
  boxH = round(457/300*boxsize); %457/30
  fig6 = figure(6); clf;
@@ -236,12 +243,17 @@ startref = starttime; % for adjusting starttime for wireless videos
  prh(~tagon,:) = nan;
  
  
-%% Section 2- start cycling through videos
+%% Section 2- start cycling through videos.  See note at the beginning about restarting if the process is interupted
 global movieNum
 tagnum = gettagnum(prhfile);
-% if tagnum>4 && tagnum < 40; T = nan(size(T)); Light = nan(size(Light)); end
+
+% this is a legacy switch.  Not recommended to use for now
 if CONTINUE; startn = n; j = max(1,j-1); else startn = 1; end % lastVideo = length of last video % lastVideo = 0;
 clear doublebits;
+
+% change to startn = xx if process was interupted (see note above to
+% determine value of xx).
+startn = startn;
 
 % some new files had audio trouble.  If they are remade, this helps find
 % them.  You will want to move your wav files 
@@ -250,20 +262,21 @@ elseif exist([fileloc 'wavfiles\'],'dir'); audioloc = [fileloc 'wavfiles\']; che
 elseif exist([fileloc(1:end-4) 'AudioData\'],'dir'); audioloc = [fileloc 'AudioData\']; checkaudiofs = true; audioend = 'wav';
 else audioloc = fileloc; checkaudiofs = false;
 end
+if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = nan(size(p)); end
 
 % if checkaudiofs; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end); end
 
-for n = startn:length(filename) %24:26 21:23 18:20]
+for n = startn:length(filename)
     if ~CONTINUE || n>startn || j == 1
         vidN = viddeploy(strcmp(filename{n},vidNam(viddeploy)));
         if isempty(vidN); continue; end
         %     pr = p;
         endtime = et(n);
-        if kitten; endtime = oframeTimes{vidN}(find(frameTimes{vidN}<=et(n),1,'last')); end
+        if wireless; endtime = oframeTimes{vidN}(find(frameTimes{vidN}<=et(n),1,'last')); end
         totaltime = endtime - starttime(n);
 %         stopj = floor((totaltime-1-.001)/dur)+1; %-1 is a correction factor for videos that go just one second over the threshold, 'cause then what's the point?
         stopj = floor((totaltime-.001)/dur)+1; %got rid of correction factor from above, we'll include that last second thank you very much.
-        if kitten && starttime(n)>0; stopj = floor(((endtime-oframeTimes{vidN}(find(frameTimes{vidN}>=starttime(n),1,'first')))-.001)/dur)+1; end
+        if wireless && starttime(n)>0; stopj = floor(((endtime-oframeTimes{vidN}(find(frameTimes{vidN}>=starttime(n),1,'first')))-.001)/dur)+1; end
         startj = 1;
     else startj = j;
     end
@@ -274,7 +287,7 @@ for n = startn:length(filename) %24:26 21:23 18:20]
 %         disp(['Loading fixed audio file for ' filename{n}(1:end-4)]);
 %     catch
 %     end
-    %     if kitten; lastframe = 0; end
+    %     if wireless; lastframe = 0; end
     c = find(cellfun(@(x) ismember(vidN,x), combos));
     ci = find(combos{c}==vidN);
     if ci == 1; combos{c}(ismember(combos{c}, find(isnan(vidDN)))) = []; end
@@ -291,11 +304,11 @@ for n = startn:length(filename) %24:26 21:23 18:20]
             break; end
         clear vid aud;
         if isinf(dur); [vid,aud] = mmread([fileloc filename{n}]); else
-            ST0 = dur*(j-1)+starttime(n); if kitten; ST0 =  oframeTimes{vidN}(find(frameTimes{vidN}>=starttime(n),1,'first')) + dur*(j-1); end
+            ST0 = dur*(j-1)+starttime(n); if wireless; ST0 =  oframeTimes{vidN}(find(frameTimes{vidN}>=starttime(n),1,'first')) + dur*(j-1); end
             if ~checkaudiofs; audioend = filename{n}(end-2:end); end
-            if j>1; ST0 = ST0-kitten*0.1;
-                [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0+.1*kitten,endtime)]);
-                 [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0+.1*kitten,endtime)],true); %just audio
+            if j>1; ST0 = ST0-wireless*0.1;
+                [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0+.1*wireless,endtime)]);
+                 [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0+.1*wireless,endtime)],true); %just audio
             else [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0,endtime)]);
                 [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0,endtime)],true); %just audio
             end
@@ -303,9 +316,9 @@ for n = startn:length(filename) %24:26 21:23 18:20]
 %             [aud, sm] = fixmmreadaud(aud,totalDuration,true);
         end
         if endtime>vid.totalDuration; endtime = vid.totalDuration; totaltime = endtime - starttime(n);
-            if stopj>ceil((totaltime-1)/dur); stopj = ceil((totaltime-1)/dur); end; end %has to be before the kitten section since you are reading video from the raw (wrong) time
+            if stopj>ceil((totaltime-1)/dur); stopj = ceil((totaltime-1)/dur); end; end %has to be before the wireless section since you are reading video from the raw (wrong) time
         startref(n) = starttime(n);
-        if kitten
+        if wireless
             readingweird = false;
             try TD = min(vid.totalDuration, endtime); catch; TD = 100*60*60; end
             if length(vid.frames)<90

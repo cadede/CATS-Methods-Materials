@@ -4,6 +4,9 @@ function [Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,tagsli
 % dec is the declination in radians at the deployment location.  Enter 0 if you want heading calculated to magnetic north
 % tagslip is a m x 2 matrix, where the first row and last rows are the tag on and tag off indices (same value in each column).  Column 1 is the start of a tag slip, column 2 is the end of a tagslip.
 
+% this function walks the user through identifying periods of time useful
+% to convert tag frame sensor data to animal frame.  See description around
+% Figs 7 & 8 in the manuscript accompanying this code.
 
 % Johnson method based on a tutorial from: Fine-scale animal
 % movement workshop, Hobart, March 2011.  Page 10 gives a lot of good information and

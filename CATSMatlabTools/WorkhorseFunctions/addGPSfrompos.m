@@ -1,5 +1,9 @@
 function [report, data] = addGPSfrompos(fileloc,data,Hzs,UTC) 
 % finds all pos files in a filelocation, and adds GPS info to the matching mat files and the prh file (if they exis.  Also generates a "quick look" with depth and GPS locations
+
+% this function for use in CATS tags that generate their own .pos files
+% with GPS information from ubx files.
+
 global fixweird
 fixweird = [];
 %%
