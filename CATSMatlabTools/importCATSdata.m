@@ -206,6 +206,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         else fs = max([gyrHz magHz pHz lHz GPSHz]);
         end
         data = data(find(~strcmp(data.Acc1,'0'),1,'first'):end,:);
+        if noPress; data.Pressure = zeros(size(data,1),1); headers{end+1} = 'Pressure'; end 
         dataT = data;
     else % if not on the first csv imported
         if vers<2020
