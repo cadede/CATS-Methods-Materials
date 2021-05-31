@@ -10,6 +10,6 @@ This repository is designed to provide the entire CATS toolkit and a full tutori
 
 1) To start, download the CATS Tools folder and **add it to your Matlab file path with all folders and subfolders.**
 
-2) If you have a brand new CATS tag, navigate to the Wiki and start with the first section ("Setting Up Tag And User Interface") to set up your tag. Please note that the CATS tag design changes regularly and may make some segments of the Wiki out-of-date. We will try to update the Wiki as often as we can.
+2) If you have a brand new CATS tag, navigate to the Wiki and start with the "Set-Up And User Interface" section to begin setting up your tag. Please note that the CATS tag design changes regularly and may make some segments of the Wiki out-of-date. We will try to update the Wiki as often as we can.
 
-3) If you have already set up your tag and successfully deployed it, navigate to the fourth section ("Importing CATS Data") and start working along from there.
+3) If you have already set up your tag and successfully deployed it, navigate to the initial processing steps ("Importing CATS Data") and work along from there.
