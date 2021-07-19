@@ -7,11 +7,13 @@
 % Before running through the steps in this file, run importCATSdata;
 % this saves a *.mat file with data at the original sampling rate of non-accelerometer data,
 % and Adata with raw accelerometer data at the sampling rate, and will be needed starting in step 2.
-% Run section 1 before you want to start making the prh file as it takes a long time (up to a day or more depending on number of videos).
-% Also prepare a deployment-specific xls file like spYYMMDD-tag#.xls with any observed tagslip times, GPS
+% If you have video or audio data, run section 1 before you want to start making the prh file as it takes a long time (up to a day or more depending on number of videos).
+% If you just have audio, it will not take as long.
+% In general, all cells should be run one at a time, except cell 1 which
+% can be skipped if you have no video or audio data.
+% Before starting, also prepare a deployment-specific xls file like spYYMMDD-tag#.xls with any observed tagslip times, GPS
 % location of tagon, and, uncommonly, if the video starttimes are not known
-% precisely,
-% then the times of surfacings for each video for later synchronization
+% precisely, then the times of surfacings for each video for later synchronization
 
 dbstop if error;
 disp('Section completed')
@@ -122,7 +124,7 @@ disp('Section 2 finished');
 clearvars -except fileloc filename decfac folder tagnum headers CellNum
 %% 3. Create a truncated file (or load it) and rename variables. This step 
 % shortens the data to be closer to the length of the deployment.  It is not
-% necessary at this stage to trim all the way to only be for the deployment, 
+% necessary at this stage to trim to just the deployment duration, since
 % sometimes it can be beneficial for smoothing data etc. to have some data on 
 % either end, but for tags that run before deployment and have a lot of floating 
 % data, this can reduce file sizes and processing times.
@@ -158,7 +160,7 @@ else
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
     [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename); % workhorse script in this section
-          save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','-append');
+          save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
     disp('Check to ensure these times are before tag on and after tag off (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
 end
@@ -361,9 +363,8 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CAL','CellNum','-append');
 disp('Section 7b finished');
 
 
-%% 8.1 Find orientation of tag on animal
-% iteratively goes tag slip section by tag slip section, rotating tag frame to whale frame
-% given user defined selection 
+%% 8a Find orientation of tag on animal (start by identfying potential tag slips)
+
 
 % Matlab packages required: Signal Processing Toolbox
 
@@ -398,8 +399,10 @@ save([fileloc filename(1:end-4) 'Info.mat'],'slips','CellNum','-append');
 
 disp('section 8.1 completed');
 
-%% 8.2
-% 2. left click on a few surfacings where accelerometers are stable, and right click on the boundaries of
+%% 8b rotate tag frame to animal frame and calculate animal pitch, roll, heading
+% iteratively goes tag slip section by tag slip section, rotating tag frame to whale frame
+% given user defined selection 
+%  left click on a few surfacings where accelerometers are stable, and right click on the boundaries of
 % the first few seconds of a dive that looks like it has a smooth transition in the accelerometers.  Double check the
 % boundaries before pressing enter.
 % outputs: calperiodI which gives the indices of each surfacing/dive 
@@ -577,12 +580,12 @@ D = flownoise; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
 figure; plotyy(DN,JJ,DN,D);
 legend('JiggleRMS','FlownoiseRMS')
 
-%% should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
+% should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
 % maxoffset = 2.5; % set with what you think the max offset would be
 % AdjDataVidOffsets;
 % disp('Now remaking full deployment audio file');
 % stitchaudio([fileloc 'AudioData\'],vars.whaleName,DN(1),vidDN,fileloc);
-%% 11. Speed calibrated vs relationship with Orientation corrected depth rate (OCDR)
+%% 11. Speed estimated from the regression of tag jiggle or flow noise against orientation-corrected depth rate (OCDR)
 % Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % NOTE: in newer versions of matlab, a known bug is that if figure 1 is maximized in the display it will not display properly 
 % if speed calibration does not look good, one recommendation is to press
@@ -618,8 +621,8 @@ end
 
 
 % set threshold parameters
-minDepth = 1;
-minPitch = 20;
+minDepth = 10;
+minPitch = 45;
 % speedEnds = speedper(:,2);
 minSpeed = 1;
 % speedEnds([1 4 5 end-1:end]) = [];
@@ -697,8 +700,8 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
-creator = 'DEC';
-notes ='Speed unreliable.  Tag likely knocked off by interaction with conspecific';
+creator = '';
+notes ='';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -956,7 +959,7 @@ disp('Section 13 finished, prh file and INFO saved');
 % Video Time, Drone, Lat_On, Long_On, Tag Type, Tag #, Species, PI contact
 % note that the "Drone" column is for "Droned Length"
 
-% Matlab packages required: Robust Control Toolbos, Computer Vision Toolbox, 
+% Matlab packages required: Robust Control Toolbox, Computer Vision Toolbox, 
 
 makemetadata = true; % Also creates a metadatafile in ATN format (requires an ATN template xls file from the "templates" folder). Set to false if you don't want this
 

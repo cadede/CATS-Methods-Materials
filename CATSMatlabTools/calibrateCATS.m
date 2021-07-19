@@ -96,7 +96,7 @@ if abs(nanmean(M)-1)>.02
     warning (['Calibration of accelerometers is inconsistent, mean of M = ' num2str(nanmean(M))]);
 end
 
-if strcmpi(tagtype(1:5),'TDR10')
+if strcmpi(tagtype(1:5),'TDR10') || strcmpi(tagtype(1:5),'Littl') 
     save([fileloc 'TDR10cal' num2str(tagnum) '.mat'],'acal','aconst');
 end
 disp('Step 1 successfully completed')

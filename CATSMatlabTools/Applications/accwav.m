@@ -5,8 +5,8 @@
 % Stanford University
 %
 % INPUTS: 
-% Calling this script will the user to select the truncate.mat, prh.mat, 
-% and calibration.mat files for a deployment of interest.
+% Calling this script will the user to select the truncate.mat and prh.mat
+% files for a deployment of interest.
 %
 % OUTPUTS:
 % The script will save a .wav file with number of channels equal to the

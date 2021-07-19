@@ -43,10 +43,14 @@ elseif strcmpi(tagtype,'data')
 axAo = [-x -y z];
 axMo = [-x -y z];
 axGo = [-x -y z];
+elseif strcmpi(tagtype,'LittleLeonardo')
+    axAo = [y x -z];
+    axMo = [x y z];
+    axGo = [x y z]; % no gyros or mag
 elseif strcmpi(tagtype,'TDR10')
 axAo = [-x y z];
 axMo = [x y z];
-axGo = [x y z];
+axGo = [x y z]; % no gyros or mag
 elseif strcmpi(tagtype,'TDR10_rotate')
 axAo = [x -y z];
 axMo = [x y z];

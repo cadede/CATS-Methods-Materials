@@ -123,7 +123,7 @@ if ~isempty(baddata)
         fixcols(~cellfun(@isempty, cellfun(@(x) strfind(x,'GPS'),headers,'uniformoutput',false))) = false;
         fixcols(cellfun(@(x) strcmp(x,'Date'),headers) | cellfun(@(x) strcmp(x,'Time'),headers)) = false;
         for j = find(fixcols)
-            if sum(isnan(data{j,:})) ~= length(data{j,:})
+            if sum(isnan(data{:,j})) ~= length(data{:,j})
                 data{:,j} = fixgaps(data{:,j});
             end
         end
