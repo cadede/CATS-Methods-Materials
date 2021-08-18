@@ -43,7 +43,7 @@ disp('Section completed')
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
-folder = 'E:\Goldfield\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
+folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
 % set to true if there are are no audio files to read.
 readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
