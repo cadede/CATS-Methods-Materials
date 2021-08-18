@@ -268,7 +268,7 @@ for n = 1:length(movies)
     while endtime<=videoL+dur;
         clear M vid aud;
         if ~timestamps
-            [vid,aud] = mmreadFT([movieloc movies{n}], [],[starttime endtime],false,true); %FT saves some time, but still not as efficient as it should be since it reads the video and not just the time
+            [vid,~] = mmreadFT([movieloc movies{n}], [],[starttime endtime],false,true); %FT saves some time, but still not as efficient as it should be since it reads the video and not just the time
         elseif ~simpleread
             readwirelessvideo2; 
             if badmovie; if ~exist([movieloc 'bad movies\'], 'dir'); mkdir([movieloc 'bad movies\']); end

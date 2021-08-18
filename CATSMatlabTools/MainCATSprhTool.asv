@@ -44,8 +44,8 @@ disp('Section completed')
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E:\Goldfield\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
-% set to true if there are are no audio files to read.
-readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+% set to true if tehre are are no audio files to read.
+readaudiofiles = false; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
 % these will be less commonly adjusted
 audioonly = false; % set to true for tags that do not have video (currently only works if you have wav files, if you only have ".raw" versions of audio files and no video files, we will have to make some adjustments still to ensure data is converted at the right sample rate.
