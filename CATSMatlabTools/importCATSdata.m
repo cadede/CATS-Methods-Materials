@@ -504,7 +504,7 @@ s3 = subplot(313);
 plot(data.Date+data.Time,data.Pressure); title('Pressure'); set(s3,'ydir','rev');
 linkaxes([s1 s2 s3],'x');
 set([s1 s2 s3],'xticklabel',datestr(get(s1,'xtick'),'HH:MM:SS'))
-disp('For figure 2, use "set([s1 s2 s3],''xticklabel'',datestr(get(s1,''xtick''),''HH:MM:SS''))" to reset axis labels if you zoom in');
+disp('For figure 2, use "set(get(gcf,''children''),''xticklabel'',datestr(get(gca,''xtick''),''HH:MM:SS''))" to reset axis labels if you zoom in');
 if any(sum(diff([data.Acc1 data.Acc2 data.Acc3])==0)>.25*size(data,1)); error('CHECK ACCELEROMETER GRAPH, may have dropped an axis'); end
 Mdiff = diff([data.Comp1 data.Comp2 data.Comp3]);
 Mdiff2 = [[data.Comp1(1:end-2) data.Comp2(1:end-2) data.Comp3(1:end-2)] - [data.Comp1(3:end) data.Comp2(3:end) data.Comp3(3:end)]; [0 0 0]];

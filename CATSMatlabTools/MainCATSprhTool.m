@@ -189,6 +189,10 @@ disp('Section 3 finished');
    % at the end of every cell, these are the new variables that are needed
    % to move forward and are saved in the INFO file. See tag wiki on github site for
    % descriptions of each variable.
+   
+   if ~exist('ofs','var'); ofs = round(1/mean(diff(data.Time(50:100))*24*60*60)); warning(['No ofs variable found, calculated ' num2str(ofs) ' Hz as original sampling rate of data table']); end
+    if ~exist('Afs','var'); Afs = round(1/mean(diff(Atime(50:100))*24*60*60)); warning(['No Afs variable found, calculated ' num2str(Afs) ' Hz as original sampling rate of data table']); end
+
       save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','-append');
 %% 4. adjust video times to match data times 
 % This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.

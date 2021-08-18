@@ -59,8 +59,10 @@ catch
     warning('Doesn''t appear to be a pressure sensor.  Inputting 0 for pressure'); noPress = true;
 end
 try pHz =str2num(acc(regexp(acc,'=')+1:end)); catch; pHz = 10; end
-acc = find(~cellfun(@isempty,strfind(Hzs,'Light')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};
+try acc = find(~cellfun(@isempty,strfind(Hzs,'Light')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};
 lHz =str2num(acc(regexp(acc,'=')+1:end));
+catch; lHz = nan; disp('No Light sample rate in txt file');
+end
 try acc = find(~cellfun(@isempty,strfind(Hzs,'GPS')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))}; GPSHz =str2num(acc(regexp(acc,'=')+1:end)); catch; GPSHz = nan; end
 try
 acc = find(~cellfun(@isempty,strfind(Hzs,'Temp.')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};

@@ -144,6 +144,8 @@ kml = im;
 gt = im;
 [im,imc] = imread([ptfl pt]); try im = ind2rgb(im,imc); catch; end
 pt = im;
+%note: fix this to be more flexible if no ID file or tag file exists (make
+%blank image)
 [im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
 ID = im;
 [im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end

@@ -91,7 +91,7 @@ et = [100*60*60*ones(1,length(filename)-1) lastend];
 %     wireless = true; else wireless = false;
 % end
 
-
+wireless = true;
 
 try D = dir(fileloc(1:end-4)); D = {D.name}'; load([fileloc(1:end-4) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
 catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
