@@ -256,11 +256,8 @@ for n = 1:length(movies)
                 badvidDN(movN(n)) = false;
             else
                  try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
-                     warning(['movie file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
-                     disp('RECOMMEND synching movie times via surfacings');
+                     disp(['movie file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
                      badvidDN(movN(n)) = false;
-                 catch; error('No video start time, recommend avoiding simpleread')
-                 end
             end
         else
             try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');

@@ -109,7 +109,7 @@ else
         %of the tag
         ODNa = ODN + timedif/24;
         if ~synchusingvidtimestamps
-            if (vidDN(1)<DN(1) || vidDN(1)>DN(end))
+            if (vidDN(1)<DN(1)-1 || vidDN(1)>DN(end)+1) % if the vidDN don't relate at all to the data times
                 if ~isnan(vidDN(1)) % legacy- if there is no info on the video start times, assume it starts just after data turns on as a first case
                     warning('Video 1 has a start time apparently out of the data, assuming it starts 5 seconds after data turns on');
                     vidDN = vidDN - (vidDN(1)-(ODNa-floor(ODNa))+5/24/60/60); %assumes the 1st video starts 5 seconds after you turn on the data
@@ -226,8 +226,8 @@ else
                         disp(ADJ);
                         error('Surface time adjustments do not agree within 1 second');
                     end
-                    disp('Adjustments:')
-                    disp(datestr(adjust,'HH:MM:SS.FFF'));
+                    disp('Adjustments (s):')
+                    disp(num2str(round(adjust*24*60*60*1000)/1000));
                     if any(abs(adjust)>10/24/60/60) && i~=min(videonum); disp(['Large adjustment in video num ' num2str(i)]); if adjust<0; sn = num2str(sign(adjust)); sn = sn(1); else sn = ''; end; disp([sn datestr(abs(adjust),'MM:SS.FFF')]); end
                     adjust = mean(adjust);
                     disp(['Mean' num2str(i)]);

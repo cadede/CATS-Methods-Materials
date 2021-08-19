@@ -43,9 +43,9 @@ disp('Section completed')
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
-folder = 'E:\Goldfield\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
+folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
 % set to true if there are are no audio files to read.
-readaudiofiles = false; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
 % these will be less commonly adjusted
 audioonly = false; % set to true for tags that do not have video (currently only works if you have wav files, if you only have ".raw" versions of audio files and no video files, we will have to make some adjustments still to ensure data is converted at the right sample rate.
@@ -203,6 +203,7 @@ disp('Section 3 finished');
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
+audioonly = false; % set to true if tag has no camera but does have audio
 
 if CellNum<3; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -218,6 +219,17 @@ DNorig = data.Date+data.Time+timedif/24;
 
 if nocam
     camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1]; vidDurs = [];
+    if audioonly
+         viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
+         vidDN = viddata.vidDN; vidDurs = viddata.vidDurs;
+         for i = 1:length(vidDN)
+             if ~isnan(vidDN(i))
+                 [~,a] = min(abs(DNorig-vidDN(i))); 
+                 [~,b] = min(abs(DNorig-(vidDN(i)+vidDurs(i)/24/60/60)))
+                 audon(a:min(a+vidDurs(i)*ofs,length(audon)))= true;
+             end
+         end
+    end
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to

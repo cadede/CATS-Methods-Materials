@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,vidDurs,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
 
 % this function looks to see if any adjustment is needed for the video and
 % data times, based on inputs from the meta data xls file, and then also
@@ -109,7 +109,7 @@ else
         %of the tag
         ODNa = ODN + timedif/24;
         if ~synchusingvidtimestamps
-            if (vidDN(1)<DN(1) || vidDN(1)>DN(end))
+            if (vidDN(1)<DN(1)-1 || vidDN(1)>DN(end)+1) % if the vidDN don't relate at all to the data times
                 if ~isnan(vidDN(1)) % legacy- if there is no info on the video start times, assume it starts just after data turns on as a first case
                     warning('Video 1 has a start time apparently out of the data, assuming it starts 5 seconds after data turns on');
                     vidDN = vidDN - (vidDN(1)-(ODNa-floor(ODNa))+5/24/60/60); %assumes the 1st video starts 5 seconds after you turn on the data
@@ -146,7 +146,7 @@ else
                 manI = find(videonum == i & strcmp(types,'Manual')); % if the whale does not surface, can do a manual calibration using another factor (tagoff, no paddlewheel to paddlewheel audio etc.)
                 noneI = find(videonum == i & strcmp(types,'None'));
                 if isempty(frameTimes{i}); continue; end
-                if strcmp(headers{5,1},'Time Style') && strcmp(headers{5,2},'Embedded'); timeDN(surfI) = timeDN(surfI) - (vidDN(i)-floor(vidDN(i))); end
+                if strcmp(headers{5,1},'Time Style') && strcmp(headers{5,2},'Embedded'); timeDN(surfI,:) = timeDN(surfI,:) - (vidDN(i)-floor(vidDN(i))); end
                 times = timeDN*24*60*60;
                 if (~isempty(surfI) || ~isempty(manI))&&(~synchusingvidtimestamps)
                     if ~isempty(surfI)
@@ -164,7 +164,7 @@ else
                         while ~isokay %double check calculated values
                             peakLoc(2:end) = peakLoc(1)+round((times(surfI(2:end),1)-times(surfI(1),1))*fs);
                             peakLoc = round(peakLoc);
-                            viewI = max(1,round(I-30*fs-times(surfI(1),1)*fs));
+                            viewI = max(1,round(I-30*fs)); % -times(surfI(1),1)*fs
                             viewI = viewI:min(round(viewI+vidDurs(i)*fs+30*fs),length(p));
                             figure(i); clf; plot(DN(peakLoc),min(p(viewI))+.05,'rs','markersize',18,'markerfacecolor','r','markeredgecolor','k');hold on;  set(i,'windowstyle','docked');
                             plot(DN(viewI),p(viewI));
@@ -227,15 +227,15 @@ else
                         error('Surface time adjustments do not agree within 1 second');
                     end
                     disp('Adjustments:')
-                    disp(datestr(adjust,'HH:MM:SS.FFF'));
+                    disp(num2str(adjust*24,'HH:MM:SS.FFF'));
                     if any(abs(adjust)>10/24/60/60) && i~=min(videonum); disp(['Large adjustment in video num ' num2str(i)]); if adjust<0; sn = num2str(sign(adjust)); sn = sn(1); else sn = ''; end; disp([sn datestr(abs(adjust),'MM:SS.FFF')]); end
                     adjust = mean(adjust);
                     disp(['Mean' num2str(i)]);
                     disp(datestr(abs(adjust),'MM:SS.FFF'));
-                    vidDN(i:end) = vidDN(i:end)-adjust;
+                    vidDN(i) = vidDN(i)-adjust;
                     lastgood = i;
                 end
-                if ~isempty(noneI) % if there were no ways to calibrate, just calibrate based on video stamp difference between this video and the last
+                if ~isempty(noneI) || (~isempty(frameTimes{i}) && isempty(surfI) && isempty(manI)) % if there were no ways to calibrate, just calibrate based on video stamp difference between this video and the last
                     if any(abs(vidDN-vidDNorig)>0) % if there have been any adjustments, use them, else will have to use the next one.
                         vidDN(i) = vidDNorig(i)-vidDNorig(lastgood)+vidDN(lastgood);
                     else FIX = [FIX; i];
@@ -289,3 +289,4 @@ else
         error('Check vidDN and vidDurs!  Nans found.  Likely there are video files in the raw folder that are before or after the deployment, so you may need to open "movieTimes" in a different matlab version and add nans or empty cells to where the movies that are not part of the deployment should be.  Another thing to check is "videonum".  If "videonum" is longer than your # of videos, you may need to adjust your excel header files to ensure that any blanks spaces are actually deleted.');
     end
 end
+vidadj = vidDN-vidDNorig;

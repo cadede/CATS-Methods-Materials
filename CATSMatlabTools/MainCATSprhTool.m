@@ -203,6 +203,7 @@ disp('Section 3 finished');
 
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
+audioonly = false; % set to true if tag has no camera but does have audio
 
 if CellNum<3; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -218,6 +219,17 @@ DNorig = data.Date+data.Time+timedif/24;
 
 if nocam
     camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1]; vidDurs = [];
+    if audioonly
+         viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
+         vidDN = viddata.vidDN; vidDurs = viddata.vidDurs;
+         for i = 1:length(vidDN)
+             if ~isnan(vidDN(i))
+                 [~,a] = min(abs(DNorig-vidDN(i))); 
+                 [~,b] = min(abs(DNorig-(vidDN(i)+vidDurs(i)/24/60/60)))
+                 audon(a:b)= true;
+             end
+         end
+    end
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to
