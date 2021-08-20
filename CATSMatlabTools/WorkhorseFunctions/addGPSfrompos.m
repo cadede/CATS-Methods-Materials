@@ -11,7 +11,7 @@ if nargin<1
     [~,fileloc] = uigetfile('*.*','Choose any file in the directory of your .pos file (will examine all subdirectories as well');
 end
 %%
-if strcmp(fileloc(end),'\'); fileloc = fileloc(1:end-1); end
+if strcmp(fileloc(end),'//'); fileloc = fileloc(1:end-1); end
 
 % clearvars -except fileloc data Hzs
 [D,F] = subdir(fileloc);
@@ -19,6 +19,11 @@ D = [{fileloc} D];
 oi = dir(fileloc); oi2 = {oi.name};
 F = [{oi2(~vertcat(oi.isdir))} F];
 posmatch = cellfun(@(x) strfind(x,'.pos'),F,'uniformoutput',false);
+% if length(posmatch) ~=1
+%     [posmatch,fileloc] = uigetfile('*.*','Choose any file in the directory of your .pos file (will examine all subdirectories as well');
+% 
+%     
+% end
 posstat = cellfun(@(x) strfind(x,'.pos.stat'),F,'uniformoutput',false);
 posfastloc = cellfun(@(x) strfind(x,'Fastloc'),D,'uniformoutput',false);
 
@@ -34,14 +39,14 @@ for j = 1:length(posmatch)
         if jj == 2; error(['more than one pos file in ' D{j}]); end
         posfile = F{j}(posmatch{j}); posfile = posfile{jj};
         done = false;
-        f = fopen([D{j} '\' posfile]); numheads = 0; skiprest = false;
+        f = fopen([D{j} '//' posfile]); numheads = 0; skiprest = false;
         while ~done
             try tline = fgets(f); catch; disp([posfile ' has no data']); Dmatch(j) = 0; posmatch{j}(jj) = 0; skiprest = true; break; end
             if strcmp(tline(1),'%')||strcmp(tline(2),'%'); numheads = numheads+1; else done = true; end; %disp(numheads); disp(done);
         end
         if skiprest; continue; end
         fclose(f);
-        posT = importdata([D{j} '\' posfile],' ',numheads);
+        posT = importdata([D{j} '//' posfile],' ',numheads);
         posT.textdata(1:size(posT.textdata,1)-size(posT.data,1),:) = [];
         DN = datenum(posT.textdata(:,1),'yyyy/mm/dd') + datenum(posT.textdata(:,2),'HH:MM:SS.fff')-floor(datenum(posT.textdata(:,2),'HH:MM:SS.fff')); %datenum in GMT
         pos{j} = [DN posT.data];
@@ -65,7 +70,7 @@ for j = 1:length(Dmatch)
         notdata = cellfun(@(x) strfind(x,'ALLDATA'),F{j},'uniformoutput',false);
         datafile = F{j}((~cellfun(@isempty,data1)|~cellfun(@isempty,data2))&cellfun(@isempty,notdata));
         if ~isempty(datafile)
-            for k = 1:length(datafile); data1 = load([D{j} '\' datafile{k}],'data'); DATA{end+1} = data1.data; end
+            for k = 1:length(datafile); data1 = load([D{j} '//' datafile{k}],'data'); DATA{end+1} = data1.data; end
             [~,data1] = max(cellfun(@(x) size(x,1), DATA)); % which one is longer
             %             oi =find(~isnan(DATA{data1}.GPSTime),1); %first GPStime recorded
             %             GPSoffset = round((DATA{data1}.GPSTime(oi)+DATA{data1}.GPSDate(oi)-pos{j}(1))*24*2)/2; % GPSoffset to nearest half hour from when data started, most tags this will be 0, but some older had GPStime in local and pos file in UTC
@@ -86,14 +91,14 @@ for j = 1:length(Dmatch)
            GPSoffset = 0;
             Tdata = DATA{data1};
             GPSDN = Tdata.GPSDate+Tdata.GPSTime-GPSoffset/24;
-            try load([D{j} '\' F{j}{~cellfun(@isempty,notdata)}],'timedif'); 
-                catch; try load([fileloc '\' F{j}{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),F{j},'UniformOutput',false))}],'INFO'); timedif = INFO.timedif;
+            try load([D{j} '//' F{j}{~cellfun(@isempty,notdata)}],'timedif'); 
+                catch; try load([fileloc '//' F{j}{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),F{j},'UniformOutput',false))}],'INFO'); timedif = INFO.timedif;
                 catch; timedif = input('timedif?  (from header xls file)'); end; end
             DNt = Tdata.Date+Tdata.Time-GPSoffset/24 + timedif/24;  %not sure if timedif is needed?  
             [GPSDN,fixjump] = fixGPSdate(DNt,GPSDN); %looks for overly repeated times (for some tags when GPS is underwater)
 %             DNt = DNt + nanmean(GPSDN-DNt);
             Tp = Tdata.Pressure;
-            if sum(Tp) == 0; Tp = load([fileloc '\' F{j}{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),F{j},'UniformOutput',false))}],'p','DN','INFO','fs'); Tp.timedif = Tp.INFO.timedif;
+            if sum(Tp) == 0; Tp = load([fileloc '//' F{j}{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),F{j},'UniformOutput',false))}],'p','DN','INFO','fs'); Tp.timedif = Tp.INFO.timedif;
                 Tp.DN = Tp.DN-Tp.timedif/24; [~,a1] = min(abs((Tdata.Date+Tdata.Time)-Tp.DN(1))); 
                 dfs = round(1./mean((Tdata.Time(50:60)-Tdata.Time(49:59))*24*60*60)); a2 = a1+dfs/Tp.fs*(length(Tp.p))-1;
                 tTp = nan(size(Tdata.Time)); tTp(a1:dfs/Tp.fs:a2) = Tp.p; tTp = fixgaps(tTp); tTp([1:a1-1 a2+1:end]) = 0;
@@ -203,10 +208,10 @@ for j = 1:length(Dmatch)
 %                   sum(Ia)
             end
             data = DATA{jj};
-            load([D{j} '\' datafile{jj}],'Adata','Atime');
-            try load([D{j} '\' datafile{jj}],'ODN'); catch; end
-            save([D{j} '\' datafile{jj}],'data','Adata','Atime');
-            try save([D{j} '\' datafile{jj}],'ODN','-append'); catch; end
+            load([D{j} '//' datafile{jj}],'Adata','Atime');
+            try load([D{j} '//' datafile{jj}],'ODN'); catch; end
+            save([D{j} '//' datafile{jj}],'data','Adata','Atime');
+            try save([D{j} '//' datafile{jj}],'ODN','-append'); catch; end
         end
        %             
         prhfile = cellfun(@(x) strfind(x,'prh.mat'),F{j},'uniformoutput',false);
@@ -216,7 +221,7 @@ for j = 1:length(Dmatch)
         % assumes that a data file you found with this pos file will relate
         % to the prh file
         for jj = 1:length(prhfile)
-            load([D{j} '\' prhfile{jj}],'p','DN','fs','tagon','GPS','INFO');
+            load([D{j} '//' prhfile{jj}],'p','DN','fs','tagon','GPS','INFO');
             oi = GPS(1,:);
             timespan = 10;
             if ~exist('INFO','var'); timedif = input('timedif?  (from header xls file)'); INFO.timedif = timedif; end
@@ -230,18 +235,18 @@ for j = 1:length(Dmatch)
 %             xs = get(ax,'xlim'); ys = get(ax,'ylim');
 %             text(xs(1)+diff(xs)/20,ys(2)-diff(ys)/20,{['Number of surfacings: ' num2str(length(surfs))]; ['Number of GPS hits on surfacings: ' num2str(size(GPS(tagon&~isnan(GPS(:,1))),1))]},'parent',ax);
             report = [report; length(surfs) size(GPS(tagon&~isnan(GPS(:,1))),1)];
-            save([D{j} '\' prhfile{jj}],'GPS','GPSerr','-append');
-            oneup = max(strfind(D{j},'\'));
-            if exist([D{j}(1:oneup) 'prh\'],'dir');
-                save([D{j}(1:oneup) 'prh\' prhfile{jj}],'GPS','GPSerr','-append');
+            save([D{j} '//' prhfile{jj}],'GPS','GPSerr','-append');
+            oneup = max(strfind(D{j},'//'));
+            if exist([D{j}(1:oneup) 'prh//'],'dir');
+                save([D{j}(1:oneup) 'prh//' prhfile{jj}],'GPS','GPSerr','-append');
             end
             whalename = prhfile{jj}(1:strfind(prhfile{jj},' ')-1);
 %             set(fig,'units','normalized','outerposition',[0 0 1 1]);
-%             if ~exist([D{j} '\QL\'],'dir'); mkdir([D{j} '\QL\']); end
-%             savefig(fig,[D{j} '\QL\' whalename ' Map.fig']);
-%             saveas(fig,[D{j} '\' whalename ' Map.bmp']);
-%             if exist([D{j}(1:oneup) 'Quicklook\'],'dir');
-%                 saveas(fig,[D{j}(1:oneup) 'Quicklook\' whalename ' Map.bmp']);
+%             if ~exist([D{j} '//QL//'],'dir'); mkdir([D{j} '//QL//']); end
+%             savefig(fig,[D{j} '//QL//' whalename ' Map.fig']);
+%             saveas(fig,[D{j} '//' whalename ' Map.bmp']);
+%             if exist([D{j}(1:oneup) 'Quicklook//'],'dir');
+%                 saveas(fig,[D{j}(1:oneup) 'Quicklook//' whalename ' Map.bmp']);
 %             end
             lat= GPS(~isnan(GPS(:,1)),1); lat(1) = [];
             long= GPS(~isnan(GPS(:,1)),2); long(1) = [];
@@ -254,14 +259,14 @@ for j = 1:length(Dmatch)
 %             end
 %             KML = ge_folder('Points',kmlstr);
 %             try
-%                 ge_output([D{j}(1) ':\' whalename '.kml'],KML);
-%                 movefile([D{j}(1) ':\' whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
+%                 ge_output([D{j}(1) '://' whalename '.kml'],KML);
+%                 movefile([D{j}(1) '://' whalename '.kml'],[D{j} '//' whalename '.kml']); % some long directory names were giving problems to ge_output
 %             catch
-%                 outdir = regexp(D{j},'\'); outdir = D{j}(1:outdir(4));
+%                 outdir = regexp(D{j},'//'); outdir = D{j}(1:outdir(4));
 %                 ge_output([outdir whalename '.kml'],KML);
-%                 movefile([outdir whalename '.kml'],[D{j} '\' whalename '.kml']); % some long directory names were giving problems to ge_output
+%                 movefile([outdir whalename '.kml'],[D{j} '//' whalename '.kml']); % some long directory names were giving problems to ge_output
 %             end
-%             if exist([D{j}(1:oneup) 'Quicklook\'],'dir'); copyfile([D{j} '\' whalename '.kml'],[D{j}(1:oneup) 'Quicklook\' whalename '.kml']); end
+%             if exist([D{j}(1:oneup) 'Quicklook//'],'dir'); copyfile([D{j} '//' whalename '.kml'],[D{j}(1:oneup) 'Quicklook//' whalename '.kml']); end
         end
     end
     DATA = cell(0);

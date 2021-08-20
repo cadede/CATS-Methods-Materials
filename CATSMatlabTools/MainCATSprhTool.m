@@ -35,7 +35,7 @@ disp('Section completed')
 % BEFORE RUNNING!: Create wav files from videos using ffmpeg (recommended),
 % or VLC (also seems to work). For ffmpeg, in command prompt, change the
 % directory to the directory with your movie files, create a "wavfiles"
-% directory, then type: for %a in (*.mov) DO ffmpeg -i "%a" "wavfiles\%~na.wav"
+% directory, then type: for %a in (*.mov) DO ffmpeg -i "%a" "wavfiles//%~na.wav"
 % This script can also create wav files from the
 % videos without running above, but this seems to sometimes create an offset error, so check the
 % results if you use this program to create wav files instead of the above recommendation.
@@ -43,7 +43,7 @@ disp('Section completed')
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
-folder = 'E:\CATS\tag_data_raw\'; % optional- just gives you a place to start looking for your data files
+folder = 'E://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
 % set to true if there are are no audio files to read.
 readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
@@ -90,11 +90,11 @@ disp('Section 1 completed');
 % variables to set
 decfac = 5; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 % Can set "folder" below to start looking for files in a specific place on your computer
-folder = 'e:/CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users\Dave\Documents\Programs\MATLAB\Tagging\CATS cal';%
+folder = 'e:/CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
 
 % import files
 global fileloc filename
-cf = pwd; try cd([vol ':\' folder]); catch; end
+cf = pwd; try cd([vol '://' folder]); catch; end
 [filename,fileloc]=uigetfile('*.mat', 'select CATS data (imported mat file)'); 
 cd(fileloc);
 [headerfile,headerloc]=uigetfile('*xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
@@ -172,9 +172,9 @@ end
 
 %load cal file
 cf = pwd; cd(fileloc);
-% try load([vol ':\' folder '\Calibration\CATScal' num2str(tagnum) '.mat']);
+% try load([vol '://' folder '//Calibration//CATScal' num2str(tagnum) '.mat']);
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4);
-try CAL = load([rootDIR 'Calibrations' '\CATScal' num2str(tagnum) '.mat']);
+try CAL = load([rootDIR 'Calibrations' '//CATScal' num2str(tagnum) '.mat']);
     disp(['CATScal' num2str(tagnum) '.mat loaded']);
 catch
     [calfile,calfileloc]=uigetfile('*.mat', 'select CATS cal file'); 
@@ -343,7 +343,12 @@ end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 if ~exist('Depth','var')
     try pressTemp = data.TempDepthInternal; catch; try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end; end
-    Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,length(DN),'pHz');
+    try Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,length(DN),'pHz');
+    catch; Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal,ofs,Hzs.pHz,df,length(DN),'pHz');
+        disp('Bench pressure cal applied');
+    end
+end
+if ~exist('Temp','var')
     try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
     Temp = decimateM(Temp,ofs,Hzs.THz,df,length(DN),'THz');
 end
@@ -390,7 +395,7 @@ if CellNum<7; x = input('Previous cell has not been completed, continue anyway? 
 end
 
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
-if ~exist('Depth','var') || ~exist('At','var')
+if ~exist('Depth','var') || ~exist('At','var') || ~exist('Mt','var') || ~exist('Gt','var')
     [Depth,At,Mt,Gt] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
 end
 try load([fileloc filename(1:end-4) 'Info.mat'],'slips'); catch; end
@@ -499,7 +504,7 @@ if ~exist('Depth','var')
 end
 vars.Depth = Depth;
 
-audiodir = [fileloc 'AudioData\'];
+audiodir = [fileloc 'AudioData//'];
 
 load([fileloc filename(1:end-4) 'Info.mat'],'flownoise');
 if exist('flownoise','var') && sum(isnan(flownoise))~=length(flownoise) 
@@ -511,7 +516,7 @@ end
 if s == 1
     [flownoise,AUD] = getflownoise(audiodir,vars);
     disp('Now making full deployment audio file');
-    stitchaudio([fileloc 'AudioData\'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc);
+    stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc);
 end
 
 tag1 = find(vars.tagondec,1);
@@ -600,7 +605,7 @@ legend('JiggleRMS','FlownoiseRMS')
 % maxoffset = 2.5; % set with what you think the max offset would be
 % AdjDataVidOffsets;
 % disp('Now remaking full deployment audio file');
-% stitchaudio([fileloc 'AudioData\'],vars.whaleName,DN(1),vidDN,fileloc);
+% stitchaudio([fileloc 'AudioData//'],vars.whaleName,DN(1),vidDN,fileloc);
 %% 11. Speed estimated from the regression of tag jiggle or flow noise against orientation-corrected depth rate (OCDR)
 % Calculate speed from jiggle and from flownoise using speed from RMS.  Adjust parameters below to adjust thresholds (or can adjust graphically within the program):
 % NOTE: in newer versions of matlab, a known bug is that if figure 1 is maximized in the display it will not display properly 
@@ -648,12 +653,12 @@ if sum(isnan(flownoise)) == length(flownoise)
 else
     RMS2 = flownoise; lab = 'FN';
 end
-if ~exist([fileloc 'SpeedPlots\'],'dir'); mkdir([fileloc 'SpeedPlots\']); end
+if ~exist([fileloc 'SpeedPlots//'],'dir'); mkdir([fileloc 'SpeedPlots//']); end
 if exist('Jig','var') && sum(isnan(Jig(:,1)))~=length(Jig(:,1))
     [~,speed,speedstats] = SpeedFromRMS3(Jig(:,1:3),'JJ',RMS2,lab,fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
     X = Jig(:,1); Y = Jig(:,2); Z = Jig(:,3); Mag = Jig(:,4);
     for fig = [1 301:300+size(speedstats.r2used,1)]
-        saveas(fig,[fileloc 'SpeedPlots\fig' num2str(fig) '.bmp']);
+        saveas(fig,[fileloc 'SpeedPlots//fig' num2str(fig) '.bmp']);
     end
 else
     JJ = nan(size(Depth)); speed=table(JJ);
@@ -682,7 +687,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
         speedstats.FN.r2used = speedstatsFN.r2used;
         speedstats.FN.sections_end_index = speedstatsFN.sections_end_index;
         for fig = [1 301:300+size(speedstats.r2used,1)]
-            saveas(fig,[fileloc 'SpeedPlots\flownoisefig' num2str(fig) '.bmp']);
+            saveas(fig,[fileloc 'SpeedPlots//flownoisefig' num2str(fig) '.bmp']);
         end
     end
 else
@@ -767,7 +772,7 @@ try
     a = ['(tag thinks it was ' num2str(UTC) ')'];
     path = matlab.desktop.editor.getActiveFilename;
     aa = strfind(path,'CATSMatlabTools');
-    UTCfileloc = [path(1:aa+15) 'excel templates and files\'];
+    UTCfileloc = [path(1:aa+15) 'excel templates and files//'];
     INFO.UTC = getUTC(GPS(1),GPS(1,2),DN(1),UTCfileloc);
     if UTC~=INFO.UTC; a = [a(1:end-1) ', getUTC function calculated it as ' num2str(INFO.UTC) ')'];  error('er'); end
 catch
@@ -810,20 +815,20 @@ catch
    addGPSfromFastloc(fileloc,INFO)
 end
 
-
+disp('Section 13a finished');
 disp('GPS data added from pos file, could plot points using script below or move to next step')% ting data (even if map doesn''t plot, you can move to 13b');
-try
-    load([fileloc prhfile],'DN','GPS','tagon','p','fs');
-    mapfileloc = 'C:\Users\Dave\Documents\Programs\MATLAB\Tagging\CATS Tools\oldCATStools\map files\';
-    [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
-    try if ~exist([fileloc '\QL\'],'dir'); mkdir([fileloc '\QL\']); end
-        savefig(fig,[fileloc '\QL\' INFO.whaleName ' Map.fig']);
-        saveas(fig,[fileloc '\' INFO.whaleName ' Map.bmp']);
-    catch
-    end
-catch
-    disp('Error in plotting map files (likely a difference in folder structure). Can move on without plotting GpS, or can use a more robust/better mapping algorithm.  Below scripts generate kml files which may be more useful in making nice maps anyway.');
-end
+% try
+%     load([fileloc prhfile],'DN','GPS','tagon','p','fs');
+%     mapfileloc = 'C://Users//Dave//Documents//Programs//MATLAB//Tagging//CATS Tools//oldCATStools//map files//';
+%     [fig,ax] = plotMapfrompos(GPS,DN,tagon,p,fs,mapfileloc);
+%     try if ~exist([fileloc '//QL//'],'dir'); mkdir([fileloc '//QL//']); end
+%         savefig(fig,[fileloc '//QL//' INFO.whaleName ' Map.fig']);
+%         saveas(fig,[fileloc '//' INFO.whaleName ' Map.bmp']);
+%     catch
+%     end
+% catch
+%     disp('Error in plotting map files (likely a difference in folder structure). Can move on without plotting GpS, or can use a more robust/better mapping algorithm.  Below scripts generate kml files which may be more useful in making nice maps anyway.');
+% end
 
 %% 13b Import non-tag GPS hits (e.g. focal follow, tag on/tag recover positions)
 % also creates a pseudotrack, geo-referenced pseudotrack, and a kml file
@@ -880,11 +885,11 @@ sp = speed.JJ;
 % pt = nan(size(Aw)); pt(tagon,:) = PT;
 % t = pt(:,1);
 % pt(:,1) = pt(:,2); pt(:,2) = t; clear t;
-% CATS2TrackPlot(head,pitch,roll,tagondec,DN,fs,pt,false,INFO.whaleName,1.25,[rootDIR 'TrackPlot\']);
+% CATS2TrackPlot(head,pitch,roll,tagondec,DN,fs,pt,false,INFO.whaleName,1.25,[rootDIR 'TrackPlot//']);
 
 Gfig = gcf;
 
-if ~exist([fileloc 'QL\'],'dir'); mkdir([fileloc 'QL\']); end
+if ~exist([fileloc 'QL//'],'dir'); mkdir([fileloc 'QL//']); end
 geoPtrack = t; Ptrack = pt; 
 
 t1 = find(tagon,1);
@@ -902,15 +907,15 @@ author = 'Dave Cade, davecade@stanford.edu'; % change user as appropriate
 % Matlab packages required: Audio Toolbox,
 
 save([fileloc prhfile],'geoPtrack','Ptrack','-append');
-saveas(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.bmp']);
-savefig(Gfig,[fileloc 'QL\' INFO.whaleName 'ptrack.fig']);
+saveas(Gfig,[fileloc 'QL//' INFO.whaleName 'ptrack.bmp']);
+savefig(Gfig,[fileloc 'QL//' INFO.whaleName 'ptrack.fig']);
 saveas(102,[fileloc INFO.whaleName 'geotrack.bmp']);
-savefig(102,[fileloc 'QL\' INFO.whaleName 'geotrack.fig']);
+savefig(102,[fileloc 'QL//' INFO.whaleName 'geotrack.fig']);
 %
 prh2Acq(fileloc,prhfile);
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
-% copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data\prh\' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
+% copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data//prh//' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
 
 t1 = find(~isnan(Ptrack(:,1)),1)+1; t2 = find(~isnan(Ptrack(:,1)),1,'last')-1;
 % This line accounts for the posisbility of nans before and after tag on;
@@ -922,8 +927,8 @@ try
     % first option makes just the DMA file, second option uses the pseudotrack,
     % third option uses the geocorrected pseudotrack.
     % CATS2TrackPlot_DMA(fileloc,[whaleName ' ' num2str(fs) 'Hzprh.mat']);
-    CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,[rootDIR 'tag_data\TrackPlot\']);
-    CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,[rootDIR 'tag_data\TrackPlot\']);
+    CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,[rootDIR 'tag_data//TrackPlot//']);
+    CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,[rootDIR 'tag_data//TrackPlot//']);
 catch
     CATS2TrackPlot(head,pitch,roll,tagon,DN,fs,Ptrack,false,INFO.whaleName,1.25,fileloc);
     CATS2TrackPlot(newhead,pitch,roll,tagon,DN,fs,geoPtrack,true,[INFO.whaleName 'geo'],1.25,fileloc);
@@ -938,8 +943,8 @@ catch
     [fn,fl] = uigetfile('*.xls*','Find Tag guide to make nc file');
     CATSnc([fileloc prhfile],[fl fn],[],author);
 end
-try copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data\prh\nc\' INFO.whaleName '_prh' num2str(fs) '.nc']);
-catch; disp('Could not copy file to tag_data\prh\nc\ folder, nc file is only in working directory.');
+try copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_data//prh//nc//' INFO.whaleName '_prh' num2str(fs) '.nc']);
+catch; disp('Could not copy file to tag_data//prh//nc// folder, nc file is only in working directory.');
 end
 % Can use this code to get lats and longs from geoPtrack:
 Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
@@ -983,6 +988,6 @@ rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
 makeQuickLook(fileloc,makemetadata);
 whaleID = INFO.whaleName;
-try copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data\Quicklook\' whaleID 'Quicklook.jpg']);
-catch; warning('Could not copy file to tag_data\Quicklook folder');
+try copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data//Quicklook//' whaleID 'Quicklook.jpg']);
+catch; warning('Could not copy file to tag_data//Quicklook folder');
 end
