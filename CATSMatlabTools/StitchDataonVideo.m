@@ -132,7 +132,7 @@ njerk = (9.81*fs)*sqrt(diff(Aw).^2*ones(3,1)) ; njerk(end+1) = njerk(end);
 
 % size of single video
 tic
-[vid,~] = mmread([fileloc filename{1}], [1 2],false,true);
+[vid,~] = mmread([fileloc filename{1}], [1 2],[],false,true);
 toc
 if abs(vid.width/vid.height-16/9)>.1; warning ('Single video is not 16 x 9. '); end
 vidW = vid.width; vidH = vid.height;
@@ -348,7 +348,7 @@ for n = startn:length(filename)
             df = endf-sf+1;
             if sf<=endf; % shorten the videos by as much earlier you started the vdieo (accounts for the propensity of these videos to take a random frame as the first frame, messing up everything
                 vid.times = vid.times (df+1:end); vid.frames = vid.frames(df+1:end); sf = sf+df;
-                if ~isempty(aud)
+                if ~noaud && ~isempty(aud)
                     if sum(cellfun(@length, aud.frames)) == 2*length(aud.data); if oj == 2; disp('audio likely 32 bits'); end; doublebits = true; else doublebits = false; end
                     [~,audS] = min(abs(aud.times-vid.times(1))); aud.times = aud.times(audS:end); datatrunc = sum(cellfun(@length,aud.frames(1:audS-1))) / (doublebits+1); aud.data = aud.data(datatrunc+1:end,:); aud.frames = aud.frames(audS:end);
                 end
@@ -371,7 +371,7 @@ for n = startn:length(filename)
             if lf>length(frameTimes{vidN}); lf = length(frameTimes{vidN}); ef = sf+length(vid.times)-1 - lf; disp(['Warning: video ' filename{n} ' length had ' num2str(ef) ' extra frame(s) read, adding time for those frames']); end
             vid.times(1:end-ef) = frameTimes{vidN}(sf:lf); if ef~=0; vid.times(end-ef+1:end) = vid.times(end-ef)+1/30:1/30:vid.times(end-ef)+ef/30; end
             audadj = oframeTimes{vidN}(sf)-frameTimes{vidN}(sf);
-            if ~isempty(aud)
+            if ~noaud&& ~isempty(aud)
                 aud.times = aud.times-audadj;
             end
          %             if vid.totalDuration>60*60;
@@ -797,7 +797,7 @@ for n = startn:length(filename)
 %             end
 %         end
         % fix audio times to match the change in video times
-        if ~isempty(aud)
+        if ~noaud && ~isempty(aud)
             oldaud = aud;
             if ~exist('doublebits','var')
                 if sum(cellfun(@length, aud.frames)) == 2*length(aud.data); doublebits = true; else doublebits = false; end
@@ -830,7 +830,10 @@ for n = startn:length(filename)
             if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
             if combos{c}(end)<10;  vN2 = ['0' num2str(combos{c}(end))]; else vN2 = num2str(combos{c}(end)); end
             if ci == 1 && oj == 1 && length(combos{c})>1; vN = [vN '-' vN2]; es = ' '; else es = ''; end
-            mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
+            if noaud; mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,conf);
+            else
+                mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
+            end
         end
 %         end
         %         catch err
