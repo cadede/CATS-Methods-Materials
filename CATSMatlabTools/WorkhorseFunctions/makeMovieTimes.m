@@ -34,7 +34,7 @@ titl = 'select FIRST movie (or audio) file from deployment';
 cd(movieloc);
 titl = 'select .bin file (just for the name)';
   if ~ispc; menu(titl,'OK'); end
-[datafile,dataloc] = uigetfile('*.*',titl,'multiselect','off');
+[datafile,dataloc] = uigetfile('*.bin',titl,'multiselect','off');
 cd(cf);
 if ischar(movies); movies = {movies}; end
 
@@ -301,6 +301,10 @@ for n = 1:length(movies)
             if viddif>timewarn || isnan(viddif);
                 warning(['end frame of this snippet appears to be ' num2str(viddif) ' s off from video''s time stamp']);
             end
+            % this resets oframeTimes in case some vid.times had been added
+            % during readwireless2 (which was run to check the initial time
+            % stamp)
+            if starttime == 0; oframeTimes{movN(n)} = frameTimes{movN(n)}; end
             oframeTimes{movN(n)} = [oframeTimes{movN(n)} vid.times];
         end
         if ~badmovie; frameTimes{movN(n)} = [frameTimes{movN(n)} vid.times]; end

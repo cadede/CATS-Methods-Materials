@@ -629,22 +629,22 @@ for n = startn:length(filename)
                 if justjiggle; spoi = 'JJ'; elseif justflownoise; spoi = 'FN'; elseif usePaddles; spoi = 'P'; else spoi = ''; end
                 text(.05,.81,['Speed' spoi ' = ' sprintf('%.1f', speedoi) ' m/s'],'color','g','fontsize',16-adj,'fontweight','bold');
                 text(.05,.74,['Jerk = ' sprintf('%.1f', mean(njerk(b:b2))) ' m/s^{3}'],'color','m','fontsize',16-adj);
-                %                 text(.05,.67,['Pitch (Gyro)= ' sprintf('%.0f',circ_mean(pitch(b:b2))*180/pi) '{//circ} (' sprintf('%.0f',circ_mean(pitchgy(b:b2))*180/pi) '{//circ})'],'color','g','fontsize',16-adj,'fontweight','bold');
-                %                 text(.05,.60,['Roll (Gyro)= ' sprintf('%.0f',circ_mean(roll(b:b2))*180/pi) '{//circ} (' sprintf('%.0f',circ_mean(rollgy(b:b2))*180/pi) '{//circ})'],'color','r','fontsize',16-adj);
-                %                 text(.05,.53,['Head (Gyro)= ' sprintf('%.0f',circ_mean(head(b:b2))*180/pi) '{//circ} (' sprintf('%.0f',circ_mean(headgy(b:b2))*180/pi) '{//circ})'],'color','b','fontsize',16-adj)
+                %                 text(.05,.67,['Pitch (Gyro)= ' sprintf('%.0f',circ_mean(pitch(b:b2))*180/pi) '{\circ} (' sprintf('%.0f',circ_mean(pitchgy(b:b2))*180/pi) '{\circ})'],'color','g','fontsize',16-adj,'fontweight','bold');
+                %                 text(.05,.60,['Roll (Gyro)= ' sprintf('%.0f',circ_mean(roll(b:b2))*180/pi) '{\circ} (' sprintf('%.0f',circ_mean(rollgy(b:b2))*180/pi) '{\circ})'],'color','r','fontsize',16-adj);
+                %                 text(.05,.53,['Head (Gyro)= ' sprintf('%.0f',circ_mean(head(b:b2))*180/pi) '{\circ} (' sprintf('%.0f',circ_mean(headgy(b:b2))*180/pi) '{\circ})'],'color','b','fontsize',16-adj)
                 %                 text(.05,.53,['|Sa| = ' sprintf('%.1f', sqrt(sum(Sa(b,:).^2))) ' m/s^{2}'],'color','k','fontsize',16);
-                text(.05,.67,['Pitch = ' sprintf('%.0f',circ_mean(pitch(b:b2))*180/pi) '{//circ}'],'color','g','fontsize',16-adj,'fontweight','bold');
-                text(.05,.60,['Roll = ' sprintf('%.0f',circ_mean(roll(b:b2))*180/pi) '{//circ}'],'color','r','fontsize',16-adj);
-                text(.05,.53,['Head = ' sprintf('%.0f',circ_mean(head(b:b2))*180/pi) '{//circ}'],'color','b','fontsize',16-adj)
+                text(.05,.67,['Pitch = ' sprintf('%.0f',circ_mean(pitch(b:b2))*180/pi) '{\circ}'],'color','g','fontsize',16-adj,'fontweight','bold');
+                text(.05,.60,['Roll = ' sprintf('%.0f',circ_mean(roll(b:b2))*180/pi) '{\circ}'],'color','r','fontsize',16-adj);
+                text(.05,.53,['Head = ' sprintf('%.0f',circ_mean(head(b:b2))*180/pi) '{\circ}'],'color','b','fontsize',16-adj)
                 text(.05,.46,['|Aw| (MSA) =' sprintf('%.2f', mean(sqrt(sum(Aw(b:b2,:).^2,2)))) ' g (' sprintf('%.2f', mean(sqrt(sum(MSA(b:b2,:).^2,2)))) ')'],'color','k','fontsize',16-adj);
                 %                 text(.05,.46,['|Aw| (|Sa|) =' sprintf('%.2f', mean(sqrt(sum(Aw(b:b2,:).^2,2)))) ' g (' sprintf('%.2f', mean(sqrt(sum(Sa(b:b2,:).^2,2)))) ')'],'color','k','fontsize',16-adj);
                 text(.05,.38,['Aw_{x} (Sa_{x}) = ' sprintf('%.2f', mean(Aw(b:b2,1))) ' g (' sprintf('%.2f',mean(Sa(b:b2,1))) ')'],'color','k','fontsize',16-adj);
                 text(.05,.30,['Aw_{y} (Sa_{y}) = ' sprintf('%.2f', mean(Aw(b:b2,2))) ' g (' sprintf('%.2f',mean(Sa(b:b2,2))) ')'],'color','k','fontsize',16-adj);
                 text(.05,.22,['Aw_{z} (Sa_{z}) = ' sprintf('%.2f', mean(Aw(b:b2,3))) ' g (' sprintf('%.2f',mean(Sa(b:b2,3))) ')'],'color','k','fontsize',16-adj);
-                %                 if mean(Light(b:b2))>3499.8; gtl = ' {//geq} '; else gtl = ' = '; end
+                %                 if mean(Light(b:b2))>3499.8; gtl = ' {\geq} '; else gtl = ' = '; end
                 %                 text(.05,.15,['Light' gtl sprintf('%.0f', mean(Light(b:b2))) ' '],'color','k','fontsize',16-adj);
                 text(.05,.15,['Light = ' sprintf('%.0f', mean(Light(b:b2))) ' '],'color','k','fontsize',16-adj);
-                text(.05,.085,['Temperature = ' sprintf('%.1f', mean(T(b:b2))) '{//circ}'],'color','k','fontsize',16-adj);
+                text(.05,.085,['Temperature = ' sprintf('%.1f', mean(T(b:b2))) '{\circ}'],'color','k','fontsize',16-adj);
                 text(.05,.025,[num2str(fs) ' Hz datafile index: ' num2str(b) ':' num2str(b2) ],'fontsize',12-adj);
                 Mbox = getframe(fig4);
 

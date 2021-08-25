@@ -113,6 +113,15 @@ hits = hits(2:end,:);
 try gDN = datenum(hits(:,timecol));
 catch gDN = datenum(vertcat(hits{:,timecol}));
 end
+
+% catch for macs that use a simple version of excel to read datenumbers
+if abs(gDN(1)-DN(1)) > 1000
+    gDN = gDN+693960;
+    if abs(gDN(1)-DN(1)) > 3
+        error('Problem reading timestamps')
+    end
+end
+
 lat = vertcat(hits{:,latcol}); long = vertcat(hits{:,longcol});
 nums = 1:length(lat);
 button = 1;
