@@ -16,9 +16,10 @@ jpks = peakfinder(JJ,5);
 % plot(D); hold on; plot(JJ,'g'); plot(dbpks,D(dbpks),'ro'); plot(jpks,JJ(jpks),'rs')
 oldVDN = vidDN;
 offsets = zeros(size(vidDN));
+% if onlyAud; offsets = 
 %
 for i = 1:length(vidDN)
-    if isnan(vidDN(i)) || vidDN(i)>DN(find(tagondec,1,'last')); continue; end
+    if isnan(vidDN(i)) || vidDN(i)>DN(find(tagondec,1,'last')) || (onlyAud && ~isempty(frameTimes{i})); continue; end
     [~,a] = min(abs(DN-vidDN(i))); [~,b] = min(abs(DN-(vidDN(i)+vidDurs(i)/24/60/60)));
     a = max(a,find(tagondec,1)); b = min(b,find(tagondec,1,'last'));
     dbps = dbpks(dbpks>=a & dbpks<=b); dbps = dbps(2:end-1);
@@ -28,7 +29,8 @@ for i = 1:length(vidDN)
         minioffsets(ii) = (jpks(aa)-dbps(ii))/fs;
     end
     offsets(i) = nanmean(minioffsets(abs(minioffsets)<maxoffset));
-    if isnan(offsets(i)) && i>1; offsets(i) = offsets(i-1); exT = ' (taken from last value)'; else exT = ''; end
+    if isnan(offsets(i)) && i>1; try  offsets(i) = offsets(find(offsets(1:i-1)~=0,1,'last'));exT = ' (taken from last value)';
+        catch; offsets(i) = 0; exT = ''; end;  else exT = ''; end
     figure(200+i); clf;
      set(gcf,'windowStyle','docked');
     s1 = subplot(211); 
@@ -53,6 +55,8 @@ disp('If you''re okay with the observed offsets, press enter to continue and sav
 
 pause;
 
+if ~exist('camondec','var'); camondec = camon; end
+if ~exist('audondec','var'); audondec = camon; end
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
 oldvar = struct('vidDN',vidDN,'camondec',camondec,'audondec',audondec,'DB',DB,'camon',camon,'audon',audon);
 for i = 1:length(vidDN)
@@ -78,6 +82,7 @@ for i = 1:length(vidDN)
     end
 
 end
+if length(camon)~=length(camondec)
 camon = false(size(tagon));
 for ii = 1:ofs/fs
     camon(ii:ofs/fs:length(camondec)*ofs/fs) = camondec;
@@ -85,7 +90,9 @@ end
 audon = false(size(tagon));
 for iii = 1:ofs/fs
     audon(iii:ofs/fs:length(audondec)*ofs/fs) = audondec;
-end    
+end   
+else camon = camondec; audon = audondec;
+end
     
     Jig = [JX JY JZ J];
 disp(['Mean offset: ' num2str(nanmean(offsets))]);
