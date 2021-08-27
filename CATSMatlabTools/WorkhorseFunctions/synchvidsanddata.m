@@ -158,8 +158,8 @@ else
                         [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1)))));
                         peakLoc = nan(size(surfI));
                         smoothp = runmean(p,round(fs/4));
-                        oi = peakfinder(smoothp(round(I-30*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 30 seconds leeway to ensure you hit it
-                        oi = oi(oi>1); peakLoc(1) = oi(1)+I-30*fs-1; % greater than 1 to get rid of first peak if the whale is descending
+                        oi = peakfinder(smoothp(round(I-10*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 30 seconds leeway to ensure you hit it
+                        oi = oi(oi>1); peakLoc(1) = oi(1)+I-10*fs-1; % greater than 1 to get rid of first peak if the whale is descending
                         isokay = false;
                         while ~isokay %double check calculated values
                             peakLoc(2:end) = peakLoc(1)+round((times(surfI(2:end),1)-times(surfI(1),1))*fs);

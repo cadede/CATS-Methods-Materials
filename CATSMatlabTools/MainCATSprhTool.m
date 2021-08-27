@@ -915,7 +915,10 @@ savefig(102,[fileloc 'QL//' INFO.whaleName 'geotrack.fig']);
 prh2Acq(fileloc,prhfile);
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
-% copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data//prh//' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
+try
+copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data//prh//' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
+catch; disp('could not copy file to tag_data/prh directory');
+end
 
 t1 = find(~isnan(Ptrack(:,1)),1)+1; t2 = find(~isnan(Ptrack(:,1)),1,'last')-1;
 % This line accounts for the posisbility of nans before and after tag on;
