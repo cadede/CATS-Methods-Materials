@@ -2,7 +2,7 @@
 
 % load prh file of interest. If you have one, also load a lunge or event detection file.
 % Running this cell plots the data as a continuous variable.  Use the zoom tool to zoom in to areas of interest.
-% To adjust the displayed times to the zoomed in version, run (see explanation below).  Note that this line is also used at the end of this script:
+% To adjust the displayed times to the zoomed in version, run the line below (see explanation below).  Note that this line is also used at the end of this script:
 %  set(AX,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'));
  
 

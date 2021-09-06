@@ -261,8 +261,9 @@ startn = startn;
 % some new files had audio trouble.  If they are remade, this helps find
 % them.  You will want to move your wav files 
 if exist([fileloc 'for audio//'],'dir'); audioloc = [fileloc 'for audio//']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
-elseif exist([fileloc 'wavfiles//'],'dir'); audioloc = [fileloc 'wavfiles//']; checkaudiofs = true; audioend = 'wav';
-elseif exist([fileloc(1:end-4) 'AudioData//'],'dir'); audioloc = [fileloc 'AudioData//']; checkaudiofs = true; audioend = 'wav';
+% if you need to read wav files, revisit making structure here.
+    elseif exist([fileloc 'wavfiles//'],'dir'); audioloc = [fileloc 'wavfiles//']; checkaudiofs = true; audioend = 'wav';
+elseif exist([fileloc(1:end-4) 'AudioData//'],'dir'); audioloc = [fileloc(1:end-4) 'AudioData//']; checkaudiofs = true; audioend = 'wav'; %'audio.mat';%
 else audioloc = fileloc; checkaudiofs = false;
 end
 if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = nan(size(p)); end
@@ -313,7 +314,11 @@ for n = startn:length(filename)
                 [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0+.1*wireless,endtime)]);
                if ~noaud;  [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0+.1*wireless,endtime)],true); end %just audio
             else [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0,endtime)]);
-                if ~noaud; [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0,endtime)],true); end %just audio
+                if ~noaud; %if j == 1; audn = load([audioloc filename{n}(1:end-4) audioend]); audn = audn.aud; end
+%                     IIIs = round([ST0 min([dur+ST0,endtime,length(audn.data)/audn.rate])]*audn.rate)
+%                     fIIIs = find(audn.times
+%                     aud = audn(
+                    [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0,endtime)],true); end %just audio
             end
 %             totalDuration = aud.totalDuration;
 %             [aud, sm] = fixmmreadaud(aud,totalDuration,true);
@@ -813,8 +818,9 @@ for n = startn:length(filename)
                 if iii>1 && newtime < aud.times(iii-1); newtime = aud.times(iii-1)+length(aud.frames{iii})/aud.rate/(doublebits+1)/2; end
                 aud.times(iii) = newtime;
             end
-                      
+%             if abs(aud.totalDuration - vid.totalDuration)>0.3 || abs(length(aud.data)/aud.rate-clipdur)>1/fs
             aud = fixmmreadaud(aud,clipdur,true); %change to false after satisfied it works
+%             end
         end
 %         if exist('audAdj','var')
 %             audA = audAdj;

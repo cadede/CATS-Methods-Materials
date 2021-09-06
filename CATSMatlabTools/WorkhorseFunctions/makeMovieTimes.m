@@ -280,7 +280,7 @@ for n = 1:length(movies)
     videoL = dur+1;
     DAY = 0;
     badmovie = false;
-    while endtime<=videoL+dur;
+    while endtime<videoL+dur;
         clear M vid aud;
         if ~timestamps
             [vid,~] = mmreadFT([movieloc movies{n}], [],[starttime endtime],false,true); %FT saves some time, but still not as efficient as it should be since it reads the video and not just the time
@@ -297,8 +297,8 @@ for n = 1:length(movies)
                 iii = iii+1;
                 [newf, flag] = gettimestamp(vid.frames(end-iii).cdata,false);
             end
-            if ~flag; viddif = (abs(newf*24*60*60-vid.times(end-iii)-(vidDN(movN(n))-floor(vidDN(movN(n))))*24*60*60)); else viddif = nan; end
-            if viddif>timewarn || isnan(viddif);
+            if ~flag; viddif = newf*24*60*60-vid.times(end-iii)-(vidDN(movN(n))-floor(vidDN(movN(n))))*24*60*60; else viddif = nan; end
+            if abs(viddif)>timewarn || isnan(viddif);
                 warning(['end frame of this snippet appears to be ' num2str(viddif) ' s off from video''s time stamp']);
             end
             % this resets oframeTimes in case some vid.times had been added
@@ -313,11 +313,14 @@ for n = 1:length(movies)
         videoL = vid.totalDuration;
         if timestamps && ~simpleread; starttime = endtime-0.1; else starttime = endtime; end
         endtime = endtime+dur;
+        if endtime+3>videoL; endtime = endtime+3;
+            disp('Added 3 seconds to second to last partial read (last partial read would have been very short');
+        end % if the final clip would be < 3 seconds, just incorporate it into the 2nd to last clip
     end
     if ~simpleread
         [frameTimes{movN(n)},numbad,numbadsect] = checkbadframes(frameTimes{movN(n)});
         lbl = [' with ' num2str(numbad) ' frames that could not be read and were interpolated, and ' num2str(numbadsect) ' frames that were shifted and corrected'];
-    else if viddif>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
+    else if abs(viddif)>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp- can choose to offset movie start time at end of process']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
         viddifs(movN(n)) = viddif;
     end
     
@@ -379,11 +382,30 @@ for i = 1:length(frameTimes);
     end
     I = I+length(frameTimes{i});
     if (~simpleread || badvidDN(i))&&~isnan(vidDN(i)); disp(['video # ' num2str(i) ' calculated to start at ' datestr(vidDN(i),'HH:MM:SS.fff')]); end
-    if simpleread && viddifs(i)>timewarn; disp(['end frame of movie #' num2str(i) ' appears to be ' num2str(viddifs(i)) ' s off from video''s time stamp']); end
+    if simpleread && abs(viddifs(i))>timewarn; disp(['end frame of movie #' num2str(i) ' appears to be ' num2str(viddifs(i)) ' s off from video''s time stamp']); end
     if simpleread && numrepeats(i)~=0; disp(['movie #' num2str(i) ' appears to have ' num2str(numrepeats(i)) ' repeated frames']); end
 end; xlabel('Frame #'); 
 set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));  
-
+% these lines examine any repeated time stamps and offer a solution if
+% appropriate
+% i = 25;  oi2 = find(abs(diff(frameTimes{i})) < median(diff(frameTimes{i}))/2 | (diff(frameTimes{i}) < 0 & diff(frameTimes{i}) > -median(diff(frameTimes{i}))));
+% for ii = 1:length(oi2); disp(frameTimes{i}(oi2(ii)-3:oi2(ii)+3)); end
+% for ii = 1:length(oi2); frameTimes{i}(oi2(ii)) = mean(frameTimes{i}([oi2(ii)-1 oi2(ii)+1])); end
+% for ii = 1:length(oi2); disp(frameTimes{i}(oi2(ii)-3:oi2(ii)+3)); end
+if any(abs(viddifs(i))>timewarn)
+    warning('Some movies had initital times (vidDN) + durations that were offset from the final frame embedded in the movie by the above listed amounts.  Recommend adjusting these times if they are small (< 1 s) and consistent throughout the movie times read process (see notes above for the specific video).  If they are big, recommend rerunning cell 1 with simpleread set to off for the movies that need it (this reads the embedded timestamp on each frame)');
+    
+    pp = input('adjust vidDN by the above listed amounts? 1 = yes, 2 = no ');
+    if pp == 1
+        for i = 1:length(frameTimes); 
+            if isempty(frameTimes{i}); continue; end
+            if abs(viddifs(i))>timewarn
+                vidDN(i) = vidDN(i) + viddifs(i)/24/60/60;
+                disp(['Movie ' num2str(i) ' start time adjusted by ' num2str(viddifs(i)) 's ']);
+            end
+        end
+    end
+end
 
 frameSize = [vid.width vid.height];
 else

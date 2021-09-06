@@ -22,8 +22,9 @@ for i = 1:length(vidDN)
     if isnan(vidDN(i)) || vidDN(i)>DN(find(tagondec,1,'last')) || (onlyAud && ~isempty(frameTimes{i})); continue; end
     [~,a] = min(abs(DN-vidDN(i))); [~,b] = min(abs(DN-(vidDN(i)+vidDurs(i)/24/60/60)));
     a = max(a,find(tagondec,1)); b = min(b,find(tagondec,1,'last'));
-    dbps = dbpks(dbpks>=a & dbpks<=b); dbps = dbps(2:end-1);
+    dbps = dbpks(dbpks>=a & dbpks<=b);% dbps = dbps(2:end-1);
     minioffsets = nan(size(dbps));
+%     jpks = peakfinder(JJ(a:b),5)+a-1;
     for ii = 1:length(dbps)
         [~,aa] = min(abs(jpks-dbps(ii)));
         minioffsets(ii) = (jpks(aa)-dbps(ii))/fs;
@@ -59,11 +60,13 @@ if ~exist('camondec','var'); camondec = camon; end
 if ~exist('audondec','var'); audondec = camon; end
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
 oldvar = struct('vidDN',vidDN,'camondec',camondec,'audondec',audondec,'DB',DB,'camon',camon,'audon',audon);
+camondec = false (size(DN)); audondec = camondec;
 for i = 1:length(vidDN)
-    if isnan(offsets(i)) || offsets(i) == 0; continue; end
-    [~,a] = min(abs(DN-vidDN(i))); b = min(round(a+vidDurs(i)*fs),length(Depth));
+%     if isnan(offsets(i)) || offsets(i) == 0; continue; end
+    if isnan(vidDN(i)); continue; end
+    [~,a] = min(abs(DN-vidDN(i))); b = min(round(a+vidDurs(i)*fs),length(DN));
     vidDN(i) = vidDN(i)+offsets(i)/24/60/60;
-    [~,a2] = min(abs(DN-vidDN(i))); b2 = min(round(a2+vidDurs(i)*fs),length(Depth));
+    [~,a2] = min(abs(DN-vidDN(i))); b2 = min(round(a2+vidDurs(i)*fs),length(DN));
     if ~isempty(frameTimes{i})
         camondec(a:b) = false;
         camondec(a2:b2) = true;
@@ -94,7 +97,7 @@ end
 else camon = camondec; audon = audondec;
 end
     
-    Jig = [JX JY JZ J];
+%     Jig = [JX JY JZ J];
 disp(['Mean offset: ' num2str(nanmean(offsets))]);
 flownoise = DB;
-save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','camondec','audondec','camon','audon','vidDN','offsets','oldvar','Jig','-append');
+save([fileloc filename(1:end-4) 'Info.mat'],'flownoise','camondec','audondec','camon','audon','vidDN','offsets','oldvar','-append');

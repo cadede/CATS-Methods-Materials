@@ -6,6 +6,7 @@ function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj] = synchvidsanddata(dat
 % data or some other marker of time from the videos that can be matched
 % with data.
 
+dbstop if error;
 global fileloc filename
 if nargin<11; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
@@ -132,7 +133,7 @@ else
         %         end
         
         tagslip = [1 1];% tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
-        Atemp = (filterCATS([data.Acc1 data.Acc2 data.Acc3],ceil(fs/8),round(fs),.05)-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
+        Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
         njerkTemp = (9.81*fs)*sqrt(diff(Atemp).^2*ones(3,1)); %temp jerk for guessing at tag slip
         
         
@@ -157,9 +158,10 @@ else
 %                         else [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1),1)))); end
                         [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1)))));
                         peakLoc = nan(size(surfI));
+                        if any(isnan(p)); p = fixgaps(p); p(isnan(p)) = 0; end
                         smoothp = runmean(p,round(fs/4));
-                        oi = peakfinder(smoothp(round(I-10*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 30 seconds leeway to ensure you hit it
-                        oi = oi(oi>1); peakLoc(1) = oi(1)+I-10*fs-1; % greater than 1 to get rid of first peak if the whale is descending
+                        oi = peakfinder(smoothp(round(I-5*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 30 seconds leeway to ensure you hit it
+                        oi = oi(oi>1); peakLoc(1) = oi(1)+I-5*fs-1; % greater than 1 to get rid of first peak if the whale is descending
                         isokay = false;
                         while ~isokay %double check calculated values
                             peakLoc(2:end) = peakLoc(1)+round((times(surfI(2:end),1)-times(surfI(1),1))*fs);
