@@ -1,6 +1,9 @@
 function prh2Acq (fl,fn)
 % column order:
 % Depth Aw_x Aw_y Aw_z pitch(deg) roll(deg) heading(deg) speedJJ speedFN Jerk MSA
+
+% creates a text file with the variables above.  This file can be read by
+% Acqknowledge software, but also any software that can read a txt file.
 %%
 
 if exist('fl','var')&&exist('fn','var'); fileloc = fl; filename = fn; else

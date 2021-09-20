@@ -4,6 +4,9 @@ function [speed,speedstats] = applySpeed(JigRMS,label1,flownoise,label2,tagon,p,
 % the third input can either be the speedstats variable or a file path from
 % which to load speedstats variable (i.e. from another tag)
 
+% this takes the speedstats structure, created in speedFromRMS3, and
+% applies it to the raw flownoise and jiggle RMS data.
+
 try load(speedstatsfilepath,'speedstats'); catch; speedstats = speedstatsfilepath; end
 if isempty(flownoise) || length(flownoise) == sum(isnan(flownoise)); numRMS = 1; else numRMS = 2; end
 

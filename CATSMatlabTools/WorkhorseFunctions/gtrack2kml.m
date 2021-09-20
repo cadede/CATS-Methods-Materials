@@ -1,5 +1,7 @@
 function gtrack2kml (gtrack,tagon,fs,DN,kmlfs,startlat,startlong,UTC,whaleName,fileloc)
 
+% writes a kml file given the geo-referenced pseudotrack variable, gtrack
+
 oi = false(size(tagon));
 oi(fs/kmlfs:fs/kmlfs:end) = true;
 [x,y,uzone] = deg2utm(startlat,startlong);

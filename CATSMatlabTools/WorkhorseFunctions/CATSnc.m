@@ -134,7 +134,7 @@ else
     info.device_model = 'Unknown';
 end
 catch
-   an = input('Error in TAG GUIDE, enter Tag Type: '); 
+   an = input('Error in TAG GUIDE, enter Tag Type (with single quotes): '); 
     info.device_model = an;
 end
 
@@ -164,7 +164,7 @@ else
     info.animal_lifehist_sex = 'Unknown';
 end
 catch
-   an = input('Error in TAG GUIDE, enter any sex determination: '); 
+   an = input('Error in TAG GUIDE, enter any sex determination (with single quotes): '); 
     info.animal_lifehist_sex = an;
 end
 
@@ -190,7 +190,7 @@ else
     info.dephist_deploy_locality = 'Unknown';
 end 
 catch
-   an = input('Error in TAG GUIDE, enter Study_Area: '); 
+   an = input('Error in TAG GUIDE, enter Study_Area (with single quotes): '); 
     info.dephist_deploy_locality = an;
 end
 
@@ -210,7 +210,7 @@ if ~isnan(raw{row,kk})
     end
 end
 catch
-   an = input('Error in TAG GUIDE, enter Animal ID: '); 
+   an = input('Error in TAG GUIDE, enter Animal ID (with single quotes): '); 
     info.animal_id = an;
 end
 %Deployment Information
@@ -372,7 +372,7 @@ else
    info.udm_drone = 'Not Applicable';
 end
 catch
-    an = input('Error in TAG GUIDE, input animal length: ');
+    an = input('Error in TAG GUIDE, input animal length (with single quotes): ');
     info.udm_drone = an;
 end
 try
@@ -426,8 +426,8 @@ try
     end
 catch
     disp('Error in TAG GUIDE, enter the following info:')
-    rlat = input('Project name? ');
-    rlong = input('PI contact info? ');
+    rlat = input('Project name? (with single quotes) ');
+    rlong = input('PI contact info? (with single quotes) ');
     info.project_name = rlat;
     info.provider_email = rlong;
     info.project_datetime_start = '';
@@ -435,9 +435,11 @@ catch
 end
 
 %Get Provider details from DataProviders tab of TagGuide
-[num,txt,raw] = xlsread(fullfile(fileloc,filename), 'DataProviders');
+try [num,txt,raw] = xlsread(fullfile(fileloc,filename), 'DataProviders');
 ak=strmatch('provider email',txt(1,:));
 row = strmatch(info.provider_email,txt(:,ak));
+catch; txt = {'oi'}; row = [];
+end
 if isempty(row)
     disp(['Check DataProviders Tab in TagGuide, ' info.provider_email ' not found']); 
 end

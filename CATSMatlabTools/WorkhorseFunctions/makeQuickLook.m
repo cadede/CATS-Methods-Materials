@@ -1,4 +1,7 @@
 function makeQuickLook(fileloc,makemetadata)
+% see required file organization and needs in the last cell of
+% MainCATSprhTool.
+
 
 if nargin<2; makemetadata = false; end
 co = [0 0 1;
@@ -141,6 +144,8 @@ kml = im;
 gt = im;
 [im,imc] = imread([ptfl pt]); try im = ind2rgb(im,imc); catch; end
 pt = im;
+%note: fix this to be more flexible if no ID file or tag file exists (make
+%blank image)
 [im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
 ID = im;
 [im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
@@ -202,8 +207,16 @@ if makemetadata
         try
             copyfile([fileloc2 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls']);
         catch
+            try
+                loc = mfilename('fullpath');
+                iiii = strfind(loc,'CATSMatlabTools');
+                loc = loc(1:iiii+15);
+                temploc = [loc 'templates\'];
+                copyfile([temploc 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls']);
+            catch
             [filenameATN,filelocATN] = uigetfile('*.*','Select ATN_Metadata Template');
             copyfile([filelocATN filenameATN],[fileloc 'ATN_Metadata.xls'],'f');
+            end
         end
     end
     xlswrite([fileloc 'ATN_Metadata.xls'],{whaleName,'CATS',tagtype,tagnum,deplong,deplat,datestr(datenum(whaleName(3:8),'YYMMDD'),'YYYY-MM-DD'),genus,spec,'2021-01-01','',name,PI,'davecade@alumni.stanford.edu'},'A2:N2');

@@ -1,4 +1,9 @@
 function [Mt,Mcalnew] = calM(data,DN,tagondec,camondec,camon,nocam,ofs,magHz,df,CAL,Temp,b,I,resThresh)
+
+
+% this function performs an in situ calibration on the magnetometer data,
+% based on the spherical_cal scripts at animaltags.org
+
 nout = length(DN);
 if nargin < 13 || isempty(I)
     I = find(tagondec);
@@ -15,8 +20,10 @@ end
 t1 = find(tagondec,1); t2 = find(tagondec,1,'last');
 
 axM = (magcalon./abs(magcalon)); axM(isnan(axM)) = 0;
+nanI = isnan([data.Comp1 data.Comp2 data.Comp3]);
 Mt = fixgaps([data.Comp1 data.Comp2 data.Comp3])*axM; %applyMagcalfirst = false;
-Mt = decimateM(Mt,ofs,magHz,df,length(DN),'magHz');
+nanI = nanI(1:df:end,:); 
+Mt = decimateM(edgenans(Mt),ofs,magHz,df,length(DN),'magHz');
 Mcalnew00.poly = [1 0; 1 0; 1 0;]; Mcalnew00.cross = diag([1 1 1]);
 % if you don't want to start with a previous calibration, comment out the next line
 if exist('Mcal3d0','var'); Mcalnew00 = Mcal3d0; else Mcalnew00.poly = [ones(3,1) (-magconstoff*axM)']; Mcalnew00.cross = axM^-1 * magcaloff; end 
@@ -238,3 +245,4 @@ else
     Mt = Mtnew;
 end
 xlim([t1 t2])
+if sum(sum(nanI))~=0; warning(['nans in each Mag data column that were removed: ' num2str(sum(nanI))]); end

@@ -1,5 +1,8 @@
 function [GPS,GPSerr] = manualGPS2prh (prhloc, prhfile)
 % Choose a prhfile and a GPS file (with date/time column, lat, long)
+% Plots GPS data acquired from non-tag sources (e.g. tag on positions,
+% focal follows, extra sensors) and allows the user to filter any bad
+% positions.
 
 if nargin<2
     try cd(prhloc);
@@ -27,7 +30,11 @@ disp('Values should be in local time,GPS should be in decimal degrees');
 load([prhloc prhfile]);
 % GPS = GPS(1,:);
 %
-if INFO.tagnum>47 && ~ismember(INFO.tagnum,[70 71]) % GPS in back so get floating positions as soon as tag pops off (but not for fastGPS tags)
+
+disp('Look for tag off location from tag floating at the surface? Only if tag GPS picks up locations while floating')
+oi = input('1 = yes, 2 = no ');
+if oi == 1
+    % if INFO.tagnum>47 && ~ismember(INFO.tagnum,[70 71]) % GPS in back so get floating positions as soon as tag pops off (but not for fastGPS tags)
     II = (1:length(p))';
     try    tagoffGPS = GPS(find(~isnan(GPS(:,1))&II>find(tagon,1,'last')&II<find(tagon,1,'last')+20*fs*60,30),:);
         if ~isempty(tagoffGPS) && sum(isnan(tagoffGPS(:,1)))~=length(tagoffGPS(:,1))
@@ -49,6 +56,7 @@ if INFO.tagnum>47 && ~ismember(INFO.tagnum,[70 71]) % GPS in back so get floatin
     catch; clear tagoffGPS;
     end
 end
+
 
 
 
@@ -105,6 +113,15 @@ hits = hits(2:end,:);
 try gDN = datenum(hits(:,timecol));
 catch gDN = datenum(vertcat(hits{:,timecol}));
 end
+
+% catch for macs that use a simple version of excel to read datenumbers
+if abs(gDN(1)-DN(1)) > 1000
+    gDN = gDN+693960;
+    if abs(gDN(1)-DN(1)) > 3
+        error('Problem reading timestamps')
+    end
+end
+
 lat = vertcat(hits{:,latcol}); long = vertcat(hits{:,longcol});
 nums = 1:length(lat);
 button = 1;
@@ -175,7 +192,7 @@ if size(GPS,1)>2
         s2 = subplot(223);
         [x,y,uz] = deg2utm(lat,long);
 %         xp = utm2m(x,y,uz);
-        if size(GPS,1)>1
+        if size(GPS,1)>1 
             gI = ~isnan(GPS(:,1))&tagon;
             oGPS = GPS(gI,:);
             gI = find(gI);

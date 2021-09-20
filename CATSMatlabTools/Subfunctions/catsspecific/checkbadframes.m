@@ -43,7 +43,7 @@ DROP = nan(2,length(drops));
 i = 1;
 while i<=length(drops)
       ldif = abs(vidframes(drops(i))-vidframes(drops(i)+1));
-    if vidframes(drops(i)+2)>vidframes(drops(i)) && replsingles
+    if replsingles && vidframes(drops(i)+2)>vidframes(drops(i))
         vidframes(drops(i)+1:drops(i)+2) = nan; vidframes = fixgaps(vidframes);
         disp(['replaced a single bad frame (# ' num2str(drops(i)+1) ') in video # ' num2str(vidnum)]);
         continue;

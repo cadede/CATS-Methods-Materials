@@ -1,4 +1,8 @@
 function [fs,Mt,At,Gt,DN,Temp,Light,LightIR,TempInternal,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip)
+
+% this function facilitates stopping and starting of the prh process by
+% applying in situ cals and decimation factors to the variables in "data"
+dbstop if error;
 nout = length(Depth);
 
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
@@ -73,6 +77,8 @@ if sum(I(:,1)) ~=size(I,1)
     Mtoff = (Mtoff-repmat(magconstoff,numrows,1))*magcaloff;
     Mt = (Mt-repmat(magconston,numrows,1))*magcalon;
     Mt(I) = nan; Mtoff(I) = nan;
+else
+    Mtoff = Mt;
 end
 camondec = camon(1:df:end); camondec = camondec(1:size(Mt,1));
 camondec = interp2length(camondec,ofs/df,ofs/df,nout);

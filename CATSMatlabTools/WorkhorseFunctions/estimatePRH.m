@@ -4,6 +4,9 @@ function [Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,tagsli
 % dec is the declination in radians at the deployment location.  Enter 0 if you want heading calculated to magnetic north
 % tagslip is a m x 2 matrix, where the first row and last rows are the tag on and tag off indices (same value in each column).  Column 1 is the start of a tag slip, column 2 is the end of a tagslip.
 
+% this function walks the user through identifying periods of time useful
+% to convert tag frame sensor data to animal frame.  See description around
+% Figs 7 & 8 in the manuscript accompanying this code.
 
 % Johnson method based on a tutorial from: Fine-scale animal
 % movement workshop, Hobart, March 2011.  Page 10 gives a lot of good information and
@@ -98,13 +101,17 @@ while ~isempty(button) || any(cellfun(@isempty,W))
                     elseif button == 3
                         dives = sort(xx);
                     end
-                    if ~isempty(surfs)&&~isempty(dives); % you have a full set of calibration periods
-                        I = startsI(i):endsI(i);
-                        s1 = surfs';
-                        calperiodI{i} = [s1(:)' dives];
-                        [Aw(I,:),Mw(I,:),Gw(I,:),~,~,~,W{i},tagprh(i,:)] = tagframe2whaleframe(At(I,:),Mt(I,:),Gt(I,:),Depth(I),[],calperiodI{i}-startsI(i)+1);
-                        [~,~,~,tocal] = reconcileSlips(W,calperiodI,tagslip);
-%                          tocal(i,:) = [nan nan];
+                    if ~isempty(surfs)&&~isempty(dives) ; % you have a full set of calibration periods
+                        if any([surfs(:); dives']>endsI(i) | [surfs(:); dives'] <startsI(i)); % if the surfs and dives are outside of the calibration period
+                            calperiodI{i} = [];
+                        else
+                            I = startsI(i):endsI(i);
+                            s1 = surfs';
+                            calperiodI{i} = [s1(:)' dives];
+                            [Aw(I,:),Mw(I,:),Gw(I,:),~,~,~,W{i},tagprh(i,:)] = tagframe2whaleframe(At(I,:),Mt(I,:),Gt(I,:),Depth(I),[],calperiodI{i}-startsI(i)+1);
+                            [~,~,~,tocal] = reconcileSlips(W,calperiodI,tagslip);
+                        end
+                        %                          tocal(i,:) = [nan nan];
                     end
                     if isempty(surfs) || isempty(dives) && (~isempty(surfs)&&~isempty(dives)); % if one is empty but not both, reset W. If both are empty, could be just an examination, so don't necessarily 0 out W, but if only one is empty, assume W needs ot be adjusted
                         W{i} = []; tagprh(i,:) = nan(1,3); calperiodI{i} = [];
@@ -201,6 +208,10 @@ while ~isempty(button)
     end
 end
 tempslips = tagslip;
+if ~exist('startsI','var'); startsI = tagslip(1:end-1,2); %if you exit without going through the process of changing anything
+    endsI = tagslip(2:end,1);
+    Wchange = endsI(1:end-1); Wchangeend = startsI(2:end);
+end
 save([fileloc filename(1:end-4) 'Info.mat'],'tempslips','-append');
 disp('New tag slip locations saved as "tempslips" variable in "INFO" file, load manually if process is interrupted and you wish to use these values.');
 warning('"slips" variable will be overwritten with new slips upon successful function termination');
@@ -233,8 +244,8 @@ At_mag = sqrt(sum(At.^2,2));
 set(s2,'ylim',[-1.5 1.5])
 s3 = subplot(6,6,31:35);
 [ax,h1,h2] = plotyy(DN,pitch*180/pi,DN,roll*180/pi);
-set(ax(1),'ycolor','g'); set(h1,'color','g');
-set(ax(2),'ycolor','r'); set(h2,'color','r');
+set(ax(1),'ycolor','g','ylim',[-90 90]); set(h1,'color','g');
+set(ax(2),'ycolor','r','ylim',[-180 180]); set(h2,'color','r');
 if exist('dec','var') && ~isempty(dec)
     [~,~,head] = calcprh(Aw(a:b,:),Mw(a:b,:),dec);
     set(ax(2),'ycolor','k','nextplot','add');

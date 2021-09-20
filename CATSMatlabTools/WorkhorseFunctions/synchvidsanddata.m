@@ -1,10 +1,19 @@
-function [camon,audon,vidDN,vidDurs,nocam,tagslip] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+
+% this function looks to see if any adjustment is needed for the video and
+% data times, based on inputs from the meta data xls file, and then also
+% provides the option to synch videos and data using surfacing behavior
+% data or some other marker of time from the videos that can be matched
+% with data.
+
+dbstop if error;
 global fileloc filename
 if nargin<11; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
 
-try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status'); end
- times = cell2mat(headers(7:end,2:3));
+try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status, maintaining user input'); end
+if strcmp(headers{5,1},'Time Style'); rowstart = 8; else rowstart = 7; end 
+times = cell2mat(headers(rowstart:end,2:3));
 %if no movie files
 if nocam
     tagslip = [1 1]; %tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
@@ -15,42 +24,38 @@ if nocam
     end
  vidDN = nan; vidDurs = 0;
 else
-   
-    useold = false;
-    nocam = false;
+     nocam = false;
     
     names =fieldnames(viddata);
     for ii = 1:length(names)
         eval([names{ii} ' = viddata.' names{ii} ';']);
     end
+    if any(vidDN<1); vidDN = vidDN+floor(DN(1)); 
+        warning('No date number on vidDN, adding the following:');
+        for ii = 2:length(vidDN);  if vidDN(ii)<vidDN(ii-1); vidDN(ii:end) = vidDN(ii:end)+1; end; try disp(['vid number ' num2str(ii) ' date: ' datestr(vidDN(ii),'yyyy-mmm-dd')]); catch; end; end
+    end
+     
     if synchusingvidtimestamps
         UTC = Hzs.UTC;
         timedif = cell2mat(headers(3,2));
         vidDNorig = vidDN;
         if data.Date(1)<datenum([2017 09 01]) % old versions of tag where time stamps were in UTC
             vidDN = vidDN + data.Date(1)+UTC/24+timedif/24;
+            disp('Old file detected, assuming time stamps are in UTC');
         elseif vidDN(find(~isnan(vidDN),1))<10 % confirm that new vidDN takes into account full date
             vidDN = vidDN + data.Date(1)+timedif/24;
         else vidDN = vidDN + timedif/24;
         end
-%         vidDN = vidDN-timedif/24;
         if sum(vidDN<DN(1)) + sum(vidDN>DN(end))>1; warning('multiple vidDN are outside range of data. This may be okay if more videos are included in movieTimes outside of those on whale (so just continue), but check that any timedif in xls header file should apply to both data and video.  If, for example, data were downloaded on a computer in a different timezone than for which the tag was programmed, video and data will be offset by different amounts and will have to be adjused for, potentially by unhighlighting the line above this one'); end
     end
     
-    if useold; try load([fileloc filename(1:end-4) 'Info.mat']); catch; end; end
-    if isempty (frameTimes); error('Put frametimes from movies in the same folder as the movies'); end
-    % if ~(exist('GPS','var') && exist('vidDN','var')&&exist('camon','var') && exist('tagslip','var')) % if you've saved previous versions in the Info file, just use those
-    if useold && exist('vidDN','var') && exist('camon','var')
-        videonum = cell2mat(headers(7:end,1)); todel = find(~isnan(videonum),1,'last')+1:length(videonum);
-        videonum(todel) = [];
-    else
-%         GPS = cell2mat(headers(2,2:3)); %from above file
+      if isempty (frameTimes); error('Put frametimes from movies in the same folder as the movies'); end
         whaleName = char(headers(1,2));
         timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
         try
-            videonum = cell2mat(headers(7:end,1)); todel = find(~isnan(videonum),1,'last')+1:length(videonum);
-            types = headers(7:end,4);
-            times = cell2mat(headers(7:end,2:3));
+            videonum = cell2mat(headers(rowstart:end,1)); todel = find(~isnan(videonum),1,'last')+1:length(videonum);
+            types = headers(rowstart:end,4);
+            times = cell2mat(headers(rowstart:end,2:3));
             times(times==0) = nan;
             surfI = find(strcmp(types,'Surface'));
             videonum(todel) = []; times(todel,:) = []; types(todel) = [];
@@ -105,10 +110,13 @@ else
         %of the tag
         ODNa = ODN + timedif/24;
         if ~synchusingvidtimestamps
-            if ~isnan(vidDN(1))
-                vidDN = vidDN - (vidDN(1)-(ODNa-floor(ODNa))+5/24/60/60); %assumes the 1st video starts 5 seconds after you turn on the data
+            if (vidDN(1)<DN(1)-1 || vidDN(1)>DN(end)+1) % if the vidDN don't relate at all to the data times
+                if ~isnan(vidDN(1)) % legacy- if there is no info on the video start times, assume it starts just after data turns on as a first case
+                    warning('Video 1 has a start time apparently out of the data, assuming it starts 5 seconds after data turns on');
+                    vidDN = vidDN - (vidDN(1)-(ODNa-floor(ODNa))+5/24/60/60); %assumes the 1st video starts 5 seconds after you turn on the data
+                end
+                vidDN = vidDN +floor(DN(1)); % account for the date
             end
-            vidDN = vidDN +floor(DN(1)); % account for the date
             vidDNorig = vidDN;
         end
         timesM = timesM + floor(DN(1));
@@ -125,10 +133,13 @@ else
         %         end
         
         tagslip = [1 1];% tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
-        Atemp = (filterCATS([data.Acc1 data.Acc2 data.Acc3],ceil(fs/8),round(fs),.05)-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
+        Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
         njerkTemp = (9.81*fs)*sqrt(diff(Atemp).^2*ones(3,1)); %temp jerk for guessing at tag slip
         
-        timeDN = times/24/60/60; %times was in seconds
+        
+%         timeDN = times/24/60/60; %times was in seconds
+        timeDN = times; % now time stamps are always time (not seconds), and timeDN is time since video start
+        timesO = times; 
         lastgood = 1; FIX = [];
         for i = 1:length(frameTimes)
             if ~synchusingvidtimestamps
@@ -136,19 +147,26 @@ else
                 manI = find(videonum == i & strcmp(types,'Manual')); % if the whale does not surface, can do a manual calibration using another factor (tagoff, no paddlewheel to paddlewheel audio etc.)
                 noneI = find(videonum == i & strcmp(types,'None'));
                 if isempty(frameTimes{i}); continue; end
+                if strcmp(headers{5,1},'Time Style') && strcmp(headers{5,2},'Embedded'); timeDN(surfI,:) = timeDN(surfI,:) - (vidDN(i)-floor(vidDN(i))); end
+                times = timeDN*24*60*60;
                 if (~isempty(surfI) || ~isempty(manI))&&(~synchusingvidtimestamps)
                     if ~isempty(surfI)
-                        if i == min(videonum) || i == videonum(find(cellfun(@(x) strcmp(x,'Surface'),types),1)); I = round(find(p>1,1,'first')+5*fs); %time for the camera to turn on after the camera is deployed
-                        else [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1),1)))); end
+%                         if i == min(videonum) || i == videonum(find(cellfun(@(x) strcmp(x,'Surface'),types),1));
+%                             dives = finddives2(p,fs,min(p)+1,min(p)+2,true);
+%                             
+%                             I = round(find(p>1,1,'first')+5*fs); %time for the camera to turn on after the camera is deployed
+%                         else [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1),1)))); end
+                        [~,I] = min(abs(DN-(vidDN(i)+timeDN(surfI(1)))));
                         peakLoc = nan(size(surfI));
+                        if any(isnan(p)); p = fixgaps(p); p(isnan(p)) = 0; end
                         smoothp = runmean(p,round(fs/4));
-                        oi = peakfinder(smoothp(round(I-5*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 5 seconds leeway to ensure you hit it
+                        oi = peakfinder(smoothp(round(I-5*fs):end),.5,6,-1); %find the first "peak" (surfacing) shallower than 6 m that is >.5m higher than surrounding areas.  Give 30 seconds leeway to ensure you hit it
                         oi = oi(oi>1); peakLoc(1) = oi(1)+I-5*fs-1; % greater than 1 to get rid of first peak if the whale is descending
                         isokay = false;
                         while ~isokay %double check calculated values
                             peakLoc(2:end) = peakLoc(1)+round((times(surfI(2:end),1)-times(surfI(1),1))*fs);
                             peakLoc = round(peakLoc);
-                            viewI = max(1,round(I-30*fs-times(surfI(1),1)*fs));
+                            viewI = max(1,round(I-30*fs)); % -times(surfI(1),1)*fs
                             viewI = viewI:min(round(viewI+vidDurs(i)*fs+30*fs),length(p));
                             figure(i); clf; plot(DN(peakLoc),min(p(viewI))+.05,'rs','markersize',18,'markerfacecolor','r','markeredgecolor','k');hold on;  set(i,'windowstyle','docked');
                             plot(DN(viewI),p(viewI));
@@ -210,16 +228,16 @@ else
                         disp(ADJ);
                         error('Surface time adjustments do not agree within 1 second');
                     end
-                    disp('Adjustments:')
-                    disp(datestr(adjust,'HH:MM:SS.FFF'));
+                    disp('Adjustments (s):')
+                    disp(num2str(round(adjust*24*60*60*1000)/1000));
                     if any(abs(adjust)>10/24/60/60) && i~=min(videonum); disp(['Large adjustment in video num ' num2str(i)]); if adjust<0; sn = num2str(sign(adjust)); sn = sn(1); else sn = ''; end; disp([sn datestr(abs(adjust),'MM:SS.FFF')]); end
                     adjust = mean(adjust);
                     disp(['Mean' num2str(i)]);
                     disp(datestr(abs(adjust),'MM:SS.FFF'));
-                    vidDN(i:end) = vidDN(i:end)-adjust;
+                    vidDN(i) = vidDN(i)-adjust;
                     lastgood = i;
                 end
-                if ~isempty(noneI) % if there were no ways to calibrate, just calibrate based on video stamp difference between this video and the last
+                if ~isempty(noneI) || (~isempty(frameTimes{i}) && isempty(surfI) && isempty(manI)) % if there were no ways to calibrate, just calibrate based on video stamp difference between this video and the last
                     if any(abs(vidDN-vidDNorig)>0) % if there have been any adjustments, use them, else will have to use the next one.
                         vidDN(i) = vidDNorig(i)-vidDNorig(lastgood)+vidDN(lastgood);
                     else FIX = [FIX; i];
@@ -244,7 +262,7 @@ else
                 end
             end
         end
-        if  ~synchusingvidtimestamps %~kitten ||
+        if  ~synchusingvidtimestamps
             for ii = 1:length(FIX)
                 i = FIX(ii);
                 ADJ = find(abs(vidDN(i+1:end)-vidDNorig(i+1:end))>0,1,'first')+i; % if there have been any adjustments, use them, else will have to use the next one.
@@ -269,8 +287,8 @@ else
             camon(sI:eI) = true; %min(eI,length(p))) = true;
         end
         
-    end
     if any(isnan(vidDN(~cellfun(@isempty,vidNam)))) || any(diff(vidDN(~cellfun(@isempty,vidNam)))<0) || any(isnan(vidDurs(~cellfun(@isempty,vidNam))))
         error('Check vidDN and vidDurs!  Nans found.  Likely there are video files in the raw folder that are before or after the deployment, so you may need to open "movieTimes" in a different matlab version and add nans or empty cells to where the movies that are not part of the deployment should be.  Another thing to check is "videonum".  If "videonum" is longer than your # of videos, you may need to adjust your excel header files to ensure that any blanks spaces are actually deleted.');
     end
 end
+vidadj = vidDN-vidDNorig;

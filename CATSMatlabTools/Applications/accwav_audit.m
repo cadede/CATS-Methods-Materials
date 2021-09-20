@@ -36,6 +36,7 @@ load([fileloc filename(1:end-3) 'mat'],'DN','INFO','tagon','fs','p');
 whaleName = INFO.whaleName;
 
 % Check to see if we should start at beginning or at a saved index (i)
+progressIndex = 44640;
 if ~exist('progressIndex','var')
     i = find(tagon,1);
 else
@@ -141,6 +142,22 @@ while i<find(tagon,1,'last')
                 case 120 %if x, go backwards
                     i = max(find(tagon,1),i-M*60*fs);
                     redraw = true; button = [];
+                case 115 %s = save progress
+                    % set the created on date vector
+                    d1 = datevec(now());
+                    created_on = [d1(2) d1(3) d1(1)];
+                    clearvars d1;
+                    % store temp variables to lunge file 
+                    starttime = DN(1);
+                    prh_fs = fs;
+                    acc_fs = Fs;
+                    CallDN = C;
+                    CallDepth = p(CI);
+                    CallI = CI;
+                    CallType = Ctype;
+                    codes = 'Call types: 1 - unidentified call, 2 - blue whale A call, 3 - blue whale B call, 4 - blue whale C call, 5 - blue whale D call, 6 - other';
+                    progressIndex = i;
+                    save([fileloc strtrim(filename(1:end-11)) ' acc_calls.mat'],'codes','CallDN','CallI','CallType','CallDepth','prh_fs','acc_fs','starttime', 'progressIndex');
             end
     end
     if redraw

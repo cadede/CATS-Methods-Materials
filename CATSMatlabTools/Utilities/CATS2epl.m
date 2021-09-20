@@ -1,10 +1,21 @@
 % function CATS2epl(geoPtrack, DN, fs, speedJJ, tagon, ID, FS,filedest) %,starttime, endtime 
+
+% uncomment aboe to run this script like a function. This inputs data from a prh
+% file and outputs an epl file suitable for plotting animal tracks in
+% echoview, including feeding events.
+
 % for n = [1:4 6:length(D)];
 % set filedest where your prh file is and filedest2 where you want the
 % final epl file
     clearvars -except D n
-filedest = ['E:\CATS\tag_data\' D{n} '\'];
+filedest = 'E:\CATS\tag_data\mn200313-70 (Antarctic)\';% ['E:\CATS\tag_data\' D{n} '\'];
 filedest2 = 'F:\Antarctic\2020\epl\';
+Istart = 102878;%120000; % to truncate file to a certain segment, set these to the indices of your prh file.
+Iend = 138000;
+if ~isinf(Iend) || Istart~=1; tail = ['-' num2str(Istart) '-' num2str(Iend)]; trunc = true;
+else tail = ''; trunc = false;
+end
+
 D2 = dir(filedest); D2 = {D2.name}; prhfile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'prh.mat'),D2,'uniformoutput',false))};
 lungefile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))};
 if isempty(lungefile); D2 = dir([filedest 'lunges\']); D2 = {D2.name}; lungefile = ['lunges\' D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))}]; end
@@ -44,7 +55,10 @@ end
 c8 = ones(size(c4));
 T = table(c1,c2,c3,c4,c5,c6,c7,c8);
 tagondec = tagon(1:df:end); tagondec(end) = [];
-T = T(tagondec,:);
+if trunc
+    T = T(ceil(Istart/df):min(floor(Iend/df),size(T,1)),:);
+    else T = T(tagondec,:);
+end
 % DNdec = DNdec(tagondec);
 % [~,a] = min(abs(DNdec-starttime));
 % [~,b] = min(abs(DNdec-endtime));
@@ -53,7 +67,7 @@ T = T(tagondec,:);
 
 % csvwrite(,[heads; table2cell(T)]);
 % dlmwrite('B:\Dropbox\data\Supergroup\Gold foraging scaling\bwdive.csv',table2cell(T),',');
-writetable(T,[filedest INFO.whaleName '.epl.txt'],'delimiter',',')
-movefile([filedest INFO.whaleName '.epl.txt'],[filedest2 INFO.whaleName '.epl']);
-disp([filedest2 INFO.whaleName '.epl written'])
+writetable(T,[filedest INFO.whaleName tail '.epl.txt'],'delimiter',',')
+movefile([filedest INFO.whaleName tail '.epl.txt'],[filedest2 INFO.whaleName tail '.epl']);
+disp([filedest2 INFO.whaleName tail '.epl written'])
 % end

@@ -1,5 +1,7 @@
 function [T,pT,newspeed,newhead] = gtrack(pitch, head, p, fs,speed,tagon,DN,GPS,GPSerr,errThresh,adjspeed,excludeloops)
 %%
+% all inputs required through GPSerr
+% errThresh, adjspeed and exclude loops are optional inputs
 % outputs: T is the georeferenced pseudotrack with three columns of [m East, m North, m depth];
 % outputs: pT is the uncorrected pseudotrack with three columns of [m East, m North, m depth]; THIS IS DIFFERENT THAN JOHNSON ptrack [north, east,depth];
 % newspeed and newhead are the corrections made to speed and head to fit the pseudotrack to the given points.

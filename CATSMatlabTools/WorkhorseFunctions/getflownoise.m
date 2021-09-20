@@ -1,5 +1,9 @@
 function [DB,AUD] = getflownoise(audiodir,vars)
 
+% reads wav files in a directory and converts them to low-frequency
+% flownoise, bandpass filtered between 66 and 94 Hz using the script
+% CATSrms
+
 names = fieldnames(vars);
 for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);
@@ -39,6 +43,7 @@ else noaud = false;
 end
 AUD = struct();
 audStart = 0;
+if isempty(vidDN); disp('assuming audiofiles are continuous with no gaps'); lastDur = 0; end
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
@@ -58,6 +63,8 @@ if ~nocam || ~noaud
             DBdf = 15;
         elseif aud.rate == 96000
             DBdf = 30;
+        elseif aud.rate == 3200
+            DBdf = 1;
         elseif aud.rate == 25811
             DBdf = 53;
         else error('new sampling rate, check your decimation factor to ensure an integer bin');
@@ -73,7 +80,7 @@ if ~nocam || ~noaud
 %              if isempty(vidnum); vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'C')+1:max(regexp(audiofiles(i).name,'\d')))); end
 %         elseif kitten
            
-            disp(['Video number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+            disp(['Audio number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
 
 %         elseif tagnum<20 && tagnum>12
 %             vidnum = i;

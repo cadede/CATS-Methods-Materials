@@ -1,4 +1,12 @@
 % rename video files
+
+% If video files have been made with data and video, and if they have been
+% stitched together with Adobe Premiere, they will have an appendix usually
+% like: ... (stitched clip).mp4.  This removes that appendix and replaces
+% it with the timestamp of the start of the video.  This can also be used
+% for files without the (stitched clip) appendix as long as they have the
+% video number embedded.
+
 [filename,fileloc] = uigetfile('*.mp4','Grab files to rename','multiselect','on');
 if ~iscell(filename); filename = {filename}; end
 d = dir(fileloc); D = {d.name};

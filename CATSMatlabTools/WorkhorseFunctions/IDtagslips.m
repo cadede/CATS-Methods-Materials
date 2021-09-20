@@ -1,5 +1,9 @@
 function [tagslip, startsI, endsI] = IDtagslips(DN,At,Depth,fs,tagondec,tagslip,camondec)
 
+% provides a user-friendly interfacing for identifying periods of tag slip
+% in a deployment.  These can be adjusted during the estimateprh script as
+% well
+
 if sum(isnan(Depth))>0
     Depth = fixgaps(Depth);
 end

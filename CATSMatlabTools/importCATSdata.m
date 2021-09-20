@@ -47,7 +47,8 @@ function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importA
 % 3) folder structure.  There is some flexibility here, but ease of use
 % will be facilitated if all data directly from the tag (csvs, ubx, txt,
 % bin, and videos) are in a single folder labeled "raw" within whatever
-% organizing folder (typically the deployment ID).
+% organizing folder (typically the deployment ID). If in another folder,
+% the .mat file will be put in that folder.
 
 
 
@@ -205,6 +206,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         else fs = max([gyrHz magHz pHz lHz GPSHz]);
         end
         data = data(find(~strcmp(data.Acc1,'0'),1,'first'):end,:);
+        if noPress; data.Pressure = zeros(size(data,1),1); headers{end+1} = 'Pressure'; end 
         dataT = data;
     else % if not on the first csv imported
         if vers<2020
@@ -326,7 +328,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             [DN,~,~,drops] = checkbadframes(DN);
             if size(DN,2)>size(DN,1); DN = DN'; end
             for ii = 1:length(drops(1,:))
-                warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows']);
+                warning(['There were timestamps out of order starting ' datestr(DN(drops(1,ii)),'dd-mmm-yyyy HH:MM:SS.fff') ', row ' num2str(drops(1,ii)) ' of csv ' num2str(i) ' for ' num2str(drops(2,ii)-drops(1,ii)) ' rows. These will be accounted for in the truncate data process (cell 3) of the prh process, but recommend further investigation of csv files and data files to determine the scale of the problem.']);
             end
         end
     end %from video processing, looks for out of order time stamps and adjust them
@@ -359,14 +361,6 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         end
         if numgaps>0; disp([num2str(numgaps) ' gaps in data filled with subsequent row']); end
     end
-%      skippeddata = find(d>1.5*1/accHz); %
-%      for ii = 1:length(skippeddata)
-%          a = skippeddata(ii);
-%          
-%           oi = [oi(1:b,:); nan(1,3); oi(b+1:end,:)];
-%          
-%          
-%      end
     
     % this line ensures all data decimates to the right length, if there
     % are extra points, carry them to the next csv;
@@ -424,42 +418,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             dataT.(headers{j}) = str2num(char(dataT.(headers{j})));
         end
     end
-%     %now accounted for by carrying over data to the next csv
-%     % sometimes decdc is one short from the sampled points, this tries to
-%     % fit it in as best as possible and then fill in the gap, also only
-%     % resamples p, comp, gyr if you set FS to be less than the maximum of
-%     % those
-%     I = size(dataT,1)-size(acc,1)+1;
-%     I2 = sum(abs(dataT.Pressure(I:end)-p));
-%     I1 = sum(abs(dataT.Pressure(1:end-I+1)-p));
-%     adjcols = any([ ~cellfun(@isempty,strfind(headers,'Comp'));  ~cellfun(@isempty,strfind(headers,'Acc'));  ~cellfun(@isempty,strfind(headers,'Gyr'));  ~cellfun(@isempty,strfind(headers,'Pressure'))]);
-%     if size(dataT,1) == size(acc,1) || I2<=I1
-%         dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
-%         if exist('FS','var') && ~isempty(FS)
-%             dataT.Comp1(I:end) = comp(:,1); dataT.Comp2(I:end) = comp(:,2); dataT.Comp3(I:end) = comp(:,3);
-%             dataT.Gyr1(I:end) = gyr(:,1); dataT.Gyr2(I:end) = gyr(:,2); dataT.Gyr3(I:end) = gyr(:,3);
-%             dataT.Pressure(I:end) = p;
-%             % if there was a leftover point
-%             if I2<I1 ; for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{1,jj} = nan; end; end; end
-%         end
-%     else
-%         dataT.Acc1(I:end) = acc(:,1); dataT.Acc2(I:end) = acc(:,2); dataT.Acc3(I:end) = acc(:,3);
-%         if exist('FS','var') && ~isempty(FS)
-%             dataT.Comp1(1:end-I+1) = comp(:,1); dataT.Comp2(1:end-I+1) = comp(:,2); dataT.Comp3(1:end-I+1) = comp(:,3);
-%             dataT.Gyr1(1:end-I+1) = gyr(:,1); dataT.Gyr2(1:end-I+1) = gyr(:,2); dataT.Gyr3(1:end-I+1) = gyr(:,3);
-%             dataT.Pressure(1:end-I+1) = p;
-%         end
-%         for jj = 1:length(adjcols); if adjcols(jj)&&i~=mini; dataT{end,jj} = nan; end; end;
-%     end
-%     testcol = find(adjcols,1,'first');
-%     if i~=mini && (isnan(dataT{1,testcol}) || isnan(data{end,testcol}))
-%         for jj = 1:length(adjcols); if adjcols(jj)
-%                 col = inpaint_nans([data{end-10:end, jj};dataT{1:11,jj}]);
-%                 data{end-10:end,jj} = col(1:11);
-%                 dataT{1:11,jj} = col(12:end);
-%             end; end
-%     end
-    
+
     if ~isnan(GPSHz) && iscell(dataT.GPSDate(1))
         I = find(cellfun(@isempty,dataT.GPSDate),1,'last'); if isempty(I); I = 0; end
         if I == size(dataT,1); dataT.GPSDate = nan(size(dataT.GPSDate)); dataT.GPSTime = nan(size(dataT.GPSTime));
@@ -545,7 +504,7 @@ s3 = subplot(313);
 plot(data.Date+data.Time,data.Pressure); title('Pressure'); set(s3,'ydir','rev');
 linkaxes([s1 s2 s3],'x');
 set([s1 s2 s3],'xticklabel',datestr(get(s1,'xtick'),'HH:MM:SS'))
-disp('For figure 2, use "set([s1 s2 s3],''xticklabel'',datestr(get(s1,''xtick''),''HH:MM:SS''))" to reset axis labels if you zoom in');
+disp('For figure 2, use "set(get(gcf,''children''),''xticklabel'',datestr(get(gca,''xtick''),''HH:MM:SS''))" to reset axis labels if you zoom in');
 if any(sum(diff([data.Acc1 data.Acc2 data.Acc3])==0)>.25*size(data,1)); error('CHECK ACCELEROMETER GRAPH, may have dropped an axis'); end
 Mdiff = diff([data.Comp1 data.Comp2 data.Comp3]);
 Mdiff2 = [[data.Comp1(1:end-2) data.Comp2(1:end-2) data.Comp3(1:end-2)] - [data.Comp1(3:end) data.Comp2(3:end) data.Comp3(3:end)]; [0 0 0]];
