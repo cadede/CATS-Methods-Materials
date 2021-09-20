@@ -392,7 +392,7 @@ set(gca,'yticklabel',datestr(get(gca,'ytick'),'HH:MM:SS.fff'));
 % for ii = 1:length(oi2); disp(frameTimes{i}(oi2(ii)-3:oi2(ii)+3)); end
 % for ii = 1:length(oi2); frameTimes{i}(oi2(ii)) = mean(frameTimes{i}([oi2(ii)-1 oi2(ii)+1])); end
 % for ii = 1:length(oi2); disp(frameTimes{i}(oi2(ii)-3:oi2(ii)+3)); end
-if any(abs(viddifs(i))>timewarn)
+if any(abs(viddifs)>timewarn)
     warning('Some movies had initital times (vidDN) + durations that were offset from the final frame embedded in the movie by the above listed amounts.  Recommend adjusting these times if they are small (< 1 s) and consistent throughout the movie times read process (see notes above for the specific video).  If they are big, recommend rerunning cell 1 with simpleread set to off for the movies that need it (this reads the embedded timestamp on each frame)');
     
     pp = input('adjust vidDN by the above listed amounts? 1 = yes, 2 = no ');
