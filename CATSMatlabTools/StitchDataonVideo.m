@@ -838,6 +838,10 @@ for n = startn:length(filename)
             if ci == 1 && oj == 1 && length(combos{c})>1; vN = [vN '-' vN2]; es = ' '; else es = ''; end
             if noaud; mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,conf);
             else
+                if aud.rate >48000; df = ceil(aud.rate/48000); if abs(aud.rate/df-round(aud.rate/df))>.01; error('audio rate is too big for mmread and suggested decimation factor does not divide evenly into audio rate'); end
+                    aud.data = decdc(aud.data,df); aud.rate = aud.rate/df;
+                end
+                warning(['Audio rate decimated to ' num2str(aud.rate) ' to work with mmwrite function']);
                 mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
             end
         end

@@ -1,4 +1,5 @@
 global movieNum
+badaudio = false;
 shortmovies = [];
 if ~isempty(wavfiles)
     aud = struct();
@@ -75,13 +76,22 @@ for n = 1:length(movies)
         end
         shortmovies = [shortmovies sm];
     else
+        badaudio = false;
         fid = fopen([movieloc movies{n}]); 
         y = fread(fid,'int16'); bits = 16; fclose(fid);
         if sum(y(2:2:end)==0) ~= length(y)/2
             fid = fopen([movieloc movies{n}]); 
             y = fread(fid,'int32'); bits = 32; fclose(fid);
             if sum(y(2:2:end)==0) ~= length(y)/2
-               error('Audio bit rate unknown (not 16 or 32 bits)'); 
+                if ~ignorebadaudio
+                    error('Audio bit rate unknown (not 16 or 32 bits)');
+                else
+                    warning(['audio file ' movies{n} ' cannot be read properly, possibly encoding error']);
+                    disp('moving to "bad audio" directory and making an empty audio file in its place');
+                    fid = fopen([movieloc movies{n}]);
+                    y = fread(fid,'int16'); bits = 16; fclose(fid);
+                    badaudio = true;
+                end
             end
         end
         
@@ -118,6 +128,17 @@ for n = 1:length(movies)
         save([DIR movies{n}(1:end-4) 'audio.mat'],'aud','totalDuration','-v7.3');
         disp(['Made a version 7.3 file (audio ' movies{n}(1:end-4) ' was a large file)']);
     end
+    if badaudio
+        try mkdir([DIR 'badaudio//']); catch; end
+        movefile([DIR movies{n}(1:end-4) 'audio.mat'],[DIR 'badaudio//' movies{n}(1:end-4) 'audio.mat']);
+        movefile([DIR movies{n}(1:end-4) '.wav'],[DIR 'badaudio//' movies{n}(1:end-4) '.wav']);
+        aud.data = zeros(0,1); % y(2:2:end)
+        aud.totalDuration = size(aud.data,1)/aud.rate;
+        totalDuration = aud.totalDuration;
+        save([DIR movies{n}(1:end-4) 'audio.mat'],'aud','totalDuration');
+        wavwrite(aud.data,aud.rate,aud.bits,[DIR movies{n}(1:end-4) '.wav'])
+    end
+    badaudio = false;
 end
 if ~audioonly; disp('Check wav files for accuracy/length, then they can be deleted (keep the .mat files for audio analysis).'); end%  If the wav files are the wrong length, reimport the audio files.  The frametimes etc. should still be accurate and should not need to be redone.');
 if ~isempty(shortmovies); disp(['Audio lengths are off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible. This message will repeat.']); end

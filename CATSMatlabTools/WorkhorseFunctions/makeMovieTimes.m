@@ -1,4 +1,4 @@
-function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums,audioonly)
+function makeMovieTimes(dur,timestamps,simpleread,folder,ripAudio,timewarn,whaleID,vidNums,audioonly,ignorebadaudio)
 dbstop if error;
 
 % this function reads the time off each video frame.  For HD CATS cams, it

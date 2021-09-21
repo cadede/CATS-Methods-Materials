@@ -53,11 +53,12 @@ readtimestamps = true; % if there are embeded timestamps on the video.  If simpl
 simpleread = true; % newer videos with accurate initial timestamps (to the ms). If false, reads timestamps from every frame and tries to estimate the bad frame reads
 timewarn = 0.1; % since typical data is downsampled to 10 Hz, use this as a threshold for accuracy of the video timestamps
 redovids = []; % set this if you are trying to re-read specific video numbers
+ignorebadaudio = false; % set to true if raw files appear to be corrupted/wrong length/wrong bit rate/wrong sample rate, then will ignore the bad audio files 
 % whaleID allows you to look up tag off and on times from a TAG GUIDE.xlx.
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
 
-makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly); %workhorse script
+makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly,ignorebadaudio); %workhorse script
 disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section, then can jump to any previously completed
