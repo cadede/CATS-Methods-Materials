@@ -1,5 +1,5 @@
 
-function [Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,tagslip,speedper] = estimatePRH(At,Mt,Gt,fs,DN,Depth,tagon,dec,tagslip,calperiodI,W)
+function [Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,tagslip,speedper] = estimatePRH(At,Mt,Gt,fs,DN,Depth,tagon,dec,tagslip,calperiodI,W,allowpitchflip)
 % calperiodI and W are optional inputs as they are calculated here, but can be inputted from previous runs
 % dec is the declination in radians at the deployment location.  Enter 0 if you want heading calculated to magnetic north
 % tagslip is a m x 2 matrix, where the first row and last rows are the tag on and tag off indices (same value in each column).  Column 1 is the start of a tag slip, column 2 is the end of a tagslip.

@@ -202,7 +202,12 @@ disp('Section 3 finished');
 %NOTE: this cell can sometimes take a long time to run if there is a large
 % data file
 
-synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video
+%NEW: first flag has been set to false as a default (so it will try to read
+%surfacing files from the xls header file and use those to synchronize the
+%video and the data). This may or may not be the future default until the
+%processor speeds of CATS tags are sufficient to handle video/data time
+%synchs independently.
+synchusingvidtimestamps = false; % for newer videos where timestamp from data is imprinted on video
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
 audioonly = false; % set to true if tag has no camera but does have audio
 
@@ -438,12 +443,17 @@ disp('section 8.1 completed');
 
 % Matlab packages required: Aerospace Toolbox
 
+% not implementable yet, will be set up for use with seals.
+allowpitchflip = false; % set to true if the direction of your gimbal rotation cannot be determined from the depth change (e.g. for a seal calibrated on land).
+
  load([fileloc filename(1:end-4) 'Info.mat'],'dec','slips');
  if CellNum<7.5; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
-
- 
+if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
+ if ~exist('Depth','var') || ~exist('At','var') || ~exist('Mt','var') || ~exist('Gt','var')
+    [Depth,At,Mt,Gt] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
+end
  try  load([fileloc filename(1:end-4) 'Info.mat'],'W','calperiodI'); catch; end
  try  load([fileloc filename(1:end-4) 'Info.mat'],'tempslips'); catch; end
  if exist('W','var') && ~isempty(W) && ~all(cellfun(@isempty,W));
@@ -466,7 +476,7 @@ end
     %      error('check input parameters');
  end
  
-[Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,newslips,speedper] = estimatePRH(At,Mt,Gt,fs,DN,Depth,tagondec,dec,slips,calperiodI,W);
+[Aw,Mw,Gw,W,Wchange,Wchangeend,tagprh,pitch,roll,head,calperiodI,newslips,speedper] = estimatePRH(At,Mt,Gt,fs,DN,Depth,tagondec,dec,slips,calperiodI,W,allowpitchflip);
 %
 oldslips = slips; slips = newslips;
 CellNum = 8;
