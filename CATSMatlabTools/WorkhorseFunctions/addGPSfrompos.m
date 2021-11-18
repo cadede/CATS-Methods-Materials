@@ -236,10 +236,10 @@ for j = 1:length(Dmatch)
 %             text(xs(1)+diff(xs)/20,ys(2)-diff(ys)/20,{['Number of surfacings: ' num2str(length(surfs))]; ['Number of GPS hits on surfacings: ' num2str(size(GPS(tagon&~isnan(GPS(:,1))),1))]},'parent',ax);
             report = [report; length(surfs) size(GPS(tagon&~isnan(GPS(:,1))),1)];
             save([D{j} '//' prhfile{jj}],'GPS','GPSerr','-append');
-            oneup = max(strfind(D{j},'//'));
-            if exist([D{j}(1:oneup) 'prh//'],'dir');
-                save([D{j}(1:oneup) 'prh//' prhfile{jj}],'GPS','GPSerr','-append');
-            end
+%             oneup = max(strfind(D{j},'//'));
+%             if exist([D{j}(1:oneup) 'prh//'],'dir');
+%                 save([D{j}(1:oneup) 'prh//' prhfile{jj}],'GPS','GPSerr','-append');
+%             end
             whalename = prhfile{jj}(1:strfind(prhfile{jj},' ')-1);
 %             set(fig,'units','normalized','outerposition',[0 0 1 1]);
 %             if ~exist([D{j} '//QL//'],'dir'); mkdir([D{j} '//QL//']); end

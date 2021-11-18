@@ -143,6 +143,11 @@ if CellNum<2; x = input('Previous cell has not been completed, continue anyway? 
     if x~=1; error('Previous cell has not been completed'); end
 end
 
+% can set to a specific start time in matlab datenumber format.  
+% Leave as nan to use the graphical interface, or 
+% set to 0 if you do not want to truncate the start time at all.
+truncstart = nan;
+
 % Follow the prompts at the top of the plot, will need to press enter twice
 % to accept the default selection, or follow prompts to choose the location
 % to truncate
@@ -160,7 +165,7 @@ else
     if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
-    [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename); % workhorse script in this section
+    [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart); % workhorse script in this section
           save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
     disp('Check to ensure these times are before tag on and after tag off (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
@@ -614,6 +619,7 @@ legend('JiggleRMS','FlownoiseRMS')
 
 % should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
 % maxoffset = 2.5; % set with what you think the max offset would be
+% onlyAud = false; % set to true if you only  want to try to offset the audio only portions of the deployment
 % AdjDataVidOffsets;
 % disp('Now remaking full deployment audio file');
 % stitchaudio([fileloc 'AudioData//'],vars.whaleName,DN(1),vidDN,fileloc);
@@ -732,8 +738,8 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
-creator = '';
-notes ='';
+creator = 'DEC';
+notes ='New vid times from surfacings (not jig/flownoise offset)';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -783,7 +789,7 @@ try
     a = ['(tag thinks it was ' num2str(UTC) ')'];
     path = matlab.desktop.editor.getActiveFilename;
     aa = strfind(path,'CATSMatlabTools');
-    UTCfileloc = [path(1:aa+15) 'excel templates and files//'];
+    UTCfileloc = [path(1:aa+15) 'templates//'];
     INFO.UTC = getUTC(GPS(1),GPS(1,2),DN(1),UTCfileloc);
     if UTC~=INFO.UTC; a = [a(1:end-1) ', getUTC function calculated it as ' num2str(INFO.UTC) ')'];  error('er'); end
 catch

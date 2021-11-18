@@ -1,11 +1,14 @@
-function [data,Adata,Atime,datagaps,ODN,fs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename)
+function [data,Adata,Atime,datagaps,ODN,fs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart)
 
 % takes data, Adata, Atime, truncates them to get rid of unneeded data
 % (i.e. most (or all) of the data before or after deployment)
 % looks for any gaps in data or potential bad data sections
 % saves truncated file in fileloc with [filename 'truncate.mat'];
 DN = data.Date+data.Time;
-disp(['Original data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM:SS')]);
+disp(['Original data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM:SS.fff')]);
+if ~isnan(truncstart); if truncstart == 0; truncstart = data.Date(1)+data.Time(1); end
+    disp(['Start time is set to: ' datestr(truncstart,'mm/dd/yyyy HH:MM:SS.fff')]);
+end
 % DV = datevec(data.Date+data.Time); %makes a datevec of the date and time
 fs = round(1./mean((data.Time(50:60)-data.Time(49:59))*24*60*60));
 if abs(round(fs)-fs)<.01; fs = round(fs); end
@@ -29,6 +32,7 @@ p1 = max([1 find(p>.05*pmax,1)-10*60*fs]); % ten minutes before the first dive g
 p2 = min(length(p),find(p>.05*pmax,1,'last')+10*60*fs);
 %
 button = 3;
+if ~isnan(truncstart); [~,p1] = min(abs(data.Date+data.Time-truncstart)); end
 
 while ~isempty(button);
     figure (2); clf;

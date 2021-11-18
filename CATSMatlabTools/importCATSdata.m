@@ -513,7 +513,7 @@ Mdiff4 = [[data.Comp1(1:end-4) data.Comp2(1:end-4) data.Comp3(1:end-4)] - [data.
 Mdiff5 = [[data.Comp1(1:end-5) data.Comp2(1:end-5) data.Comp3(1:end-5)] - [data.Comp1(6:end) data.Comp2(6:end) data.Comp3(6:end)]; [0 0 0; 0 0 0; 0 0 0; 0 0 0]];
 if any(sum(Mdiff == 0 & Mdiff2 == 0 & Mdiff3 == 0 & Mdiff4 == 0 & Mdiff5 == 0)>.25*size(data,1)); error('CHECK MAGNETOMETER GRAPH, may have dropped an axis'); end
 
-disp('Can select tag on and tag off times, or press ctrl+c to excape');
+disp('Can select tag on and tag off times, or press ctrl+c to escape');
 try
     if sum(data.Pressure>5)<fs*120; error('less than two minutes of dives below 5 m'); end
     tagon = gettagon(data.Pressure,fs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]);
