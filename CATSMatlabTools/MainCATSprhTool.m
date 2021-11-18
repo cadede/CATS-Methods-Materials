@@ -532,7 +532,7 @@ end
 if s == 1
     [flownoise,AUD] = getflownoise(audiodir,vars);
     disp('Now making full deployment audio file');
-    stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc);
+    try; stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); catch; disp('error in stitch audio'); end
 end
 
 tag1 = find(vars.tagondec,1);
@@ -738,8 +738,8 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
-creator = 'DEC';
-notes ='New vid times from surfacings (not jig/flownoise offset)';
+creator = '';
+notes ='';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
