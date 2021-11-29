@@ -252,8 +252,19 @@ else
                         sI = vidDN(videonum(find(videonum < i,1,'last')))+vidDurs(videonum(find(videonum < i,1,'last')))/24/60/60; % okay to do i -1 because you shouldn't note a slip if it's the first video
 %                         tagslipC = [tagslipC 0];
                         eI = vidDN(i);
-                    else sI = times(slipI(j),1)+vidDN(i); %   tagslipC = [tagslipC 1];
-                        eI = times(slipI(j),2)+vidDN(i);
+                    else
+                        if strcmp(headers{5,1},'Time Style') && strcmp(headers{5,2},'Embedded')
+                            if ~synchusingvidtimestamps
+                                times(slipI(j),:) = timeDN(slipI(j),:) + floor(vidDN(i));
+                            else
+                                times(slipI(j),:) = times(slipI(j),:) + floor(vidDN(i));
+                            end
+                            sI = times(slipI(j),1); %   tagslipC = [tagslipC 1];
+                            eI = times(slipI(j),2);
+                        else
+                            sI = times(slipI(j),1)+vidDN(i); %   tagslipC = [tagslipC 1];
+                            eI = times(slipI(j),2)+vidDN(i);
+                        end
                     end
                     [~,sI] = min(abs(DN-sI)); [~,eI] = min(abs(DN-eI));
 %                     [~,oi] = max(njerkTemp(sI:eI));

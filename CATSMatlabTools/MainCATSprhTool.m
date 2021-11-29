@@ -601,6 +601,7 @@ Jig = [JX JY JZ J];
 catch
     warning('Error running TagJiggle, perhaps acc sample rate is lower than 180?  Can adjust high-pass filter in above lines to try again');
     Jig = nan(length(Depth),4);
+    J = nan(size(Depth)); JX = J; JY = J; JZ = J;
 end
 
 % speedP = Paddles; speedP(speedP == 0) = nan;
@@ -738,8 +739,8 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
-creator = '';
-notes ='';
+creator = 'DEC';
+notes ='New vid times from surfacings (not jig/flownoise offset)';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
