@@ -441,7 +441,7 @@ for n = startn:length(filename)
         set(get(ax1(2),'ylabel'),'string',[speedoi ' (m/s)'],'fontsize',16 + adF);
         %         if vidW == 2560; JP = 1.037; else JP = 1.062; end
         if vidW > 1500; JP = 1.044; SPACE = '    '; else JP = 1.057; SPACE = ''; end; if ~smallfont; JP = JP - 0.01; end
-        jtext = text(DN2(round(fs*(dataendtime)*JP+b)),max(get(gca,'ylim')),[SPACE 'Jerk/' num2str(oi) ' (m/s^{3})'],'rotation',90,'fontsize',16 + adF,'color','m');
+        jtext = text(round(fs*(dataendtime)*JP+b),max(get(gca,'ylim')),[SPACE 'Jerk/' num2str(oi) ' (m/s^{3})'],'rotation',90,'fontsize',16 + adF,'color','m');
         %             xlabel('Local Time');
         ylabel('Depth'); set(get(gca,'ylabel'),'fontsize',16 + adF);
         set(gca,'units','points');
