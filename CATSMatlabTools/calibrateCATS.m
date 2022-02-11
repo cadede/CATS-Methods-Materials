@@ -32,10 +32,12 @@ cd(fileloc);
 cd(cf);
 
 data =  load([fileloc filename]); data = data.data;
-[benchdata, txtdata] = xlsread([benchloc benchfile]);
+[benchdata, txtdata,alldata] = xlsread([benchloc benchfile]);
+if ~isnumeric(alldata{2,2}); benchdata = [nan(2,size(benchdata,2)); benchdata]; end
 %
 tagtype = txtdata{3,2}
-tagnum = benchdata(1,2)
+tagnum = alldata{2,2}
+if isnumeric(tagnum); tagnum = num2str(tagnum); end
 starts = benchdata(13:3:30,2);
 positions = benchdata(13:3:30,1);
 stops = benchdata(13:3:30,3);
@@ -97,7 +99,7 @@ if abs(nanmean(M)-1)>.02
 end
 
 if strcmpi(tagtype(1:5),'TDR10') || strcmpi(tagtype(1:5),'Littl') 
-    save([fileloc 'TDR10cal' num2str(tagnum) '.mat'],'acal','aconst');
+    save([fileloc 'TDR10cal' tagnum '.mat'],'acal','aconst');
 end
 disp('Step 1 successfully completed')
 %% 2.  Now enter files where gyro calibration is found (only run this cell if you have gyro data)
@@ -662,11 +664,11 @@ pconst = nanmean(data.Pressure(1:180*fs)); %give pressure above water in first f
 dirup = max(strfind(fileloc(1:strfind(fileloc,'Bench')),'\'));
 if isempty(dirup); dirup = length(fileloc); end
 
-save([fileloc(1:dirup) str 'cal' num2str(tagnum) '.mat'],'gycal','gyconst','acal','aconst','magcaloff','magconstoff','magcalon','magconston','pcal','pconst','Tcal','Tconst');
+save([fileloc(1:dirup) str 'cal' tagnum '.mat'],'gycal','gyconst','acal','aconst','magcaloff','magconstoff','magcalon','magconston','pcal','pconst','Tcal','Tconst');
 if exist('Acal3d0','var') && ~isempty(Acal3d0)
-    save([fileloc(1:dirup) str 'cal' num2str(tagnum) '.mat'],'Acal3d0','Acal3d0cam','-append');
+    save([fileloc(1:dirup) str 'cal' tagnum '.mat'],'Acal3d0','Acal3d0cam','-append');
 end
 if exist('Mcal3d0','var') && ~isempty(Mcal3d0)
-    save([fileloc(1:dirup) str 'cal' num2str(tagnum) '.mat'],'Mcal3d0','Mcal3d0cam','-append');
+    save([fileloc(1:dirup) str 'cal' tagnum '.mat'],'Mcal3d0','Mcal3d0cam','-append');
 end
 disp(['Step 5 successfully completed, cal file saved in folder: ' fileloc(1:dirup)])

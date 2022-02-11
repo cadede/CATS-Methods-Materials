@@ -59,11 +59,11 @@ disp(['TagOffAnimal: ' datestr(DN(find(tagon,1,'last')),'mm/dd/yy HH:MM:SS.fff')
 disp(['EndData: ' datestr(DN(end),'mm/dd/yy HH:MM:SS.fff')]);
 
 %add GPS to PRH file
-try
-    GPSoffset = INFO.UTC+INFO.timedif;
-catch
-    GPSoffset = INFO.timedif;
-end
+% try
+    GPSoffset = INFO.UTC;%+INFO.timedif;
+% catch
+%     GPSoffset = INFO.timedif;
+% end
 dataGPS.GPSDN = dataGPS.DNUTC+GPSoffset/24; %This converts GPS to same offest as PRH (local Time)
 % Remove points from recovery
 dataGPS((dataGPS.GPSDN>max(DN)),:) = []; % remove GPS locations outside of PRH data (sometimes hits from recovery)

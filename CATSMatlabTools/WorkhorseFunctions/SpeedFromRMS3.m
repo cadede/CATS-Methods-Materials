@@ -1,7 +1,7 @@
 function [speedJJ,speedTable,speedstats] = SpeedFromRMS3(RMS1,lab1,RMS2,lab2,fs,p,pitch,roll,DN,speedper,tagslip,tagon,binSize,filterSize,minDepth0,minPitch0,minSpeed,minTime)
 
 global label1 label2 numRMS minPitch minDepth maxDepth maxRR% only used in the context of this function
-label1 = lab1; label2 = lab2; minPitch = minPitch0; minDepth = minDepth0;
+
 
 % Regresses a metric of speed (e.g. RMS flow noise or the amplitude of tag
 % vibrations) against orientation corrected depth rate and applies that
@@ -13,8 +13,9 @@ label1 = lab1; label2 = lab2; minPitch = minPitch0; minDepth = minDepth0;
 
 if nargin <18 || isempty(minTime); minTime = 2/fs; end
 if nargin <17 || isempty(minSpeed); minSpeed = 0; end
-if nargin <16 || isempty(minPitch); minPitch = 45; end
-if nargin <15 || isempty(minDepth); minDepth = 5; end
+if nargin <16 || isempty(minPitch0); minPitch0 = 45; end
+if nargin <15 || isempty(minDepth0); minDepth0 = 5; end
+label1 = lab1; label2 = lab2; minPitch = minPitch0; minDepth = minDepth0;
 if nargin <14 || isempty(filterSize); filterSize = 1; end
 if nargin <13 || isempty(binSize); binSize = 1/fs; end
 if nargin <12 || isempty(tagon); tagon = true(size(p)); end
@@ -75,9 +76,10 @@ spitch = runcirc_mean(pitch,round(filterSize*2*fs)); %smoothed pitch
 spitch = [circ_mean([spitch(1:end-1) spitch(2:end)],[],2); nan]; % average each point with the one after it (since each depth deviation is happening between two pitches)
 OspeedSP = -dd./sin(spitch)*fs; OspeedSP(abs(spitch*180/pi)<minPitch) = nan; OspeedSP(p<minDepth) = nan;
 OspeedJJ = nan(size(RMS1)); % speed from Jiggle
-clear dd;
+
 
 if binData % bin data (so that you are looking at chunks of data instead of each data point on its own)
+    clear dd;
     bin = round(fs*binSize);
     X = buffer(RMS1(:,1),bin,0,'nodelay'); X(X == 0) = nan; Y = 20*log10(nanmean(10.^(X/20))); RMS1 = Y';
     X = buffer(RMS2(:,1),bin,0,'nodelay'); X(X == 0) = nan; RMS2 = 20*log10(nanmean(10.^(X/20)))';
@@ -98,6 +100,7 @@ if binData % bin data (so that you are looking at chunks of data instead of each
         end
         J = Y;
     end
+else bin = 1;
 end
 
 % from here on out, everything is at the reduced, binned, sizes

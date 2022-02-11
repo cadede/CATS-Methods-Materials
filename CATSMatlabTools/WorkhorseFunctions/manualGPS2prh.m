@@ -113,6 +113,15 @@ hits = hits(2:end,:);
 try gDN = datenum(hits(:,timecol));
 catch gDN = datenum(vertcat(hits{:,timecol}));
 end
+
+% catch for macs that use a simple version of excel to read datenumbers
+if abs(gDN(1)-DN(1)) > 1000
+    gDN = gDN+693960;
+end
+if abs(gDN(1)-DN(1)) > 3
+    error('Problem reading timestamps (start times are more than 3 days off).  Check DN variable in prh file and the time column in GPS excel sheet.  Dates should be in mm/dd/yyyy HH:MM:SS format')
+end
+
 lat = vertcat(hits{:,latcol}); long = vertcat(hits{:,longcol});
 nums = 1:length(lat);
 button = 1;

@@ -31,7 +31,6 @@ tic;
 
 autocrop = true; % if you want to automatically crop the video to 60 seconds before tag on and 30 seconds after tagon, if false enter start, end below
 
-
 firststart = 0; % if autocrop is false, enter starttime of the first video you want to render (in seconds).  0 if the whole video, something else if you want to cut some off
 lastend = 30000;% if autocrop is false, enter a big number if you want to do the whole last video (anything longer than the length of the file- generally 100 hours in seconds to be bigger than the weird reading wireless videos)
 % not relevant for single video cameras:
@@ -61,18 +60,22 @@ co = [0 0 1;
       0.25 0.25 0.25];
 set(groot,'defaultAxesColorOrder',co);
 
-cf = pwd; %try cd('D:\'); catch; end
+cf = pwd; %try cd('D://'); catch; end
 [filename,fileloc]=uigetfile('*.*', 'select video files from one deployment','multiselect','on'); % can do multiple files successively
 if ischar(filename); filename = {filename}; end
-cd(fileloc); try cd('\\GOLDTERA1\lab\TEMP\prhs'); catch; end %cd(
+cd(fileloc); try cd('////GOLDTERA1//lab//TEMP//prhs'); catch; end %cd(
 [prhfile,prhloc] = uigetfile('*.mat','select prh file');
 
-try cd('P:\'); catch; end
+try cd('P://'); catch; end
 [~,filedest] = uigetfile('*.*','choose any file in the directory you want to put the partial files in, press cancel to use the same folder as the videos');
 cd(cf);
 if sum(filedest==0) || isempty(filedest); filedest = fileloc; end
 %
 load([prhloc prhfile]); %viddeploy(1) = [];
+if sum(isnan(flownoise)) == length(flownoise); noaud = true; else noaud = false; end
+% if there is no audio on the file, the flag here shoudl be set to true
+
+
 if autocrop
     if find(tagon,1)>60*fs
     firststart = round(max(0,24*60*60*(DN(find(tagon,1)) - vidDN(min(viddeploy))) - 60));
@@ -91,7 +94,7 @@ et = [100*60*60*ones(1,length(filename)-1) lastend];
 %     wireless = true; else wireless = false;
 % end
 
-
+wireless = true;
 
 try D = dir(fileloc(1:end-4)); D = {D.name}'; load([fileloc(1:end-4) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
 catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellfun(@isempty,cellfun(@(x) strfind(x,'movieTimes'),D,'uniformoutput',false))}],'frameTimes','oframeTimes','frameSize');
@@ -129,7 +132,7 @@ njerk = (9.81*fs)*sqrt(diff(Aw).^2*ones(3,1)) ; njerk(end+1) = njerk(end);
 
 % size of single video
 tic
-[vid,aud] = mmread([fileloc filename{1}], [1 2]);
+[vid,~] = mmread([fileloc filename{1}], [1 2],[],false,true);
 toc
 if abs(vid.width/vid.height-16/9)>.1; warning ('Single video is not 16 x 9. '); end
 vidW = vid.width; vidH = vid.height;
@@ -182,8 +185,8 @@ xs = get(gca,'xlim');
 ys = get(gca,'ylim');
 text(xs(1),ys(2),'Full Deployment Record','fontsize',16 + adF,'verticalalignment','bottom');
 prhN = regexp(prhfile,' ')-1;
-if ~exist([prhloc 'QL\'],'dir'); mkdir([prhloc 'QL\']); end
-saveas(fig,[prhloc 'QL\' prhfile(1:prhN) ' TDR' '.bmp']);
+if ~exist([prhloc 'QL//'],'dir'); mkdir([prhloc 'QL//']); end
+saveas(fig,[prhloc 'QL//' prhfile(1:prhN) ' TDR' '.bmp']);
 
 
 % make long prh graph
@@ -221,7 +224,7 @@ set(axp5,'xticklabel',oi,'fontsize',16 + adF);
 ys = get(axp5(1),'ylim');
 xs = get(axp5(1),'xlim');
 ltext = text(xs(1)-(xs(2)-xs(1))*.028,ys(1)-(ys(2)-ys(1))/40,'Local Time: ','parent',axp5(1),'verticalalignment','top','fontname',get(axp5(1),'fontname'),'fontsize',get(axp5(1),'fontsize'),'horizontalalignment','left');
-saveas(fig5,[prhloc 'QL\' prhfile(1:prhN) ' prh' '.bmp']);
+saveas(fig5,[prhloc 'QL//' prhfile(1:prhN) ' prh' '.bmp']);
 CONTINUE = false; % Should be false, but set to true if you want to continue a previously interrupted cycle.  FYI, best time to interrupt is when the graphs are blazing.
 startref = starttime; % for adjusting starttime for wireless videos
 
@@ -257,9 +260,10 @@ startn = startn;
 
 % some new files had audio trouble.  If they are remade, this helps find
 % them.  You will want to move your wav files 
-if exist([fileloc 'for audio\'],'dir'); audioloc = [fileloc 'for audio\']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
-elseif exist([fileloc 'wavfiles\'],'dir'); audioloc = [fileloc 'wavfiles\']; checkaudiofs = true; audioend = 'wav';
-elseif exist([fileloc(1:end-4) 'AudioData\'],'dir'); audioloc = [fileloc 'AudioData\']; checkaudiofs = true; audioend = 'wav';
+if exist([fileloc 'for audio//'],'dir'); audioloc = [fileloc 'for audio//']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
+% if you need to read wav files, revisit making structure here.
+    elseif exist([fileloc 'wavfiles//'],'dir'); audioloc = [fileloc 'wavfiles//']; checkaudiofs = true; audioend = 'wav';
+elseif exist([fileloc(1:end-4) 'AudioData//'],'dir'); audioloc = [fileloc(1:end-4) 'AudioData//']; checkaudiofs = true; audioend = 'wav'; %'audio.mat';%
 else audioloc = fileloc; checkaudiofs = false;
 end
 if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = nan(size(p)); end
@@ -282,7 +286,7 @@ for n = startn:length(filename)
     end
 %     clear audAdj;
 %     try
-%         audAdj = load([prhloc 'VideoData\' filename{n}(1:end-4) 'audio.mat']);
+%         audAdj = load([prhloc 'VideoData//' filename{n}(1:end-4) 'audio.mat']);
 %         audAdj = audAdj.aud;
 %         disp(['Loading fixed audio file for ' filename{n}(1:end-4)]);
 %     catch
@@ -308,9 +312,13 @@ for n = startn:length(filename)
             if ~checkaudiofs; audioend = filename{n}(end-2:end); end
             if j>1; ST0 = ST0-wireless*0.1;
                 [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0+.1*wireless,endtime)]);
-                 [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0+.1*wireless,endtime)],true); %just audio
+               if ~noaud;  [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0+.1*wireless,endtime)],true); end %just audio
             else [vid,~] = mmread([fileloc filename{n}], [],[ST0 min(dur+ST0,endtime)]);
-                [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0,endtime)],true); %just audio
+                if ~noaud; %if j == 1; audn = load([audioloc filename{n}(1:end-4) audioend]); audn = audn.aud; end
+%                     IIIs = round([ST0 min([dur+ST0,endtime,length(audn.data)/audn.rate])]*audn.rate)
+%                     fIIIs = find(audn.times
+%                     aud = audn(
+                    [~,aud]= mmread([audioloc filename{n}(1:end-3) audioend], [],[ST0 min(dur+ST0,endtime)],true); end %just audio
             end
 %             totalDuration = aud.totalDuration;
 %             [aud, sm] = fixmmreadaud(aud,totalDuration,true);
@@ -331,7 +339,7 @@ for n = startn:length(filename)
                     clear vid;
                     j = j+1;
                     ET = min([dur*j+ST0,endtime, 100*60*60]); % endtime
-                    [vid,aud] = mmread([fileloc filename{n}], [],[ST ET]);
+                    [vid,aud] = mmread([fileloc filename{n}], [],[ST ET],false,noaud);
                     if mod(round((ET-ST)*2/60)/2,300) == 0; kk = round((ET-ST)/60/60); disp([num2str(kk) ' "hours" read']);
                     end
                 end
@@ -345,7 +353,7 @@ for n = startn:length(filename)
             df = endf-sf+1;
             if sf<=endf; % shorten the videos by as much earlier you started the vdieo (accounts for the propensity of these videos to take a random frame as the first frame, messing up everything
                 vid.times = vid.times (df+1:end); vid.frames = vid.frames(df+1:end); sf = sf+df;
-                if ~isempty(aud)
+                if ~noaud && ~isempty(aud)
                     if sum(cellfun(@length, aud.frames)) == 2*length(aud.data); if oj == 2; disp('audio likely 32 bits'); end; doublebits = true; else doublebits = false; end
                     [~,audS] = min(abs(aud.times-vid.times(1))); aud.times = aud.times(audS:end); datatrunc = sum(cellfun(@length,aud.frames(1:audS-1))) / (doublebits+1); aud.data = aud.data(datatrunc+1:end,:); aud.frames = aud.frames(audS:end);
                 end
@@ -368,7 +376,7 @@ for n = startn:length(filename)
             if lf>length(frameTimes{vidN}); lf = length(frameTimes{vidN}); ef = sf+length(vid.times)-1 - lf; disp(['Warning: video ' filename{n} ' length had ' num2str(ef) ' extra frame(s) read, adding time for those frames']); end
             vid.times(1:end-ef) = frameTimes{vidN}(sf:lf); if ef~=0; vid.times(end-ef+1:end) = vid.times(end-ef)+1/30:1/30:vid.times(end-ef)+ef/30; end
             audadj = oframeTimes{vidN}(sf)-frameTimes{vidN}(sf);
-            if ~isempty(aud)
+            if ~noaud&& ~isempty(aud)
                 aud.times = aud.times-audadj;
             end
          %             if vid.totalDuration>60*60;
@@ -433,7 +441,7 @@ for n = startn:length(filename)
         set(get(ax1(2),'ylabel'),'string',[speedoi ' (m/s)'],'fontsize',16 + adF);
         %         if vidW == 2560; JP = 1.037; else JP = 1.062; end
         if vidW > 1500; JP = 1.044; SPACE = '    '; else JP = 1.057; SPACE = ''; end; if ~smallfont; JP = JP - 0.01; end
-        jtext = text(DN2(round(fs*(dataendtime)*JP+b)),max(get(gca,'ylim')),[SPACE 'Jerk/' num2str(oi) ' (m/s^{3})'],'rotation',90,'fontsize',16 + adF,'color','m');
+        jtext = text(round(fs*(dataendtime)*JP+b),max(get(gca,'ylim')),[SPACE 'Jerk/' num2str(oi) ' (m/s^{3})'],'rotation',90,'fontsize',16 + adF,'color','m');
         %             xlabel('Local Time');
         ylabel('Depth'); set(get(gca,'ylabel'),'fontsize',16 + adF);
         set(gca,'units','points');
@@ -496,7 +504,7 @@ for n = startn:length(filename)
             vidts(i) = text(DN2(a1+20),y2,vNs(i,:),'verticalalignment','top','horizontalalignment','left','fontsize',10,'color','r');
         end
         if ~exist ([prhloc 'graphs'],'dir'); mkdir ([prhloc 'graphs']); end
-        if oj == 1; savefig(fig1,[prhloc 'graphs\' prhfile(1:prhN) ' (' vN ') speedgraph' num2str(fs) 'Hz.fig']); end
+        if oj == 1; savefig(fig1,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') speedgraph' num2str(fs) 'Hz.fig']); end
         %
         
         
@@ -545,7 +553,7 @@ for n = startn:length(filename)
         ltext = text(xs(1)-(xs(2)-xs(1))*.028,ys(1)-(ys(2)-ys(1))/40,'Local Time: ','parent',axp(1),'verticalalignment','top','fontname',get(axp(1),'fontname'),'fontsize',get(axp(1),'fontsize'),'horizontalalignment','left');
         %
         if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
-        if oj == 1; savefig(fig3,[prhloc 'graphs\' prhfile(1:prhN) ' (' vN ') prhgraph' num2str(fs) 'Hz.fig']); end
+        if oj == 1; savefig(fig3,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') prhgraph' num2str(fs) 'Hz.fig']); end
         
         %            +(j-1)*dur/24/60/60; %time stamp of the video fragment
         
@@ -771,7 +779,7 @@ for n = startn:length(filename)
             vid.frames(i).cdata = oi;
         end
         if ci == 1; % if you are not adding on to a last video, make a new directory
-            if ~exist ([filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\' filename{n}(1:end-4)],'dir'); mkdir ([filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\' filename{n}(1:end-4)]); end
+            if ~exist ([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{n}(1:end-4)],'dir'); mkdir ([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{n}(1:end-4)]); end
             dirN = n; %else dirN stays the same
         end
         vid.width = xsize;
@@ -794,7 +802,7 @@ for n = startn:length(filename)
 %             end
 %         end
         % fix audio times to match the change in video times
-        if ~isempty(aud)
+        if ~noaud && ~isempty(aud)
             oldaud = aud;
             if ~exist('doublebits','var')
                 if sum(cellfun(@length, aud.frames)) == 2*length(aud.data); doublebits = true; else doublebits = false; end
@@ -810,8 +818,9 @@ for n = startn:length(filename)
                 if iii>1 && newtime < aud.times(iii-1); newtime = aud.times(iii-1)+length(aud.frames{iii})/aud.rate/(doublebits+1)/2; end
                 aud.times(iii) = newtime;
             end
-                      
+%             if abs(aud.totalDuration - vid.totalDuration)>0.3 || abs(length(aud.data)/aud.rate-clipdur)>1/fs
             aud = fixmmreadaud(aud,clipdur,true); %change to false after satisfied it works
+%             end
         end
 %         if exist('audAdj','var')
 %             audA = audAdj;
@@ -822,26 +831,33 @@ for n = startn:length(filename)
 %         else audA = aud;
 %         end
 %         if n>1 || j>5
-        if isinf(dur); mmwrite([filedest 'partial\' filename{dirN}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
+        if isinf(dur); mmwrite([filedest 'partial//' filename{dirN}(1:end-4) '//' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
             if oj ==1; tail = []; else tail = [num2str(dur*(j-2)+starttime(n)) 'sec']; end
             if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
             if combos{c}(end)<10;  vN2 = ['0' num2str(combos{c}(end))]; else vN2 = num2str(combos{c}(end)); end
             if ci == 1 && oj == 1 && length(combos{c})>1; vN = [vN '-' vN2]; es = ' '; else es = ''; end
-            mmwrite([filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\' filename{dirN}(1:end-4) '\' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
+            if noaud; mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,conf);
+            else
+                if aud.rate >48000; df = ceil(aud.rate/48000); if abs(aud.rate/df-round(aud.rate/df))>.01; error('audio rate is too big for mmread and suggested decimation factor does not divide evenly into audio rate'); end
+                    aud.data = decdc(aud.data,df); aud.rate = aud.rate/df;
+                end
+                warning(['Audio rate decimated to ' num2str(aud.rate) ' to work with mmwrite function']);
+                mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' es prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,aud,conf);
+            end
         end
 %         end
         %         catch err
-        %             if isinf(dur); mmwrite([filedest 'partial\' filename{n}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
+        %             if isinf(dur); mmwrite([filedest 'partial//' filename{n}(1:end-4) '//' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf); else
         %                 if j ==1; tail = []; else tail = [num2str(dur*(j-1)+starttime(n)) 'sec']; end
         %                 if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
-        %                 mmwrite([filedest 'partial\' prhfile(1:10) '\' filename{n}(1:end-4) '\' prhfile(1:10) ' (' vN ')' tail '.avi'],vid,aud);
+        %                 mmwrite([filedest 'partial//' prhfile(1:10) '//' filename{n}(1:end-4) '//' prhfile(1:10) ' (' vN ')' tail '.avi'],vid,aud);
         %             end
         %         end
         % these lines should have allowed the continual writing of a file to
         % put all the pieces into one video, but it always crashed matlab for me
-        %         if j == 1; mmwrite([fileloc filename{n}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Continue'); end
-        %         if j == stopj; mmwrite([fileloc filename{n}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Initialized');
-        %         else mmwrite([fileloc filename{n}(1:end-4) '\' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Continue','Initialized'); end
+        %         if j == 1; mmwrite([fileloc filename{n}(1:end-4) '//' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Continue'); end
+        %         if j == stopj; mmwrite([fileloc filename{n}(1:end-4) '//' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Initialized');
+        %         else mmwrite([fileloc filename{n}(1:end-4) '//' filename{n}(1:end-4) 'SxS.avi'],vid,aud,conf,'Continue','Initialized'); end
         disp([num2str((j-1)*dur) ' sec written']);
     end
     %     if n == length(filename); curVideo = min(vid.totalDuration,endtime)-starttime(n); else curVideo = vid.totalDuration-starttime(n); end
@@ -860,7 +876,7 @@ for n = startn:length(filename)
         vid.rate = 30;
         vid.totalDuration = 3;
         tail = [tail 'gap'];
-        mmwrite([filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\' filename{dirN}(1:end-4) '\' prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,conf);
+        mmwrite([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{dirN}(1:end-4) '//' prhfile(1:regexp(prhfile,' ')-1) ' (' vN ')' tail '.avi'],vid,conf);
     end
     
 end
@@ -868,12 +884,12 @@ clear vid
 aoi = find(~isnan(vidDN),1,'first');
 oi = find(isnan(vidDN)); oi(oi<aoi) = [];
 if ~isempty(oi)
-    badmoviesloc = [filedest 'partial\' prhfile(1:regexp(prhfile,' ')-1) '\badmovies\'];
-    D = dir([fileloc 'bad movies\']); D = {D(~vertcat(D.isdir)).name};
+    badmoviesloc = [filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//badmovies//'];
+    D = dir([fileloc 'bad movies//']); D = {D(~vertcat(D.isdir)).name};
     if ~exist(badmoviesloc,'dir'); mkdir(badmoviesloc); end
     for i = 1:length(D)
         clear vid aud
-        [vid,aud] = mmread([fileloc 'bad movies\' D{i}]);
+        [vid,aud] = mmread([fileloc 'bad movies//' D{i}]);
         mmwrite([badmoviesloc D{i}(1:end-3) 'avi'],vid,aud,conf);
     end
 end

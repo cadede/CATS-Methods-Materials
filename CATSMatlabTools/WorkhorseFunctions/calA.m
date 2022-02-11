@@ -23,7 +23,8 @@ I = I(1:df:end,:); if size(I,1)<size(At,1); I(end,:) = I(end-1,:); else I = I(1:
 At_mag=sqrt(sum(At.^2,2));
 axA = (acal./abs(acal)); axA(isnan(axA)) = 0;
 Att = [data.Acc1 data.Acc2 data.Acc3]*axA;
-Att = decimateM(Att,ofs,accHz,df,length(DN),'accHz');
+nanI = isnan(Att); nanI = nanI(1:df:end,:); 
+Att = decimateM(edgenans(Att),ofs,accHz,df,length(DN),'accHz');
 [~,Acalnew,~] = spherical_calwk(Att(II,:),1,'cross');
 Atnew = (Att*diag(Acalnew.poly(:,1))+repmat(Acalnew.poly(:,2)',[size(Att,1),1]))*Acalnew.cross;
 oi = norm2(Atnew); disp(std(oi)/mean(oi)); %clear Mtt;
@@ -55,4 +56,4 @@ switch Mchoice
     otherwise
         Acal = []; disp('No calibration chosen, so bench test was used by default');
 end
-         
+if sum(sum(nanI))~=0; warning(['nans in each Acc data column that were removed: ' num2str(sum(nanI))]); end
