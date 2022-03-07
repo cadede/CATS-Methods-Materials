@@ -1,5 +1,6 @@
-function [data,Adata,Atime,datagaps,ODN,fs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart)
+function [data,Adata,Atime,datagaps,ODN2,fs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart,ODN,tagnum)
 
+dbstop if error
 % takes data, Adata, Atime, truncates them to get rid of unneeded data
 % (i.e. most (or all) of the data before or after deployment)
 % looks for any gaps in data or potential bad data sections
@@ -18,7 +19,9 @@ if abs(round(Afs)-Afs)<.01; Afs = round(Afs); end
 disp(['Acc sample rate: fs = ' num2str(Afs) ' Hz']);
 
 %
-ODN = data.Date(1)+data.Time(1);
+ODN2 = data.Date(1)+data.Time(1);
+if abs(ODN-ODN2)>1/24/60/60; error('Data start time (ODN variable) does not match the start time of "data" variable, check txt file and rerun importCATSdata if necessary, starting from csv1');
+end
 if sum(data.Pressure) == 0; disp('No pressure sensor'); data.Pressure(:) = 30; p = data.Pressure; nopress = true;
 else
     p = data.Pressure; nopress = false;
@@ -35,7 +38,7 @@ button = 3;
 if ~isnan(truncstart); [~,p1] = min(abs(data.Date+data.Time-truncstart)); end
 
 while ~isempty(button);
-    figure (2); clf;
+    FF = figure (2); clf;
     set(gcf,'units','normalized','outerposition',[0 0 1 1]);
     s1 = subplot(2,1,1);
     plot(1:length(p),p); set(gca,'ydir','rev');
@@ -73,13 +76,46 @@ while ~isempty(button);
     if button == 49; p1 = round(x1); elseif button == 50; p2 = round(x1); end
     
 end
-
+title('Look at main screen for next instruction');
+% minfig(FF,1)
+try set(FF,'windowstate','minimized'); catch; end
 % truncate data
 data = data(p1:p2,:);
 DN = data.Date+data.Time; [~,aa] = min(abs(DN(1)-Atime)); [~,ba] = min(abs(DN(end)-Atime));
 Adata = Adata(aa:ba,:); Atime = Atime(aa:ba);
 disp(['New data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM:SS')]);
 disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:MM:SS')]);
+synchaudio = 0;
+while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
+synchaudio = input('Is there audio data to truncate? (recommended so that start times align) (1 = yes, 2 = no) ');
+end
+oi = pwd;
+try cd([fileloc 'raw\']); catch; cd(fileloc); end
+if synchaudio == 1
+        [audiofile,audiofileloc]=uigetfile('*.wav', 'select wav file'); 
+        [~,FS] = audioread([audiofileloc audiofile],[1 5]);
+        audioInfo = audioinfo([audiofileloc audiofile]);
+%         audiostart = data.Date(p1)+data.Time(p1);
+        k = 1;
+        if ~exist([fileloc 'AudioData\'],'dir'); mkdir([fileloc 'AudioData\']); end
+        for i = round(p1/fs)*FS:FS*60*60:round(p2/fs*FS)
+            [Y,FS] = audioread([audiofileloc audiofile],[i min(i+FS*60*60-1,audioInfo.TotalSamples)]);
+            astart = datevec(data.Date(p1)+data.Time(p1)+(k-1)*1/24);
+            astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
+            audiowrite([fileloc 'AudioData\' astart],Y,FS);
+            aud = struct();
+            aud.data = Y;
+            aud.rate = FS;
+            aud.bits = audioInfo.BitsPerSample;
+             aud.totalDuration = size(aud.data,1)/aud.rate;
+             aud.nrChannels = size(aud.data,2);
+             totalDuration = aud.totalDuration;
+              save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration');
+              disp([num2str(k) ' hours of audio completed']);
+             k = k+1;
+        end
+end
+cd(oi);
 
 skippeddata = find(diff(DN*24*60*60)>1.5*1/fs); % find spots where gaps are longer than 1.5*1/fs with missing data and replace with nans.  
 baddata = nan(size(skippeddata)); % keeps track of length of baddata

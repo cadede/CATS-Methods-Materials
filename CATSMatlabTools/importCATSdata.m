@@ -200,7 +200,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
         data.Properties.VariableNames = headers;
         
-        [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
+        [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file);
         if ~UTCflag; UTCoffset = 0; else UTCoffset = UTC; end
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
         else fs = max([gyrHz magHz pHz lHz GPSHz]);
@@ -462,7 +462,7 @@ if ~exist('THz','var'); THz = nan; end; if ~exist('T1Hz','var'); T1Hz = nan; end
 datafs = fs;
 Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
 try
-    save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs');
+    save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','ODN');
     if ~isempty(notes); save([newfileloc file(1:end-3) 'mat'],'notes','-append'); end
     if ~isempty(lastwarn)
         error(lastwarn);
@@ -470,8 +470,8 @@ try
     disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
     disp(newfileloc)
 catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-    if isempty (notes); save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','-v7.3');
-    else save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','notes','Hzs','-v7.3'); end
+    if isempty (notes); save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','ODN','-v7.3');
+    else save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','notes','Hzs','ODN','-v7.3'); end
     disp('Made a version 7.3 file in order to include all');
     disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
     disp(newfileloc)

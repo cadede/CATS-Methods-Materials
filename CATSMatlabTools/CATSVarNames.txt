@@ -9,7 +9,7 @@ raw tag data has both local and UTC time.  Local time in raw data is the time on
 
 At- Acceleration data for each axis (x,y,z) in the tag's reference frame (g's)
 Aw- Acceleration data for each axis rotated to the whale's reference frame
-audon- logical index of where in the data acoustic data was recorded separtely from camera data.
+audon- logical index of where in the data acoustic data was recorded separtely from camera data. For new tags where audio is recorded separately from video data, this is all audio. For old tags, where audio is written on video data, this is only the spots where audio is separate from camera data.
 camon- logical index of where in the data the camera was on
 DN- index of datenumbers corresponding to each data point (Local Time)
 DV- index of datevectors corresponding to each data point (Local Time)

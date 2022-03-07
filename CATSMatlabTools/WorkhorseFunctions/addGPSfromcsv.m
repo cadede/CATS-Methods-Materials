@@ -1,41 +1,43 @@
 %% 13. Combine fastGPS data with PRH file
 % based on Add_SDA_GPS by James Fahlbusch (c) 2019
 
-function addGPSfromFastloc(fileloc,INFO)
-try D = dir([fileloc '/fastGPS']);
+function addGPSfromcsv(fileloc,INFO)
+try D = dir([fileloc '/raw/']);
     D = {D.name}; D = D(3:end);
-    iscsv = cellfun(@(x) strcmp(x(end-3:end),'.csv'),D,'uniformoutput',false);
+    iscsv = cellfun(@(x) strcmp(x(end-6:end),'gps.csv'),D,'uniformoutput',false);
     if sum(cellfun(@isempty,iscsv)) == 0
        D = D(cellfun(@(x) x,iscsv));
     else
         D = D(~isempty(iscsv));
     end
-    if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error('can''t find file'); end
+    if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/raw/']; else error('can''t find file'); end
 catch
     cdir = pwd; cd(fileloc);
-    [filenameGPS,filelocGPS] = uigetfile('*.csv','select fastGPS csv file for this deployment');
+    [filenameGPS,filelocGPS] = uigetfile('*.csv','select GPS.csv file for this deployment');
     cd (cdir);
 end
 % tag 70 is fastGPS 1231, 71 is 1232;
-if str2num(INFO.tagnum) == 70; gpsID = 1231; elseif str2num(INFO.tagnum) == 71; gpsID = 1232;
-else gpsID = input('Input fastGPS ID # for this deployment: ');
-end
-disp(['gpsID = ' num2str(gpsID)]);
+% if str2num(INFO.tagnum) == 70; gpsID = 1231; elseif str2num(INFO.tagnum) == 71; gpsID = 1232;
+% else gpsID = input('Input fastGPS ID # for this deployment: ');
+% end
+% disp(['gpsID = ' num2str(gpsID)]);
 
 % optsG = detectImportOptions([filelocGPS filenameGPS]);
 % optsG.ExtraColumnsRule = 'ignore';
 dataGPS = readtable([filelocGPS filenameGPS],'ReadVariableNames',false);
-headersG = {'ID' 'var2' 'GPSDate' 'GPSTime' 'Lat' 'Long' 'Alt' 'Err1' 'Err2' 'Err3' 'numsats' 'numsats2'}; %optsG.VariableNames;
+% headersG = {'GPSdate' 'GPSTime' 'GPSDate' 'GPSTime' 'Lat' 'Long' 'Alt' 'Err1' 'Err2' 'Err3' 'numsats' 'numsats2'}; %optsG.VariableNames;
+headersG = {'GPSDate' 'GPSTime' 'UTCoffset_s' 'Latitude' 'Longitude' 'DistTrav'};
 % csv has is exported from R script so all values have a common format
 % dataGPS = readtable([filelocGPS filenameGPS],optsG);
 % need to process with milliseconds and without seperetely and combine
 %dateMill = datetime(dataGPS.Date, 'InputFormat', 'MM/dd/yyyy HH:mm:ss.SS');
-dataGPS.Properties.VariableNames(1:length(headersG)) = headersG;
-dataGPS(dataGPS.ID~=gpsID,:) = [];
-dateFull = datenum(dataGPS.GPSDate)+datenum(dataGPS.GPSTime)-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
+dataGPS.Properties.VariableNames([1 2 6 15 16 31]) = headersG;
+% dataGPS(dataGPS.ID~=gpsID,:) = [];
+% dateFull = datenum(dataGPS.GPSDate,'dd.mm.yyyy')+datenum(dataGPS.GPSTime,'HH:MM:SS.fff')-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
+GPSDN = datenum(dataGPS.GPSDate)+datenum(dataGPS.GPSTime);%-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
 % dataGPS.datetimeUTC = dateFull;
 % dataGPS(:,[2 7:10])=[]; % remove unused columns
-dataGPS.DNUTC = dateFull;%datenum(dataGPS.datetimeUTC); % Convert to number format if needed
+dataGPS.DNUTC = GPSDN;% not sure what UTC offset does, but would also have to adjust data to match-dataGPS.UTCoffset_s/24/60/60;%datenum(dataGPS.datetimeUTC); % Convert to number format if needed
 disp('First 10 Timestamps of GPS Data');
 try disp(datestr(dataGPS.DNUTC(1:10),'dd-mmm-yyyy HH:MM:SS.fff')); catch
     disp(datestr(dataGPS.DNUTC(1:end),'dd-mmm-yyyy HH:MM:SS.fff'));
@@ -65,8 +67,16 @@ disp(['EndData: ' datestr(DN(end),'mm/dd/yy HH:MM:SS.fff')]);
 %     GPSoffset = INFO.timedif;
 % end
 dataGPS.GPSDN = dataGPS.DNUTC+GPSoffset/24; %This converts GPS to same offest as PRH (local Time)
+
+Lat = runmean(dataGPS.Latitude,10); Long = runmean(dataGPS.Longitude,10);
+Lat = Lat(1:10:end); Long = Long(1:10:end);
+dataGPS = dataGPS(1:10:end,:); dataGPS.Lat = Lat; dataGPS.Long = Long;
+repI = find(diff(dataGPS.DistTrav)==0)+1;
+% repI = find(abs(diff(dataGPS.Lat)) < .0001 & abs(diff(dataGPS.Long)) <.0001)+1;
+dataGPS(repI,:) = [];
 % Remove points from recovery
-dataGPS((dataGPS.GPSDN>max(DN)),:) = []; % remove GPS locations outside of PRH data (sometimes hits from recovery)
+dataGPS(dataGPS.GPSDN>max(DN)|dataGPS.GPSDN<min(DN),:) = []; % remove GPS locations outside of PRH data (sometimes hits from recovery)
+
 figure(641); clf; plot(DN,-p,dataGPS.GPSDN,0,'rs')
 set(gca,'xticklabel',datestr(get(gca,'xtick'),'mm/dd/yy HH:MM:SS'));
 saveas(641,[fileloc INFO.whaleName '_DiveGPS.bmp']);
@@ -80,7 +90,7 @@ GPSerr = nan(max(length(GPSDN),length(DN)),3);
 for b =1:length(dataGPS.GPSDN)
     [~,a] = min(abs(DN-GPSDN(b)));
     GPSall(a,1:2) = GPSdata(b,1:2);
-    GPSerr(a,1:3) = [dataGPS.Err1(b) dataGPS.Err2(b) dataGPS.Err3(b)];
+%     GPSerr(a,1:3) = [dataGPS.Err1(b) dataGPS.Err2(b) dataGPS.Err3(b)];
 end
 GPSall(1,1:2) = GPS(1,1:2);
 %save a UTM version of the location data

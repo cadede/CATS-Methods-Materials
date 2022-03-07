@@ -43,13 +43,16 @@ else noaud = false;
 end
 AUD = struct();
 audStart = 0;
-if isempty(vidDN); disp('assuming audiofiles are continuous with no gaps'); lastDur = 0; end
+if isempty(vidDN)||~isempty(audstart); disp('assuming audiofiles are continuous with no gaps'); lastDur = 0; end
+if ~isempty(audstart); disp(['Audio start time is ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff')]); end
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
-        vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
+        if isempty(audstart); vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
             vidnum = str2num(vidnum(end-3:end));
-        if audStart>DN(find(tagondec,1,'last')) || ((vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var'))
+        else vidnum = [];
+        end
+        if isempty(audstart) && (audStart>DN(find(tagondec,1,'last')) || ((vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')))
                 warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
                 continue
         end
@@ -67,7 +70,7 @@ if ~nocam || ~noaud
             DBdf = 1;
         elseif aud.rate == 25811
             DBdf = 53;
-        else error('new sampling rate, check your decimation factor to ensure an integer bin');
+        else error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
         end
         try
         [DBt, offset] = CATSrms(aud,fs,DBdf); %offset is in seconds
@@ -80,20 +83,22 @@ if ~nocam || ~noaud
 %              if isempty(vidnum); vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'C')+1:max(regexp(audiofiles(i).name,'\d')))); end
 %         elseif kitten
            
-            disp(['Audio number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          if ~isempty(vidnum); disp(['Audio number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          else disp(['Audio number ' num2str(i) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          end
 
 %         elseif tagnum<20 && tagnum>12
 %             vidnum = i;
 %         else
 %             vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'\d')));
 %         end
-        try audStart = vidDN(vidnum)+offset/24/60/60;
+        try if ~isempty(audstart); error(' '); end; audStart = vidDN(vidnum)+offset/24/60/60; 
         catch
             if i == 1; disp('assuming audiofiles start at beginning of file and are continuous');
-                audStart = DN(1) +offset/24/60/60;
-            elseif (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
+                if isempty(audstart); audStart = DN(1) +offset/24/60/60; else audStart = audstart; end
+            elseif ~isempty(vidnum) && (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
                 warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
-                continue
+%                 continue
             else
                 audStart = audStart+lastDur;
             end
