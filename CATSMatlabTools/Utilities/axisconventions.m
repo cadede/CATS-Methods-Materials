@@ -47,6 +47,10 @@ elseif strcmpi(tagtype,'LittleLeonardo')
     axAo = [y x -z];
     axMo = [x y z];
     axGo = [x y z]; % no gyros or mag
+elseif strcmpi(tagtype,'LLspeed')
+    axAo = [y x z];
+    axMo = [-y -x -z];
+    axGo = [x y z]; % no gyros or mag
 elseif strcmpi(tagtype,'TDR10')
 axAo = [-x y z];
 axMo = [x y z];

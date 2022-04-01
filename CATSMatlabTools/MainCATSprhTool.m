@@ -277,6 +277,7 @@ if nocam
                  audon(a:b)= true;
              end
          end
+    else; audstart = nan;
     end
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
@@ -753,7 +754,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Matlab packages required: Signal Processing Toolbox, Statistics and
 % Machine Learning Toolbox, Mapping Toolbox
 
-creator = '';
+creator = 'DEC';
 notes = '';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
@@ -821,7 +822,7 @@ INFO.creator = creator;
 INFO.Hzs = Hzs; %original data sample rates
 
 
-GPSoffset = mean(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
+GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
 disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
 y = input('(1 = yes, 2 = no) ');
 INFO.GPSoffset = GPSoffset;
@@ -853,7 +854,7 @@ disp('Section 12 finished, prh file and INFO saved');
 % Matlab packages required: Mapping toolbox
 
 
-clearvars -except prhfile fileloc filename 
+clearvars -except fileloc filename 
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag

@@ -21,11 +21,14 @@ function [data, Adata, Atime, Hzs] = importLLdata(FS)
   end
   
   data = readtable([accloc accfile],'headerlines',6);
-  data.Properties.VariableNames = {'Acc1' 'Acc2' 'Acc3'};
-  ddata = readtable([depthloc depthfile],'headerlines',6);
+  try data.Properties.VariableNames = {'Acc1' 'Acc2' 'Acc3'};
+  catch; data.Properties.VariableNames = {'Acc1' 'Acc2' 'Acc3' 'Comp1' 'Comp2' 'Comp3'};
+  end
+  ddata = readtable([depthloc depthfile]);%,'headerlines',6);
   depth = interp2length(ddata.Depth,1,100,size(data,1));
   Temp = interp2length(ddata.Temp,1,100,size(data,1));
-  Camon = logical(interp2length(ddata.Video,1,100,size(data,1)));
+  try Camon = logical(interp2length(ddata.Video,1,100,size(data,1))); catch; end
+  try Speed = interp2length(ddata.Speed,1,100,size(data,1)); catch; end
 DN = datenum([2021 05 22 12 57 00]);
 I = (0:size(data,1)-1)';
 DN = DN+I/100/24/60/60;
@@ -33,14 +36,15 @@ data.Date = floor(DN);
 data.Time = DN-floor(DN);
 data.Pressure = depth;
 data.Temp = Temp;
-data.CamOn = Camon;
+try data.CamOn = Camon; catch; data.CamOn = false(size(data.Acc1)); end
 Adata = [data.Acc1 data.Acc2 data.Acc3];
 Atime = DN;
 Hzs = struct();%'accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
 Hzs.accHz = 100; Hzs.pHz = 1; Hzs.THz = 1; Hzs.datafs = 100;
-data.Comp1 = nan(size(data.Acc1));
+try t = data.Comp1(1)+1; catch; data.Comp1 = nan(size(data.Acc1));
 data.Comp2 = data.Comp1; data.Comp3 = data.Comp2;
-data.Gyr1 = data.Comp1; data.Gyr2 =data.Comp1; data.Gyr3 = data.Comp1;
+end
+data.Gyr1 = nan(size(data.Acc1)); data.Gyr2 =data.Gyr1; data.Gyr3 = data.Gyr1;
    save([depthloc 'data.mat'],'data','Adata','Atime','Hzs');
 
 

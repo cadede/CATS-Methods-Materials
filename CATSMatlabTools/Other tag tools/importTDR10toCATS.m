@@ -91,14 +91,15 @@ end
     disp(['Number of missing data points (Pressure): ' num2str(sum(isnan(data.Pressure)))]);
     oiD = diff(data.DN);
     BAD = find(diff(data.DN)*24*60*60>median(oiD*24*60*60)*1.5);
-    disp(['Number of time gaps: ' num2str(size(BAD,1))]);
+    disp(['Number of time gaps: ' num2str(size(BAD,1))]);   
     if length(BAD) >=1
         for i = 1:size(BAD,1)
+            disp(['Time gap index ' num2str(i) ': ' num2str(BAD(i))]);
             data.Date(BAD(i)+1) = data.Date(BAD(i));
             data.DN(BAD(i)+1) = data.Date(BAD(i)+1) + data.Time(BAD(i)+1);
             disp(datestr(data.DN(BAD(i):BAD(i)+2),'dd-mmm-yyyy HH:MM:SS.fff'));
             if isempty(notes); notes = 'Bad data at t = '; end
-            notes = [notes datestr(DN(BAD(i)),'mm/dd HH:MM:SS.fff') ', '];
+            notes = [notes datestr(data.DN(BAD(i)),'mm/dd HH:MM:SS.fff') ', '];
         end
     end
     
@@ -264,7 +265,7 @@ end
     disp(head(data,5));
     % Save Hzs (determined from data)
     Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',0,'THz',THz,'TDIHz',TDIHz);
-   
+    ODN = data.DN(1);
     disp('Section 2 (Data Processing) finished');
         
 %% 2a. Truncate Data (optional)
@@ -276,7 +277,7 @@ end
     [s, e] = consec(tagonI);
     tagonI = s(find(e-s>=fs,1,'first')); % first time you have 1 second deeper than 1 m
     tagonI = find(Depth(1:tagonI)<min(Depth(1:tagonI))+.1,1,'last'); % changed a value
-    tagoff = find(Depth<3,1,'last');
+    tagoff = find(Depth<10,1,'last');
     tagoff = round(tagoff*fs/4); 
     if tagonI ~= 1
         tagonI = tagonI*round(fs/4); %adjust back to undecimated values
@@ -348,13 +349,13 @@ Atime = data.DN;
 Adata = [data.Acc1 data.Acc2 data.Acc3];
 
  try
-    save([fileloc filename(1:end-4) '.mat'],'data','events','Adata','Atime','Hzs');
+    save([fileloc filename(1:end-4) '.mat'],'data','events','Adata','Atime','Hzs','ODN');
     if ~isempty(notes); save([fileloc filename(1:end-3) 'mat'],'notes','-append'); end
      if ~isempty(lastwarn)
          error(lastwarn);
      end
  catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-     save([fileloc filename(1:end-4) '.mat'],'data','events','Adata','Atime','Hzs','-v7.3');
+     save([fileloc filename(1:end-4) '.mat'],'data','events','Adata','Atime','Hzs','ODN','-v7.3');
      if ~isempty(notes); save([fileloc filename(1:end-3) 'mat'],'notes','-append'); end
      disp('Made a version 7.3 file in order to include all');
  end

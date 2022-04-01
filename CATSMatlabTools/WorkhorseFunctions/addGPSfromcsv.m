@@ -26,12 +26,12 @@ end
 % optsG.ExtraColumnsRule = 'ignore';
 dataGPS = readtable([filelocGPS filenameGPS],'ReadVariableNames',false);
 % headersG = {'GPSdate' 'GPSTime' 'GPSDate' 'GPSTime' 'Lat' 'Long' 'Alt' 'Err1' 'Err2' 'Err3' 'numsats' 'numsats2'}; %optsG.VariableNames;
-headersG = {'GPSDate' 'GPSTime' 'UTCoffset_s' 'Latitude' 'Longitude' 'DistTrav'};
+headersG = {'GPSDate' 'GPSTime' 'UTCoffset_s' 'Latitude' 'Longitude' 'Alt1','Alt2','DistTrav'};
 % csv has is exported from R script so all values have a common format
 % dataGPS = readtable([filelocGPS filenameGPS],optsG);
 % need to process with milliseconds and without seperetely and combine
 %dateMill = datetime(dataGPS.Date, 'InputFormat', 'MM/dd/yyyy HH:mm:ss.SS');
-dataGPS.Properties.VariableNames([1 2 6 15 16 31]) = headersG;
+dataGPS.Properties.VariableNames([1 2 6 15 16 17 18 31]) = headersG;
 % dataGPS(dataGPS.ID~=gpsID,:) = [];
 % dateFull = datenum(dataGPS.GPSDate,'dd.mm.yyyy')+datenum(dataGPS.GPSTime,'HH:MM:SS.fff')-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
 GPSDN = datenum(dataGPS.GPSDate)+datenum(dataGPS.GPSTime);%-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
