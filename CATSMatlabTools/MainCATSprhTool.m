@@ -277,6 +277,7 @@ if nocam
                  audon(a:b)= true;
              end
          end
+         audstart = nan; % audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
     else; audstart = nan;
     end
 else
