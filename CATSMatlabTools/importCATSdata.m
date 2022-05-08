@@ -81,7 +81,7 @@ warning('on','all')
 warning('off','MATLAB:textscan:AllNatSuggestFormat')
 % allows you to start the import at a file number above 0
 if regexp(filename(end-7:end-4),'_\d\d\d')
-    i = strfind(filename,'_');
+    i = max(strfind(filename,'_'));
     i = str2num(filename(i+1:i+3));
 else
     i = 0;
@@ -203,7 +203,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file);
         if ~UTCflag; UTCoffset = 0; else UTCoffset = UTC; end
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
-        else fs = max([gyrHz magHz pHz lHz GPSHz]);
+        else fs = min(max([gyrHz magHz pHz lHz GPSHz]),accHz);
         end
         data = data(find(~strcmp(data.Acc1,'0'),1,'first'):end,:);
         if noPress; data.Pressure = zeros(size(data,1),1); headers{end+1} = 'Pressure'; end 
