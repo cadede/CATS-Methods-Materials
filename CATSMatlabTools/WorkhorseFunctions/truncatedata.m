@@ -95,12 +95,12 @@ if synchaudio == 1
         [audiofile,audiofileloc]=uigetfile('*.wav', 'select wav file'); 
         [~,FS] = audioread([audiofileloc audiofile],[1 5]);
         audioInfo = audioinfo([audiofileloc audiofile]);
-%         audiostart = data.Date(p1)+data.Time(p1);
+%         audiostart = data.Date(1)+data.Time(1);
         k = 1;
         if ~exist([fileloc 'AudioData\'],'dir'); mkdir([fileloc 'AudioData\']); end
         for i = round(p1/fs)*FS:FS*60*60:round(p2/fs*FS)
             [Y,FS] = audioread([audiofileloc audiofile],[i min(i+FS*60*60-1,audioInfo.TotalSamples)]);
-            astart = datevec(data.Date(p1)+data.Time(p1)+(k-1)*1/24);
+            astart = datevec(data.Date(1)+data.Time(1)+(k-1)*1/24); % was p1, but data is already truncated so need to use first value
             astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
             audiowrite([fileloc 'AudioData\' astart],Y,FS);
             aud = struct();
@@ -110,7 +110,16 @@ if synchaudio == 1
              aud.totalDuration = size(aud.data,1)/aud.rate;
              aud.nrChannels = size(aud.data,2);
              totalDuration = aud.totalDuration;
-              save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration');
+             lastwarn('');
+             try
+                 save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration');
+                 if ~isempty(lastwarn)
+                     error(lastwarn);
+                 end
+             catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
+                 save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration','-v7.3');
+                 disp('Made a version 7.3 file in order to write large data file (sample rate was large)');
+             end
               disp([num2str(k) ' hours of audio completed']);
              k = k+1;
         end

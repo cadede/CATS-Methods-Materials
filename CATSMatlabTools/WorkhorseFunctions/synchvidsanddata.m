@@ -31,7 +31,7 @@ if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
     try cd([fileloc 'AudioData\']); catch; cd(fileloc); end
     [~,I] = min(abs(DN-timestamp)); I = I-fs*10:I+fs*10;
     [audfile,audloc] = uigetfile('*.wav','Get first audio file from "AudioData" folder (assumes all audiofiles from here are consecutive with no gaps)');
-    if exist([audloc audfile(1:end-3) 'mat'],'file'); load([audloc audfile(1:end-3) 'mat']); else
+    if exist([audloc audfile(1:end-4) 'audio.mat'],'file'); load([audloc audfile(1:end-4) 'audio.mat']); else
         aud = struct();
         [aud.data,aud.rate,aud.bits] = wavread([audloc audfile]);
     end
@@ -69,10 +69,11 @@ if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
     audioI2 = x2-audioI(1)+1-10*aud.rate:x2-audioI(1)+1+10*aud.rate;
     xlim([audioI2(1) audioI2(end)]/aud.rate)
     audstart = DN(x)-x2/aud.rate/24/60/60;
+    disp(['Old Audio start time: ' datestr(DN(1), 'dd-mmm-yyyy HH:MM:SS.fff')]);
     disp(['New Audio Start time: ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff') '. Will be asked to rename audio files after prh process is complete.']);
-    close(FF);
+%     close(FF);
 else
-    audstart = [];
+    audstart = nan;
 end
 
 cd(cf); 
