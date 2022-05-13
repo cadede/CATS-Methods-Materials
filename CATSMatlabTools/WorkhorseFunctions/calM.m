@@ -3,6 +3,9 @@ function [Mt,Mcalnew] = calM(data,DN,tagondec,camondec,camon,nocam,ofs,magHz,df,
 
 % this function performs an in situ calibration on the magnetometer data,
 % based on the spherical_cal scripts at animaltags.org
+% 
+% oi = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); 
+% data.Comp1 = oi(:,1); data.Comp2 = oi(:,2); data.Comp3 = oi(:,3);
 
 nout = length(DN);
 if nargin < 13 || isempty(I)

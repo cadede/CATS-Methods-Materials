@@ -172,7 +172,7 @@ else
     if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
-    if ~exist('ODN','var'); error('ODN variable (time tag was not originally turned on), not included in mat file. Rerun importCATSdata (from csv 1) or check txt file for "first_entry" and manually add ODN variable to mat file'); end
+    if ~exist('ODN','var'); error('ODN variable (time, as a datenumber, tag was originally turned on), not included in mat file. Rerun importCATSdata (from csv 1) or check txt file for "first_entry" and manually add ODN variable to mat file'); end
     [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart,ODN,tagnum); % workhorse script in this section
     save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
     disp('Check to ensure these times are before deployment and after tag off, and that any periods before deployment where data started and stopped are excluded (or check plot)');
@@ -235,7 +235,7 @@ if ~exist('nopress','var') && sum(isnan(data.Pressure)) == length(data.Pressure)
 % output: tagon (an index of values for when the tag was on the whale
 tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
    CellNum = 4;
-         save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','-append');
+         save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
      disp('Section 4 done');
 %% 5.(old cell 4) adjust video times to match data times 
 % This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
@@ -303,7 +303,7 @@ disp('Section 5 done');
 % Pressure is adjusted using the internal temperature 
 
 % Matlab packages required: Signal Processing Toolbox, Statistics and
-% Machine Learning Toolbox
+% Machine Learning Toolbox2
 
 if ~exist('data','var');  load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
 load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress','CAL','tagon','camon','audon','tagslip','Hzs','Afs');
@@ -400,8 +400,15 @@ if CellNum<6.5; x = input('Previous cell has not been completed, continue anyway
 end
 
 % Matlab packages required: Signal Processing Toolbox
-I = tagondec;
-[Mt,Mcal] = calM(data,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
+
+%
+I = tagondec; 
+% lowpassfreq = .05; % magnetometers should not need this filter to calibrate, but can be helpful if there are spikes from metal as part of the tag.  In that case, uncomment these lines.
+% % and change "data" in calM function to data2;
+% Mto = [data.Comp1 data.Comp2 data.Comp3];
+% Mto = fir_nodelay([data.Comp1,data.Comp2,data.Comp3],128,lowpassfreq/(ofs/2),'low'); % only keeps signals below 3 Hz
+% data2 = data; data.Comp1 = Mto(:,1); data.Comp2 = Mto(:,2); data.Comp3 = Mto(:,3);
+[Mt,Mcal] = calM(data2,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
 
 CAL.Mcal = Mcal;
 Mt_mag = sqrt(sum(Mt.^2,2));
@@ -534,6 +541,7 @@ if ~exist('Depth','var')
     Depth = applyCal2(data,vars.DN,vars.CAL,vars.camondec,vars.ofs,vars.Hzs,vars.df);   
 end
 vars.Depth = Depth;
+if ~exist('audstart'); audstart = ODN; warning('no audstart variable found, assuming audio starts at original data start time'); end
 vars.audstart = audstart;
 
 audiodir = [fileloc 'AudioData//'];
@@ -546,9 +554,13 @@ else
 end
 
 if s == 1
-    [flownoise,AUD] = getflownoise(audiodir,vars);
+   try [flownoise,AUD] = getflownoise(audiodir,vars);
     disp('Now making full deployment audio file');
     try if isempty(audstart); stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); end; catch; disp('error in stitch audio'); end
+   catch disp('error in read audio- continue without making flownoise? 1 = yes, 2= no');
+       ss = input('?');
+       if ss == 2; error('error in read audio'); else flownoise = nan(size(Depth)); AUD = []; end
+   end
 end
 
 tag1 = find(vars.tagondec,1);
@@ -676,10 +688,10 @@ end
 
 
 % set threshold parameters
-minDepth = 10;
-minPitch = 45;
+minDepth = 2;
+minPitch = 30;
 % speedEnds = speedper(:,2);
-minSpeed = 1;
+minSpeed = 1.7;
 % speedEnds([1 4 5 end-1:end]) = [];
 
 if sum(isnan(flownoise)) == length(flownoise)
@@ -766,6 +778,7 @@ end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 % if ~exist('At','var');
     [p,At,Mt,Gt,T,TempI,Light] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
+%     Mt = fir_nodelay(Mt,128,2/(ofs/2),'low');
 % end
 
 
@@ -823,16 +836,18 @@ INFO.creator = creator;
 INFO.Hzs = Hzs; %original data sample rates
 
 
-GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
-disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
-y = input('(1 = yes, 2 = no) ');
-INFO.GPSoffset = GPSoffset;
-if y == 1
-    DN = DN + GPSoffset;
-    vidDN = vidDN + GPSoffset;
-    audstart = audstart + GPSoffset;
-
-    INFO.TimeNote = 'IMU time offset to match GPS time';
+try GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
+    disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
+    y = input('(1 = yes, 2 = no) ');
+    INFO.GPSoffset = GPSoffset;
+    if y == 1
+        DN = DN + GPSoffset;
+        vidDN = vidDN + GPSoffset;
+        audstart = audstart + GPSoffset;
+        
+        INFO.TimeNote = 'IMU time offset to match GPS time';
+    end
+catch
 end
 
 AUD.start = audstart;

@@ -172,10 +172,18 @@ name = txt{row,col};
 if strcmp(name,'U'); name = 'Unident.'; end
 col = find(cellfun(@any,cellfun(@(x) strcmp(x,'Notes'),txt(3,:),'uniformoutput',false)));
 note = txt{row,col};
+try
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'First seen'),txt(3,:),'uniformoutput',false)));
 seen = txt{row,col}; if ~isempty(seen) && ~any(isnan(seen)); note = ['First seen ' num2str(seen(1:min(length(seen),4))) ', ' note]; end
+catch
+   warning('No "first seen" column, item not included'); 
+end
+try
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Genetic Sex'),txt(3,:),'uniformoutput',false)));
 sex = txt{row,col}; if ~isempty(sex) && ~any(isnan(sex)); note = ['Sex: ' sex ', ' note]; end
+catch
+   warning('No "genetic sex" column, item not included'); 
+end
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Study_Area'),txt(3,:),'uniformoutput',false)));
 place = txt{row,col};
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Total Data Time'),txt(3,:),'uniformoutput',false)));
@@ -192,7 +200,11 @@ deplong = txt{row,col};
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Tag Type'),txt(3,:),'uniformoutput',false)));
 tagtype = txt{row,col};
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Tag #'),txt(3,:),'uniformoutput',false)));
+try
 tagnum = txt{row,col};
+catch
+    warning('No tag # column, using 0'); tagnum = 0;
+end
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Spec'),txt(3,:),'uniformoutput',false)));
 spec = txt{row,col}; switch spec; case 'bw'; genus = 'Balaenoptera'; spec = 'musculus'; case 'bs'; genus = 'Balaenoptera'; spec = 'borealis'; case 'bp'; genus = 'Balaenoptera'; spec = 'physalus'; case 'mn'; genus = 'Megaptera'; spec = 'Novaeangliae'; case 'oo'; genus = 'Orcinus'; spec = 'orca'; case 'er'; genus = 'Escrichtius'; spec = 'robustus'; case 'bb'; genus = 'Balaenoptera'; spec = 'bonaerensis'; case 'be'; genus = 'Balaenoptera'; spec = 'edeni'; case 'rt'; genus = 'Rhincodon'; spec = 'typus'; otherwise; genus = 'Unk'; spec = 'sp'; end
 col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'PI Contact'),txt(3,:),'uniformoutput',false)));

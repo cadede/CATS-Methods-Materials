@@ -24,7 +24,7 @@ function		ncfile = CATSnc(prhfile,tagguideloc,ncloc,author)
 % 
 % nargin = 0; %uncomment this line if you are running from the code (not as a function)
 if nargin <3 || isempty(ncloc);
-    if nargin == 2; 
+    if nargin > 1; 
         % Load the NC Metadata Structures
         % look for Structures folder in same directory as this script
         p = mfilename('fullpath');
@@ -90,6 +90,7 @@ try
     ak=strmatch('ID',txt(3,:));
     species=strmatch('Spec',txt(3,:));
     row = strmatch(whalename,txt(:,ak));
+    if isempty(row); error(' oi'); end
 catch
     species = whalename(1:2);
 %     disp('Need TAG GUIDE columns: ID, Spec, Tag #, Tag Type, Biopsy, UTC, Study Area, Animal, Lat_On, Long_On,
@@ -352,7 +353,8 @@ try k = strncmpi(txt{row,species},{S.abbrev},2) ;
 catch k = strncmpi(species,{S.abbrev},2) ;
 end
 if all(k==0),
-    fprintf(' Warning: unknown species %s. Set metadata manually\n', prefix) ;
+    fprintf(' Warning: unknown species %s. Set metadata manually in tagged_species.csv\n', prefix) ;
+    error('see warning');
     return ;
 end
 if sum(k)>1,

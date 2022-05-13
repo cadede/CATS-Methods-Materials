@@ -126,7 +126,8 @@ fclose(fidOut);
 fidOut = fopen([filedest txtfile],'w');
 fprintf(fidOut,'smooth %0.0f\r\n',1);
 fprintf(fidOut,'vec_file %s\r\n',[folder outfile]);
-if strcmpi(whaleName(1:2),'mn'); AN = 'HUMPBACK'; elseif strcmpi(whaleName(1:2),'bw')||strcmpi(whaleName(1:2),'bp')||strcmpi(whaleName(1:2),'bb')||strcmpi(whaleName(1:2),'be'); AN = 'BLUE'; elseif strcmp(whaleName(1:2),'oo')||strcmp(whaleName(1:2),'rt'); AN = 'DOLPHIN'; else AN = 'HUMPBACK'; end
+if strcmpi(whaleName(1:2),'mn'); AN = 'HUMPBACK'; elseif strcmpi(whaleName(1:2),'bw')||strcmpi(whaleName(1:2),'bp')||strcmpi(whaleName(1:2),'bb')||strcmpi(whaleName(1:2),'be'); AN = 'BLUE';
+elseif strcmp(whaleName(1:2),'oo')||strcmp(whaleName(1:2),'rt')||strcmp(whaleName(1:2),'cm'); AN = 'DOLPHIN'; else AN = 'HUMPBACK'; end
 fprintf(fidOut,'animal %s\r\n',AN);
 DV = datevec(DN(find(tagon,1)));
 fprintf(fidOut,'tagon_hms %02.0f %02.0f %02.0f\r\n',DV(1,4:6));% we set trackplot above to only be for when the tag is on
