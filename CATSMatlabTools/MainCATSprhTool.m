@@ -350,7 +350,8 @@ if any(diff(DN)<0 | diff(DN)>1.5/24/60/60/fs); error('Error in time order (DN va
 % This uses bench cals acal, magcal, gycal to orient the axes to NED
 [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
 CellNum = 6;
-save([fileloc filename(1:end-4) 'Info.mat'],'DN','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
+if sum(isnan(Mt_bench(:,1))) == size(Mt_bench,1); nomag = true; else nomag = false; end
+save([fileloc filename(1:end-4) 'Info.mat'],'DN','nomag','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
 disp('Section 6 done');
 %% 7a.  In situ cals
 % Test an in situ calibration of acclerometer using spherical_cal script from animaltags.org.
@@ -362,7 +363,7 @@ disp('Section 6 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','DN','camondec','camon','nocam','df','CAL','Hzs','b','ofs','Afs');
+load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','DN','camondec','nomag','camon','nocam','df','CAL','Hzs','b','ofs','Afs');
 if CellNum<6; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
@@ -407,10 +408,14 @@ I = tagondec;
 % % and change "data" in calM function to data2;
 % Mto = [data.Comp1 data.Comp2 data.Comp3];
 % Mto = fir_nodelay([data.Comp1,data.Comp2,data.Comp3],128,lowpassfreq/(ofs/2),'low'); % only keeps signals below 3 Hz
-% data2 = data; data.Comp1 = Mto(:,1); data.Comp2 = Mto(:,2); data.Comp3 = Mto(:,3);
-[Mt,Mcal] = calM(data2,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
+% data2 = data; data2.Comp1 = Mto(:,1); data2.Comp2 = Mto(:,2); data2.Comp3 = Mto(:,3);
+if nomag
+    warning('No magnetometer present'); Mt = nan(size(At)); CAL.Mcal = CAL.Acal;
+else
+[Mt,Mcal] = calM(data,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
 
 CAL.Mcal = Mcal;
+end
 Mt_mag = sqrt(sum(Mt.^2,2));
    CellNum = 7;
 save([fileloc filename(1:end-4) 'Info.mat'],'CAL','CellNum','-append');
@@ -592,7 +597,7 @@ disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  
 % Makes a summary variable with the amplitude of vibrations (tag jiggle) as
-% measured by high frequency accerlometers, filtered from 10-90 Hz.  If the
+% measured by high frequency accelerometers, filtered from 10-90 Hz.  If the
 % sample rate is < 180 Hz, only a high pass filter at 10 Hz is used.
 % The fourth column of J is themagnitude of the overall Jiggle for
 % comparison in the next step.
@@ -620,11 +625,13 @@ if exist('Acal','var') && ~isempty(Acal)
 else
     A = (Adata-repmat(aconst,size(Adata,1),1))*acal;
 end
+if Afs>180; maxfilt = 90; else maxfilt = round(.9*Afs/2); warning('Acc sample rate is less than 200 Hz, results of speed calibraiton may be unreliable'); end
+if Afs>100; minfilt = 10; else minfilt = ceil(.1*Afs/2); end
 try 
-JX = TagJiggle(A(:,1),Afs,fs,[10 90],.5,Atime+timedif/24,DN); % 10 and 90 are the high-pass and low-pass filter frequencies. The higher number will have to be < .5* Afs.
-JY = TagJiggle(A(:,2),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
-JZ = TagJiggle(A(:,3),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
-J = TagJiggle(A,Afs,fs,[10 90],.5,Atime+timedif/24,DN);
+JX = TagJiggle(A(:,1),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN); % 10 and 90 are the high-pass and low-pass filter frequencies. The higher number will have to be < .5* Afs.
+JY = TagJiggle(A(:,2),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
+JZ = TagJiggle(A(:,3),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
+J = TagJiggle(A,Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
 Jig = [JX JY JZ J];
 catch
     warning('Error running TagJiggle, perhaps acc sample rate is lower than 180?  Can adjust high-pass filter in above lines to try again');
@@ -643,7 +650,7 @@ disp('Section 10b finished');
 % acoustics (and likely video)
 JJ = J; JJ(isnan(JJ)) = 0; JJ = runmean(JJ,fs);
 D = flownoise; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
-figure; plotyy(DN,JJ,DN,D);
+figure; if sum(isnan(D))~=length(D); plotyy(DN,JJ,DN,D); else plot(DN,JJ,DN,D); end
 legend('JiggleRMS','FlownoiseRMS')
 
 % should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
@@ -691,11 +698,18 @@ end
 minDepth = 2;
 minPitch = 30;
 % speedEnds = speedper(:,2);
-minSpeed = 1.7;
+minSpeed = 1;
 % speedEnds([1 4 5 end-1:end]) = [];
 
 if sum(isnan(flownoise)) == length(flownoise)
     RMS2 = []; lab = '';% could set RMS2 = Jig(:,4); lab = 'magJ'; if you want to compare the multiaxes model jig to the overall magnitude model
+    try paddles = data.Speed; 
+        RMS2 = decimateM(paddles,ofs,Hzs.SHz,df,length(JJ),'paddles',true); 
+        RMS2 = runmean(RMS2,fs/2);
+        lab = 'PW';
+        Paddles = RMS2;
+    catch
+    end
 else
     RMS2 = flownoise; lab = 'FN';
 end
@@ -712,19 +726,19 @@ else
 end
     JigRMS = table(X, Y, Z, Mag);
 
+%
 
-
-if sum(isnan(flownoise)) ~= length(flownoise)
-    s = input('Would you like to recalibrate speed from flow noise using its own sections (1 = yes, 2 = no- click no if current calibration is good)? ');
+if ~isempty(RMS2) %sum(isnan(flownoise)) ~= length(flownoise)
+    s = input('Would you like to recalibrate speed from 2nd variable using its own sections (1 = yes, 2 = no- click no if current calibration is good)? ');
     if s == 1
         disp('Can quit out of this and start cell again later if the results don''t seem to be improving');
-        [~,speedFN,speedstatsFN] = SpeedFromRMS3(flownoise,'FN',[],'',fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
+        [~,speedFN,speedstatsFN] = SpeedFromRMS3(RMS2,lab,[],'',fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
         if sum(isnan(JigRMS.X)) == length(JigRMS.X)
             speedstats = speedstatsFN;
         end
         oi = speedFN.Properties.VariableNames;
-        oi(cellfun(@(x) strcmp('section',x), oi)) = {'FNsection'};
-        oi(cellfun(@(x) strcmp('sectionUsed',x), oi)) = {'FNsectionUsed'};
+        oi(cellfun(@(x) strcmp('section',x), oi)) = {[lab 'FNsection']};
+        oi(cellfun(@(x) strcmp('sectionUsed',x), oi)) = {[lab 'sectionUsed']};
         speedFN.Properties.VariableNames = oi;
         for i = 1:length(oi); speed.(oi{i}) = speedFN.(oi{i}); end
         speedstats.FN.Models = speedstatsFN.Models;
@@ -733,7 +747,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
         speedstats.FN.r2used = speedstatsFN.r2used;
         speedstats.FN.sections_end_index = speedstatsFN.sections_end_index;
         for fig = [1 301:300+size(speedstats.r2used,1)]
-            saveas(fig,[fileloc 'SpeedPlots//flownoisefig' num2str(fig) '.bmp']);
+            saveas(fig,[fileloc 'SpeedPlots//' lab 'fig' num2str(fig) '.bmp']);
         end
     end
 else
@@ -746,7 +760,7 @@ CellNum = 11;
 
 disp('Section 11 (speed) finished');
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
-
+try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % %% if you want to apply speed using speed calibrations from another tag,
 % % uncomment this section
 % 
@@ -768,7 +782,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = '';
+notes = 'Speed not well determined with paddlewheel or accelerometer';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -860,6 +874,7 @@ end
 CellNum = 12;
 prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
+if exist('Paddles','var'); save([fileloc prhfile],'Paddles','-append'); end
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
 %% 13a. Adds tag GPS data to data structure. 

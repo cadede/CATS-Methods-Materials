@@ -203,6 +203,7 @@ for i = 1:length(movies)
         end
     end
 end
+vidDursTemp = vidDurs;
 oi = nan(size(vidDurs));
 if ~timestamps; oi(vidNum) = vidDN(ismember(cellstr(vertcat(D.name)),movies)); end
 vidDN = oi;
@@ -270,6 +271,7 @@ for n = 1:length(movies)
             end
         end
     end
+    vidDurs(movN(n)) = vidDursTemp(movN(n));
     if strcmp(movies{n}(end-2:end),'raw') || n >  mlast-m1+1;
         vidNam{movN(n)} = movies{n};
        if movN(n)>movN(mlast-m1+1); vidNam{movN(n)} = []; vidDurs(movN(n)) = nan; end

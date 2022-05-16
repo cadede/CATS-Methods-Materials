@@ -2,7 +2,7 @@ function makeQuickLook(fileloc,makemetadata)
 % see required file organization and needs in the last cell of
 % MainCATSprhTool.
 
-
+dbstop if error
 if nargin<2; makemetadata = false; end
 co = [0 0 1;
       0 0.5 0;
@@ -28,17 +28,23 @@ prhf = D{~cellfun(@isempty,cellfun(@(x) regexp(x,'prh'),D,'uniformoutput',false)
 whaleName = prhf(1:regexp(prhf,' ')-1);
 isID = ~cellfun(@isempty,cellfun(@(x) regexpi(x,whaleName),D,'uniformoutput',false));
 cf = pwd; cd(fileloc);
+   blankfileloc = mfilename('fullpath');
+        i = strfind( blankfileloc,'\');
+         blankfileloc =  blankfileloc(1:i(end));
+         bfl = [ blankfileloc 'Structures\'];
+         bf = 'NoDataImage.jpg';
+        
 try
     try map = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),Dql,'uniformoutput',false))&isimagql};
         map = ['QL\' map];
     catch; map = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),D,'uniformoutput',false))&isimag};
     end
     mapfl = fileloc; 
-catch; warning('Could not find map image, select map or press cancel to quit and put map image in folder.');
+catch; warning('Could not find map image, select map file or press cancel to use blank file.');
     cd(fileloc);
     [map,mapfl] = uigetfile('*.*','Select map image file');
     cd(cf);
-    if isempty(mapfl); error('no file selected'); end
+    if isempty(mapfl)||mapfl == 0; map = bf; mapfl = bfl; end
 end
 try prhi =  D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),D,'uniformoutput',false))&isimag}; catch; end
 try prhi =  Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),Dql,'uniformoutput',false))&isimagql}; prhi = ['QL\' prhi]; catch; end
@@ -54,11 +60,11 @@ try
     catch; kml = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),D,'uniformoutput',false))&isimag};
     end
     kmlfl = fileloc;
-catch; warning('Could not find kml image, select kml image or press cancel to quit and put kml image in folder.');
+catch; warning('Could not find kml image, select kml file or press cancel to use blank file.');
     cd(fileloc);
     [kml,kmlfl] = uigetfile('*.*','Select kml image file');
     cd(cf);
-    if isempty(kmlfl); error('no file selected'); end
+    if isempty(kmlfl)||kmlfl == 0; kmlfl = bfl; kml = bf; end
 end
 try
     try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
@@ -66,11 +72,11 @@ try
     catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
     end
     gtfl = fileloc;
-catch; warning('Could not find ptrack image, select ptrack file or press cancel to quit and put geotrack image in folder.');
+catch; warning('Could not find ptrack image, select ptrack file or press cancel to use blank file.');
     cd(fileloc);
     [gt,gtfl] = uigetfile('*.*','Select ptrack image file');
     cd(cf);
-    if isempty(gtfl); error('no file selected'); end
+    if isempty(gtfl)|| gtfl == 0; gt = bf; gtfl = bfl; end
 end
 try
     try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
@@ -78,11 +84,11 @@ try
     catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
     end
     ptfl = fileloc;
-catch; warning('Could not find geotrack image, select ptrack or press cancel to quit and put ptrack image in folder.');
+catch; warning('Could not find geotrack image, select ptrack or press cancel to use blank file.');
     cd(fileloc);
     [pt,ptfl] = uigetfile('*.*','Select geotrack image file');
     cd(cf);
-    if isempty(ptfl); error('no file selected'); end
+    if isempty(ptfl)||ptfl==0; pt = bf; ptfl = bfl; end
 end
 try try cam = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),Dql,'uniformoutput',false))&isimagql};
         cam = ['QL\' cam];
@@ -98,20 +104,22 @@ D = dir([fileloc pfold]); D = {D.name}';
 try
 ID = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ID_'),D,'uniformoutput',false))}];
 IDfl = fileloc;
-catch; warning('Could not find ID photo, select ID photo or press cancel to quit and put ID_ photo in pics folder.');
+[im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
+catch; warning('Could not find ID photo, select ID photo or press cancel to use blank file.');
     cd(fileloc);
     [ID,IDfl] = uigetfile('*.*','Select ID photo');
     cd(cf);
-    if isempty(IDfl); error('no file selected'); end
+    if isempty(IDfl)||IDfl == 0; ID = bf; IDfl = bfl; end
 end
 try
 TAG = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'TAG_'),D,'uniformoutput',false))}];
 TAGfl = fileloc;
-catch; warning('Could not find photo of tag on animal, select photo or press cancel to quit and put TAG_ photo in pics folder.');
+[im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
+catch; warning('Could not find photo of tag on animal, select photo or press cancel to use blank file.');
     cd(fileloc);
     [TAG,TAGfl] = uigetfile('*.*','Select ID photo');
     cd(cf);
-    if isempty(TAGfl); error('no file selected'); end
+    if isempty(TAGfl)||TAGfl==0; TAG = bf; TAGfl = bfl; end
     
 end
 if sum(~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))) > 0

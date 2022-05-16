@@ -40,13 +40,13 @@ Mt = (Mt*diag(Mcalnew00.poly(:,1))+repmat(Mcalnew00.poly(:,2)',size(Mt,1),1))*Mc
 % I = [93000:98000];%[125000:130000 1210000:1230000];%[]% 187500:192500];%600000:620000 1000000:1020000];% 404000:405000 446000:446200 820000:802000 805000:806000];%1000000:1030000];% 260000:270000];
 
 if isnan(b); error('may be problem with GPS- b does not exist'); end
-[Mtt, Mcalnew,output] = spherical_calwk(Mt(I,:),b,'cross');
-Mtnew = (Mt*diag(Mcalnew.poly(:,1))+repmat(Mcalnew.poly(:,2)',size(Mt,1),1))*Mcalnew.cross;
-oi = norm2(Mtnew); disp(std(oi)/mean(oi)); clear Mtt;
-if std(oi)/mean(oi)<0.000001;
-    disp('Cross method could not converge, trying again with a bound, if no luck, try limiting I');
+% [Mtt, Mcalnew,output] = spherical_calwk(Mt(I,:),b,'cross');
+% Mtnew = (Mt*diag(Mcalnew.poly(:,1))+repmat(Mcalnew.poly(:,2)',size(Mt,1),1))*Mcalnew.cross;
+% oi = norm2(Mtnew); disp(std(oi)/mean(oi)); clear Mtt;
+% if std(oi)/mean(oi)<0.000001;
+%     disp('Cross method could not converge, trying again with a bound, if no luck, try limiting I');
     [Mtt, Mcalnew,output] = spherical_calwk(Mt(I,:),b,'cross',true);
-end
+% end
 Mtnew = (Mt*diag(Mcalnew.poly(:,1))+repmat(Mcalnew.poly(:,2)',size(Mt,1),1))*Mcalnew.cross;
 Mcal2 = Mcalnew00;
 D = Mcalnew00.cross*diag(Mcalnew.poly(:,1));
@@ -222,7 +222,16 @@ if (std(oi)/mean(oi)>resThresh || isnan(std(oi)/mean(oi)) || axB<10) && ~nocam
 
      switch Mchoice
          case 1;
-         disp('Rerun section 6 above to get Mt');
+             Mt = fixgaps([data.Comp1 data.Comp2 data.Comp3])*axM; %applyMagcalfirst = false;
+             nanI = nanI(1:df:end,:);
+             Mt = decimateM(edgenans(Mt),ofs,magHz,df,length(DN),'magHz');
+             Mcalnew00.poly = [1 0; 1 0; 1 0;]; Mcalnew00.cross = diag([1 1 1]);
+             % if you don't want to start with a previous calibration, comment out the next line
+             if exist('Mcal3d0','var'); Mcalnew00 = Mcal3d0; else Mcalnew00.poly = [ones(3,1) (-magconstoff*axM)']; Mcalnew00.cross = axM^-1 * magcaloff; end
+             
+             Mt = (Mt*diag(Mcalnew00.poly(:,1))+repmat(Mcalnew00.poly(:,2)',size(Mt,1),1))*Mcalnew00.cross;  % apply old cal first or no cal
+             disp('Bench calibration chosen');
+             Mcalnew = Mcalnew00;
          case 2;
              disp('Used Whole Data set Calibration');
              Mt = MtO;

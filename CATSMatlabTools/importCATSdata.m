@@ -1,4 +1,6 @@
 function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll)
+dbstop if error
+
 %
 % David Cade
 % version 11.23.2020
@@ -152,13 +154,15 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
                         headers(~cellfun(@isempty,strfind(headers,'Pressure'))) = {'Pressure'}; end;
                 end;
         end
-        if sum(cellfun(@(x) strcmp(x,'Pressure'),headers)) == 0;
+        if sum(~cellfun(@isempty,strfind(headers,'Pressure'))) == 0;
            warning('No Pressure data detected, continue? 1 = yes, 2 = no');
            x = input('?');
            if x ~=1;
                error ('Fix pressure data');
            else noPress = true;
-           end            
+           end  
+        else
+            headers(~cellfun(@isempty,strfind(headers,'Pressure'))) = {'Pressure'};
         end
         %This adds a numeral to every subsequently found version of
         %Temperature that is in the csv
@@ -168,7 +172,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         % Magnetometers are described as "Comp" for compass
         try headers(~cellfun(@isempty,strfind(headers,'Comp'))) = {'Comp1' 'Comp2' 'Comp3'};  catch; headers(~cellfun(@isempty,strfind(headers,'Magnet'))) = {'Comp1' 'Comp2' 'Comp3'}; end
         headers(~cellfun(@isempty,strfind(headers,'Gyr'))) = {'Gyr1' 'Gyr2' 'Gyr3'};
-        headers(~cellfun(@isempty,strfind(headers,'Acc'))) = {'Acc1' 'Acc2' 'Acc3'};
+        headers(find(~cellfun(@isempty,strfind(headers,'Acc')),3)) = {'Acc1' 'Acc2' 'Acc3'};
         try headers(~cellfun(@isempty,strfind(headers,'Speed'))) = {'Speed'}; catch; end
         delcol = [];
         if sum(~cellfun(@isempty,strfind(headers,'Date'))) == 2; % if there is both local and UTC time.
@@ -188,8 +192,8 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try delcol = [delcol find(~cellfun(@isempty,strfind(headers,'CC vid. size')),1)];
         catch; end
         data(:,delcol) = []; headers(delcol) = [];
-        if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTCflag = true; else UTCflag = false; end
-        headers(~cellfun(@isempty,strfind(headers,'Date'))) = {'Date'};
+        try if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTCflag = true; else UTCflag = false; end; catch; UTCflag = false; end
+    try    headers(~cellfun(@isempty,strfind(headers,'Date'))) = {'Date'}; catch; warning('No date column detected'); end
         headers(~cellfun(@isempty,strfind(headers,'Time'))) = {'Time'};
         try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat1' 'GPSsat2'}; catch; try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat'}; catch; end; end
         try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA' 'BATTmAh'}; catch;  try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA'}; catch; try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv'}; catch; end;  end; end
@@ -221,7 +225,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         end
         if noPress; dataT.Pressure = zeros(size(dataT,1),1); end
         dataT.Properties.VariableNames = headers;
-        DT = datenum(dataT.Date,'dd.mm.yyyy');
+        try DT = datenum(dataT.Date,'dd.mm.yyyy'); catch; warning('Could not read date, check format?'); end
         if any(abs(diff(DT))>5);
             stupidi = find(abs(diff(DT))>1,1);
             dataT = dataT(1:stupidi,:);
@@ -282,7 +286,10 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     
     timescal = datenum(oiT(:,1:8));
     
-    DN = timescal-floor(timescal)+datenum(dataT.Date,'dd.mm.yyyy');
+    try DN = timescal-floor(timescal)+datenum(dataT.Date,'dd.mm.yyyy'); dateflag = false;
+    catch; warning('No date imported'); DN1 = input('Input tag start date in datevec format? '); DN1 = datenum([DN1(1:3) 0 0 0]);
+        DN = timescal-floor(timescal)+DN1*ones(size(dataT.Time)); dateflag = true; headers = [headers {'Date'}];
+    end
     isb = arrayfun(@(x) strcmp(x,' '),oiT(:,end)); % some bad imports skipped a few seconds of data by going from 10.9 to 10.10 seconds (e.g.)
     if any(isb)
         bad10 = find(~isb);
@@ -374,7 +381,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         extraData = [];
     end
     dataT.Time = DN-floor(DN);
-    dataT.Date = floor(DN);
+    dataT.Date = floor(DN); if dateflag; newday = find(diff(dataT.Time)<0 & dataT.Time(2:end)<1/60/60/24); dataT.Date(newday+1:end)=dataT.Date(newday+1:end)+1; end
     
     Atime = [Atime; DN];
     Adata = [Adata; oi];

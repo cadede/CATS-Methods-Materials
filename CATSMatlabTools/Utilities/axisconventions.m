@@ -31,6 +31,10 @@ if strcmpi(tagtype,'Wireless') || strcmpi(tagtype,'motus') || strcmpi(tagtype,'a
     axAo = [x y z];
     axMo = [x y z];
     axGo = [x y z]; % no gyros in acousonde
+elseif strcmpi(tagtype,'Technosmart')
+   axAo = [x -y -z];
+   axMo = [-y x z];
+   axGo = [x -y -z];
 elseif strcmpi(tagtype,'Beacon')
    axAo = [-y x z];
    axMo = [-y x z];

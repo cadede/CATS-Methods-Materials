@@ -363,7 +363,7 @@ else
             [~,eI] = min(abs(DN-(vidDN(i)+vidDurs(i)/60/60/24))); %round(sI + vidDurs(i)*fs);
             camon(sI:eI) = true; %min(eI,length(p))) = true;
         end
-        if ~isempty(audstart)
+        if ~isempty(audstart) && ~isnan(audstart)
             [~,I] = min(abs(DN-audstart));
             audon(I:end) = true;
         end
