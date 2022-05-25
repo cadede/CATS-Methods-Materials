@@ -172,7 +172,7 @@ else
     if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
-    if ~exist('ODN','var'); error('ODN variable (time, as a datenumber, tag was originally turned on), not included in mat file. Rerun importCATSdata (from csv 1) or check txt file for "first_entry" and manually add ODN variable to mat file'); end
+    if ~exist('ODN','var'); error('ODN variable (time, as a datenumber, tag was originally turned on in local time), not included in mat file. Rerun importCATSdata (from csv 1) or check txt file for "first_entry" and manually add ODN variable to mat file'); end
     [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart,ODN,tagnum); % workhorse script in this section
     save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
     disp('Check to ensure these times are before deployment and after tag off, and that any periods before deployment where data started and stopped are excluded (or check plot)');
@@ -227,13 +227,13 @@ if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat'],'data',
 
 % tests for existence of pressure data (since most scripts rely on having pressure data)
 if ~exist('nopress','var') && sum(isnan(data.Pressure)) == length(data.Pressure) || sum(diff(data.Pressure) == 0) == length(data.Pressure) -1; nopress = true; else nopress = false; end
-
+timedif = cell2mat(headers(3,2)); % 
 % inputs: Depth variable
 %          fs (sampling rate)
 %          starttime (matlab datenumber of the starttime- put 0 if unknown)
 %          At (another comparable variable.  Set up to be Acceleration, but could use temperature or even depth again just to make the script work if no other data is available)
 % output: tagon (an index of values for when the tag was on the whale
-tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
+tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
    CellNum = 4;
          save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
      disp('Section 4 done');
@@ -696,16 +696,16 @@ end
 
 % set threshold parameters
 minDepth = 2;
-minPitch = 30;
+minPitch = 20;
 % speedEnds = speedper(:,2);
-minSpeed = 1;
+minSpeed = .4;
 % speedEnds([1 4 5 end-1:end]) = [];
 
 if sum(isnan(flownoise)) == length(flownoise)
     RMS2 = []; lab = '';% could set RMS2 = Jig(:,4); lab = 'magJ'; if you want to compare the multiaxes model jig to the overall magnitude model
     try paddles = data.Speed; 
         RMS2 = decimateM(paddles,ofs,Hzs.SHz,df,length(JJ),'paddles',true); 
-        RMS2 = runmean(RMS2,fs/2);
+        RMS2 = runmean(RMS2,fs);
         lab = 'PW';
         Paddles = RMS2;
     catch
@@ -782,7 +782,7 @@ try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = 'Speed not well determined with paddlewheel or accelerometer';
+notes = 'Speed calibration is not great.';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
