@@ -59,7 +59,7 @@ m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; 
 % these try catch help choose which files to import
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
-    for i = 1:length(m2); m2times(i) = datenum(m2{i}(min(regexp(m2{i},'-'))+1:max(regexp(m2{i},'-'))-1),'yyyymmdd-HHMMSS'); end
+    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
     rootDIR = folder; loc1 = strfind(movieloc,'CATS'); if ~isempty(loc1); rootDIR = movieloc(1:loc1+4); end
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch;  titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
@@ -84,7 +84,7 @@ end
 
 try % find all movies on whale to get frameTimes
     m2times = nan(size(m2));
-    for i = 1:length(m2); m2times(i) = datenum(m2{i}(min(regexp(m2{i},'-'))+1:max(regexp(m2{i},'-'))-1),'yyyymmdd-HHMMSS'); end
+    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
     rootDIR = strfind(movieloc,'CATS'); rootDIR = movieloc(1:rootDIR+4);
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch; try [~,~,txt] = xlsread([fileloc filename]); catch; cd(fileloc); titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end; end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
@@ -237,16 +237,20 @@ end
  badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
-    if audioonly; vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff'); 
+    if audioonly; slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff'); 
         try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
         continue; 
     end
-    try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
+    try slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff');
     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
         badvidDN(movN(n)) = true;
          d = regexp(movies{n},'-');
         if ~strcmp(movies{n}(end-2:end),'raw')
-            day = datenum(movies{n}(d(1)+1:d(2)-1),'yyyymmdd');
+            try day = datenum(movies{n}(d(1)+1:d(2)-1),'yyyymmdd');
+            catch; try day = datenum(movies{n}(d(end-3)+1:d(end-2)-1),'yyyymmdd');
+                catch; day = datenum(movies{n}(d(end-2)+1:d(end-1)-1),'yyyymmdd');
+                end
+            end
             starttime = 0; endtime = dur; videoL = dur+1; DAY = 0; badmovie = false;
             readwirelessvideo2;
             oi = checkbadframes(vid.times);
@@ -256,7 +260,7 @@ for n = 1:length(movies)
                 disp(['Video ' num2str(movN(n)) ' calculated to start at ' datestr(vidDN(movN(n)),'yyyy-mmm-dd HH:MM:SS.fff')]);
                 badvidDN(movN(n)) = false;
             else
-                 try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
+                 try vidDN(movN(n)) = datenum(movies{n}(d(end-2)+1:d(end)-1),'yyyymmdd-HHMMSS');
                      warning(['movie file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
                      disp('RECOMMEND synching movie times via surfacings');
                      badvidDN(movN(n)) = false;
@@ -264,7 +268,7 @@ for n = 1:length(movies)
                  end
             end
         else
-            try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
+            try vidDN(movN(n)) = datenum(movies{n}(d(end-2)+1:d(end)-1),'yyyymmdd-HHMMSS');
             disp(['Audio file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
             badvidDN(movN(n)) = false;
             catch; warning('Could not read audio time stamp');
@@ -353,7 +357,10 @@ if timestamps && ~simpleread  && ~audioonly% if vid start time is read from the 
     for n = 1:length(movies)
         if isempty(intersect(movN(n),vidNums)); continue; end
         if ~strcmp(movies{n}(end-2:end),'raw') && n<=  mlast-m1+1;
-            DAY = floor(datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS'));
+            slashI = regexp(movies{n},'-');
+            try DAY = floor(datenum(movies{n}(slashI(end-3)+1:slashI(end)-2),'yyyymmdd-HHMMSS'));
+            catch; DAY = floor(datenum(movies{n}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'));
+            end
             vidDN(movN(n)) = DAY+vidDN(movN(n))-floor(vidDN(movN(n)));
             continue;
         end
