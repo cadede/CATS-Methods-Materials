@@ -87,7 +87,7 @@ disp(['New data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM
 disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:MM:SS')]);
 synchaudio = 0;
 while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
-synchaudio = input('Is there audio data to truncate? (recommended so that start times align) (1 = yes, 2 = no) ');
+synchaudio = input('Is there audio data to truncate? (recommended if audio file is recorded on diary, not necessary if audio is from videos) (1 = yes, 2 = no) ');
 end
 oi = pwd;
 try cd([fileloc 'raw\']); catch; cd(fileloc); end

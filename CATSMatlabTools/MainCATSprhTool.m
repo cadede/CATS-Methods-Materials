@@ -105,7 +105,11 @@ global fileloc filename
 cf = pwd; try cd([vol '://' folder]); catch; end
 [filename,fileloc]=uigetfile('*.mat', 'select CATS data (imported mat file)'); 
 cd(fileloc);
+if ispc
 [headerfile,headerloc]=uigetfile('*xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
+else
+[headerfile,headerloc]=uigetfile('*.xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
+end
 cd(cf);
 [~,~,headers]= xlsread([headerloc headerfile]);
 tagnum = cell2mat(headers(4,2)) %displays the tag number, necessary to be correct to import the correct calibration file

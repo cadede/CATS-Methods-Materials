@@ -9,7 +9,7 @@ for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);
 end
 
-
+if exist('audstart','var') && isnan(audstart); audstart = []; end
 DB = nan(size(Depth,1),1);
 DNaud = DN(1):1/fs/24/60/60:DN(end);
 DBaud = nan(size(DNaud));
