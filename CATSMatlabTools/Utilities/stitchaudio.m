@@ -26,7 +26,12 @@ if isempty(audiofiles) % check for other wav files not from movies (acousonde/dt
             clear aud;
             %             [~,aud]= mmread([audiodir '' wavfiles(n).name], [],[],true); %just audio
             aud = struct();
-            [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
+            try [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
+                    catch
+            audioI = audioinfo([audiodir '' wavfiles(n).name]);
+            [aud.data,aud.rate] = audioread([audiodir '' wavfiles(n).name]);
+            aud.bits = audioI.BitsPerSample;
+        end
             aud.nrChannels = size(aud.data,2);
             aud.totalDuration = size(aud.data,1)/aud.rate;
             lastwarn('');

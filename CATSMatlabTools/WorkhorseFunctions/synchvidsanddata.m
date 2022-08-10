@@ -33,7 +33,13 @@ if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
     [audfile,audloc] = uigetfile('*.wav','Get first audio file from "AudioData" folder (assumes all audiofiles from here are consecutive with no gaps)');
     if exist([audloc audfile(1:end-4) 'audio.mat'],'file'); load([audloc audfile(1:end-4) 'audio.mat']); else
         aud = struct();
-        [aud.data,aud.rate,aud.bits] = wavread([audloc audfile]);
+        try [aud.data,aud.rate,aud.bits] = wavread([audloc audfile]);
+        catch
+            audioI = audioinfo([audloc audfile]);
+            [aud.data,aud.rate] = audioread([audloc audfile]);
+            aud.bits = audioI.BitsPerSample;
+        end
+end
     end
     FF = figure(100); clf;
     audioI = round((timestamp-DN(1))*24*60*60*aud.rate); audioI = audioI-aud.rate*10:audioI+aud.rate*10;

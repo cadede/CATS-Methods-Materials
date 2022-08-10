@@ -3,7 +3,13 @@ badaudio = false;
 shortmovies = [];
 if ~isempty(wavfiles)
     aud = struct();
-    [aud.data,aud.rate,aud.bits] = wavread(wavstr{1},[1 10]);
+    try
+        [aud.data,aud.rate,aud.bits] = wavread(wavstr{1},[1 10]);
+    catch
+        audioI = audioinfo(wavstr{1});
+        [aud.data,aud.rate] = audioread(wavstr{1},[1 10]);
+        aud.bits = audioI.BitsPerSample;
+    end
 elseif ~isempty(find(~cellfun(@(x) strcmp(x(end-2:end),'raw'),m2),1))
     [~,aud] = mmread([movieloc m2{find(~cellfun(@(x) strcmp(x(end-2:end),'raw'),m2),1)}],[],[3 4],true);
 else aud = struct(); aud.rate = input('Input sample rate of .raw files (in Hz): ');
@@ -32,7 +38,12 @@ for n = 1:length(movies)
     wavfile = []; sm = [];
     if audioonly && strcmp(movies{n}(end-2:end),'wav')
         wavfile = movies{n};
-        [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+        try [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+              catch
+            audioI = audioinfo(wavfile);
+            [aud.data,aud.rate] = audioread(wavfile);
+            aud.bits = audioI.BitsPerSample;
+        end
         if size(aud.data,2) == 2 && all(aud.data(:,2) == 0); aud.data = aud.data(:,1); aud.nrChannels = 1;
         elseif size(aud.data,2) == 2 && all(aud.data(:,1) == 0); aud.data = aud.data(:,2); aud.nrChannels = 1;
         else aud.nrChannels = size(aud.data,2);
@@ -45,7 +56,13 @@ for n = 1:length(movies)
         if ~isempty(wavstr); wavfile = wavstr{cellfun(@(x) strcmp(movies{n}(1:end-3),x(1:end-3)),wavfiles)}; end
         if ~isempty(wavfile)
             aud = struct();
-            [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+            try
+                [aud.data,aud.rate,aud.bits] = wavread(wavfile);
+            catch
+                audioI = audioinfo(wavfile);
+                [aud.data,aud.rate] = audioread(wavfile);
+                aud.bits = audioI.BitsPerSample;
+            end
             vid= mmread([movieloc movies{n}], [1 3]); %just audio
             aud.nrChannels = size(aud.data,2);
             aud.totalDuration = size(aud.data,1)/aud.rate;

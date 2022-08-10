@@ -147,7 +147,9 @@ if ~exist (DIR,'dir')
     mkdir (DIR);
 end
 
-if timestamps; oframeTimes = frameTimes; end
+% if timestamps; 
+    oframeTimes = frameTimes; 
+% end
 
 warning('off','all');
 %
@@ -326,7 +328,8 @@ for n = 1:length(movies)
     if ~simpleread
         [frameTimes{movN(n)},numbad,numbadsect] = checkbadframes(frameTimes{movN(n)});
         lbl = [' with ' num2str(numbad) ' frames that could not be read and were interpolated, and ' num2str(numbadsect) ' frames that were shifted and corrected'];
-    else if abs(viddif)>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp- can choose to offset movie start time at end of process']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
+    elseif timestamps
+        if abs(viddif)>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp- can choose to offset movie start time at end of process']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
         viddifs(movN(n)) = viddif;
     end
     

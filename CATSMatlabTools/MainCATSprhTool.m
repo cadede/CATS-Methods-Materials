@@ -17,7 +17,7 @@
 
 dbstop if error;
 disp('Section completed')
-%% 1 Read time stamps on video files (can skip for data only)
+%% 1 Read time stamps on video files (CAN SKIP THIS CELL IF NO VIDEOS)
 % runs for a long time (~ 2x as long as the amount of video you have)
 % Saves output so can run this and come back to it later
 % outputs: AudioData folder with audio info for each file

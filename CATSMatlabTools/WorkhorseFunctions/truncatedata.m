@@ -87,7 +87,8 @@ disp(['New data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM
 disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:MM:SS')]);
 synchaudio = 0;
 while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
-synchaudio = input('Is there audio data to truncate? (recommended if audio file is recorded on diary, not necessary if audio is from videos) (1 = yes, 2 = no) ');
+    disp('Are there audio data to truncate? (i.e., was there a single audio file recorded on the diary that starts at the same time the tag was switched on?)');
+synchaudio = input('1 = yes, 2 = no (i.e. no audio or audio was extracted from videos as separate files) ');
 end
 oi = pwd;
 try cd([fileloc 'raw\']); catch; cd(fileloc); end
@@ -99,6 +100,7 @@ if synchaudio == 1
         k = 1;
         if ~exist([fileloc 'AudioData\'],'dir'); mkdir([fileloc 'AudioData\']); end
         for i = round(p1/fs)*FS:FS*60*60:round(p2/fs*FS)
+            if i> audioInfo.TotalSamples; warning(['wav file stopped recording ' num2str(i) ' hours after deployment']); break; end
             [Y,FS] = audioread([audiofileloc audiofile],[i min(i+FS*60*60-1,audioInfo.TotalSamples)]);
             astart = datevec(data.Date(1)+data.Time(1)+(k-1)*1/24); % was p1, but data is already truncated so need to use first value
             astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];

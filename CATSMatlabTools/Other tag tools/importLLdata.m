@@ -26,7 +26,13 @@ dbstop if error
   fid = fopen([accloc accfile]);
   heads = textscan(fid,'%s',10,'headerlines',4);
   fclose(fid);
+  try Afs = 1000/str2num(heads{1}{find(cellfun(@(x) strcmp(x,'PERIOD'),heads{1}))+1});
+  catch fid = fopen([accloc accfile]);
+  heads = textscan(fid,'%s',30,'headerlines',4);
+  fclose(fid);
   Afs = 1000/str2num(heads{1}{find(cellfun(@(x) strcmp(x,'PERIOD'),heads{1}))+1});
+  end
+     
   try data.Properties.VariableNames = {'Acc1' 'Acc2' 'Acc3'};
   catch; data.Properties.VariableNames = {'Acc1' 'Acc2' 'Acc3' 'Comp1' 'Comp2' 'Comp3'};
   end
@@ -34,7 +40,13 @@ dbstop if error
   fid = fopen([depthloc depthfile]);
   dheads = textscan(fid,'%s',10,'headerlines',4);
   fclose(fid);
+  try dfs = str2num(dheads{1}{find(cellfun(@(x) strcmp(x,'PERIOD'),heads{1}))+1});
+  catch
+      fid = fopen([depthloc depthfile]);
+  dheads = textscan(fid,'%s',30,'headerlines',4);
+  fclose(fid);
   dfs = str2num(dheads{1}{find(cellfun(@(x) strcmp(x,'PERIOD'),heads{1}))+1});
+  end
   depth = interp2length(ddata.Depth,dfs,Afs,size(data,1));
   Temp = interp2length(ddata.Temp,dfs,Afs,size(data,1));
   try Camon = logical(interp2length(ddata.Video,1,Afs,size(data,1))); catch; end
