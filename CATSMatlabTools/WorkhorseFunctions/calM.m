@@ -218,7 +218,8 @@ if (std(oi)/mean(oi)>resThresh || isnan(std(oi)/mean(oi)) || axB<10) && ~nocam
      xlim([t1 t2])
       z1 = zoom(s1); z2 = zoom(s2);  z4 = zoom(s4); %z3 = zoom(s3);
       set([z1 z2 z4],'enable','on','Motion','both');
-    Mchoice = input('Which axis do you want to use? (Enter 1-3) ');
+      disp('Which calibration (plotted as subplots 1,2,3) do you want to use?');
+    Mchoice = input('Generally will want whole calibration (2) unless cam on/cam off gives marked improvement in consistency and residual (Enter 1-3) ');
 
      switch Mchoice
          case 1;

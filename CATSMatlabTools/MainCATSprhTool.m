@@ -550,6 +550,7 @@ if ~exist('Depth','var')
     Depth = applyCal2(data,vars.DN,vars.CAL,vars.camondec,vars.ofs,vars.Hzs,vars.df);   
 end
 vars.Depth = Depth;
+try audstart = vars.audstart; catch; end
 if ~exist('audstart'); audstart = ODN; warning('no audstart variable found, assuming audio starts at original data start time'); end
 vars.audstart = audstart;
 

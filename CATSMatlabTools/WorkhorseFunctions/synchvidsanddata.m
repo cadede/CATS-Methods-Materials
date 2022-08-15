@@ -13,7 +13,7 @@ if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else 
  Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
 % synch 
 try if viddata.vid4k
-        synchaudio = input('Synch an audio file with data? (1 = yes, 2 = no) ');
+        synchaudio = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
         
     else audstart = [];
     end
@@ -39,7 +39,6 @@ if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
             [aud.data,aud.rate] = audioread([audloc audfile]);
             aud.bits = audioI.BitsPerSample;
         end
-end
     end
     FF = figure(100); clf;
     audioI = round((timestamp-DN(1))*24*60*60*aud.rate); audioI = audioI-aud.rate*10:audioI+aud.rate*10;
