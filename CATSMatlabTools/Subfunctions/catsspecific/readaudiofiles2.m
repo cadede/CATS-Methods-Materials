@@ -55,6 +55,7 @@ for n = 1:length(movies)
         if ~checkaudiofs; audioend = movies{n}(end-2:end); end
         if ~isempty(wavstr); wavfile = wavstr{cellfun(@(x) strcmp(movies{n}(1:end-3),x(1:end-3)),wavfiles)}; end
         if ~isempty(wavfile)
+            clear aud;
             aud = struct();
             try
                 [aud.data,aud.rate,aud.bits] = wavread(wavfile);
@@ -63,12 +64,13 @@ for n = 1:length(movies)
                 [aud.data,aud.rate] = audioread(wavfile);
                 aud.bits = audioI.BitsPerSample;
             end
+            clear vid;
             vid= mmread([movieloc movies{n}], [1 3]); %just audio
             aud.nrChannels = size(aud.data,2);
             aud.totalDuration = size(aud.data,1)/aud.rate;
             if aud.nrChannels == 2 && sum(aud.data(:,2)==0) == length(aud.data(:,2)); aud.data(:,2) = []; aud.nrChannels = aud.nrChannels - 1; end
             totalDuration = aud.totalDuration;
-            if size(aud.data(:,1),1) == 0 || vid.totalDuration - aud.totalDuration > .5;
+            if size(aud.data(:,1),1) == 0 || ((vid.totalDuration - aud.totalDuration) > .5);
                 warning(['Video ' num2str(movieNum) ' duration is ' num2str(vid.totalDuration) ', while its wav file is ' num2str(aud.totalDuration) 's']);
                 sm = movN(n);
             end

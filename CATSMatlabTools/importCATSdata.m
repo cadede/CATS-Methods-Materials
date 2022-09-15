@@ -1,4 +1,4 @@
-function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll)
+function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll,ignorebadTimeStamps)
 dbstop if error
 
 %
@@ -18,6 +18,12 @@ dbstop if error
 % true.  setting this to true ensures that all csvs are read (default is to
 % stop once a file has no depth change throughout after a period where there were depth changes).  If false,
 % data stops once pressure remains at the surface for an entire csv read.
+% importCATSdata([],[],[],[],true); % set the 5th parameter to true if you
+% want to ignore any bad timestamps and read data in order, recording
+% whatever the timestamps says. This flag is only useful to speed up the
+% process in the rare case where the internal clock of the cats tag is
+% giving errors.
+
 % [data, Adata, Atime, Hzs] = importCATSdata(...);
 %
 %set FS if you want to set the frequency of data table (you will have to
@@ -63,6 +69,8 @@ if nargin <2 || isempty(fileloc) || isempty(filename)
     [filename,fileloc] = uigetfile('*.csv','select original csv file, if it''s big, split into parts in a ''csvs'' folder');
 end
 if nargin<4; importAll = false;
+end
+if nargin<5; ignorebadTimeStamps = false;
 end
 % 
 if iscell(filename); fname = filename{1}; else fname = filename; end
@@ -293,9 +301,13 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     isb = arrayfun(@(x) strcmp(x,' '),oiT(:,end)); % some bad imports skipped a few seconds of data by going from 10.9 to 10.10 seconds (e.g.)
     if any(isb)
         bad10 = find(~isb);
-        DN(bad10) = DN(bad10)+1/24/60/60; % add a second back
-        oiT(bad10,10:end-1) = oiT(bad10,11:end); %move the values forward
-        oiT(:,end) = []; % get rid of the extra column
+        if ~ignorebadTimeStamps
+            DN(bad10) = DN(bad10)+1/24/60/60; % add a second back
+            oiT(bad10,10:end-1) = oiT(bad10,11:end); %move the values forward
+            oiT(:,end) = []; % get rid of the extra column
+        else
+            warning('See below, time stamp issue below not corrected');
+        end
         warning(['SOME TIMESTAMPS STARTING ROW ' num2str(bad10(1)) ' AND ENDING ROW ' num2str(bad10(end)) ' IN CSV ' num2str(i) ' DON''T COUNT ACCURATELY.  SHOULD BE FIXED BUT HIGHLY RECOMMEND REDOWNLOADING DATA TO ENSURE NOTHING WAS MISSED OR FIXED INACCURATELY.']);
     end
     

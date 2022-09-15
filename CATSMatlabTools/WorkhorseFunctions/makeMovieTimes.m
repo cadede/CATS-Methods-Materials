@@ -239,7 +239,7 @@ end
  badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
-    if audioonly; slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff'); 
+    if audioonly || strcmp(movies{n}(end-2:end),'wav'); slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff'); 
         try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
         continue; 
     end
