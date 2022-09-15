@@ -55,7 +55,7 @@ end
 %
 disp(['ID = ' whaleID]);
 % grab the movie files from the directory
-m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||(strcmp(m2{i}(end-2:end),'wav')&&audioonly)||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
+m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||(strcmp(m2{i}(end-2:end),'wav'))||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
 % these try catch help choose which files to import
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
@@ -109,7 +109,7 @@ for n = 1:length(movies)
     lastnum = regexpi(movies{n},'.mp4');
     if isempty(lastnum); lastnum = regexpi(movies{n},'.mov'); end
     if isempty(lastnum); lastnum = regexpi(movies{n},'.raw'); end
-     if isempty(lastnum)&&audioonly; lastnum = regexpi(movies{n},'.wav'); end
+     if isempty(lastnum); lastnum = regexpi(movies{n},'.wav'); end
     movN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     else audN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     end
@@ -164,7 +164,7 @@ if  ripAudio
     for i = 1:length(D); for j = 1:length(F{i}); D1{end+1} = [D{i} '\' F{i}{j}]; if strcmp(F{i}{j}(end-3:end),'.wav'); wavfiles{end+1} = F{i}{j}; wavstr{end+1} = D1{end}; disp(wavstr{end}); end; end; end
     for i = 1:length(movies); if strcmp(movies{i}(end-2:end),'raw'); disp([movieloc movies{i}]); end; end
     readaudiofiles2;
-    disp(['Check that audio files were successfully written, then if you''re sure, you can delete files after ' LastOnMovie]);
+    disp(['Check that audio files were successfully written, then if you''re sure, you can delete movie/audio files after ' LastOnMovie]);
     disp('Any premade wav files were read and left in their original directory');
 else
     disp('no audio was extracted from vids');

@@ -26,7 +26,7 @@
 % that n may not be 10, as the first video of the deployment may not be 1.
 % e.g., if the first video is 5, n in this example would be 6. To check
 % this, type filename{6} and the name of video 10 would be displayed.
-
+clear all;
 tic;
 
 autocrop = true; % if you want to automatically crop the video to 60 seconds before tag on and 30 seconds after tagon, if false enter start, end below

@@ -36,7 +36,7 @@ if aud.rate == 96000; warning('audio rates higher than 48 kHz may have problems,
 for n = 1:length(movies) 
     clear aud; clear totalDuration;
     wavfile = []; sm = [];
-    if audioonly && strcmp(movies{n}(end-2:end),'wav')
+    if strcmp(movies{n}(end-2:end),'wav')
         wavfile = movies{n};
         try [aud.data,aud.rate,aud.bits] = wavread(wavfile);
               catch
@@ -157,5 +157,5 @@ for n = 1:length(movies)
     end
     badaudio = false;
 end
-if ~audioonly; disp('Check wav files for accuracy/length, then they can be deleted (keep the .mat files for audio analysis).'); end%  If the wav files are the wrong length, reimport the audio files.  The frametimes etc. should still be accurate and should not need to be redone.');
+if ~audioonly; disp('Check wav files for accuracy/length, they are not necessary for futher processing (.mat are used), but can be retained for acoustic processing'); end%  If the wav files are the wrong length, reimport the audio files.  The frametimes etc. should still be accurate and should not need to be redone.');
 if ~isempty(shortmovies); disp(['Audio lengths are off in videos: ' num2str(shortmovies) '.  This may suggest a problem with the download, recommend redownloading if possible. This message will repeat.']); end

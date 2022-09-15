@@ -115,15 +115,16 @@ THz = I(find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Temp'),{H.abbrev},'unifor
 datafs = fs;
 lHz = nan; T1Hz = nan; UTC = nan; GPSHz = nan;
 Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
+ODN = Atime(1); %original date number
 %
 lastwarn('');
 try
-    save([fileloc H(1).stationcode '.' H(1).title '-' H(1).year(3:4) H(1).month H(1).day '-' H(1).sourcesn(end-3:end) '.mat'],'data','Adata','Atime','Hzs');
+    save([fileloc H(1).stationcode '.' H(1).title '-' H(1).year(3:4) H(1).month H(1).day '-' H(1).sourcesn(end-3:end) '.mat'],'data','Adata','Atime','Hzs','ODN');
     if ~isempty(lastwarn)
         error(lastwarn);
     end
 catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-    save([fileloc H(1).stationcode '.' H(1).title '-' H(1).year(3:4) H(1).month H(1).day '-' H(1).sourcesn(end-3:end) '.mat'],'data','Adata','Atime','Hzs','-v7.3');
+    save([fileloc H(1).stationcode '.' H(1).title '-' H(1).year(3:4) H(1).month H(1).day '-' H(1).sourcesn(end-3:end) '.mat'],'data','Adata','Atime','Hzs','ODN','-v7.3');
     disp('Made a version 7.3 file in order to include all');
 end
 
