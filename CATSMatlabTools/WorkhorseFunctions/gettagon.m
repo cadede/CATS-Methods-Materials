@@ -31,7 +31,7 @@ set(gca,'children',oi,'xticklabel',[]);
 set(sp2,'xticklabel',datestr(get(gca,'xtick'),'mm/dd HH:MM:SS'));
 TEX = text(DN(1),max(Depth),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in (closest boundary will be affected)','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
 [x,~,button] = ginput(1);
-zoom reset; fact = 10;
+zoom reset; fact = (tagoff-tagon)/5/fs/60;
 while ~isempty(button)
     % regraph
     delete(pat);
@@ -39,6 +39,7 @@ while ~isempty(button)
     oi = get(gca,'children'); oi=[oi(2:end); oi(1)]; set(gca,'children',oi);
     if button == 3
         fact = fact/2;
+        if fact>10 && fact < (tagoff-tagon)/5/fs/60/2; fact = 10; end
         xlim([x-fact/24/60 x+fact/24/60]); %surrounds the point by fact minutes
         set(sp2,'xticklabel',datestr(get(gca,'xtick'),'mm/dd HH:MM:SS'));
         delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
@@ -55,7 +56,7 @@ while ~isempty(button)
         oi = get(gca,'children'); oi=[oi(2:end); oi(1)]; set(gca,'children',oi);
         delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
         set(sp2,'xticklabel',datestr(get(gca,'xtick'),'mm/dd HH:MM:SS'));
-        [x,~,button] = ginput(1); fact = 10; continue;
+        [x,~,button] = ginput(1); fact = (tagoff-tagon)/5/fs/60; continue;
     end
 end
 

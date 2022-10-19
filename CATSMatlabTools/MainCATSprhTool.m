@@ -198,7 +198,7 @@ try CAL = load([rootDIR 'Calibrations' '//CATScal' num2str(tagnum) '.mat']);
 catch
     [calfile,calfileloc]=uigetfile('*.mat', 'select CATS cal file'); 
     CAL = load([calfileloc calfile]);
-    if isempty(regexp(calfile,num2str(tagnum))); error('Cal file does not match tag num, restart cell at next line to continue'); end
+    if isempty(regexp(calfile,num2str(tagnum))); error('Cal file does not match tag num, if this is okay, restart cell at next line to continue'); end
  disp(['CATScal' num2str(tagnum) '.mat loaded']);
 end
 cd(cf);
@@ -272,8 +272,17 @@ DNorig = data.Date+data.Time+timedif/24;
 if nocam
     camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1]; vidDurs = [];
     if audioonly
+        try
          viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
          vidDN = viddata.vidDN; vidDurs = viddata.vidDurs;
+         catch
+            warning('movieTimes file does not exist, if this is a CATS tag, press ''ctrl-c'' to quit and then run cell one on the audio files.');
+            warning('If this is not a cats tag press enter to try to read the start time of each audio file from the file name of files within the AudioData folder');
+            warning('If there is an error, create a movieTimes file with a "vidDN" and "vidDurs" variable that matches the start time and duration of each audio file');
+            pause;
+         wavFilestoMovieTimes
+        end
+         
          for i = 1:length(vidDN)
              if ~isnan(vidDN(i))
                  [~,a] = min(abs(DNorig-vidDN(i))); 
@@ -292,16 +301,17 @@ else
    % have a record of their start times (i.e. collected independently of the diary data)
    [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchusingvidtimestamps);
 end
-
+   CellNum = 5;
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audstart','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
 
 
 % 
 disp('Info. to enter into TAG GUIDE if desired:');
-disp(['Total Cam Time: ' datestr(sum(camon&tagon)/ofs/24/60/60,'HH:MM:SS')]);
-disp(['Total Aud Time (includes camera time): ' datestr(sum((audon | camon)&tagon)/ofs/24/60/60,'HH:MM:SS')]);
+camtime = sum(camon&tagon)/ofs/24/60/60;
+disp(['Total Cam Time: ' datestr(camtime,'HH:MM:SS')]);
+audtime = sum((audon | camon)&tagon)/ofs/24/60/60;
+disp(['Total Aud Time (includes camera time): ' num2str(floor(audtime*24)) ':' datestr(audtime,'MM:SS')]);
 disp(['Original data start time: ' datestr(ODN,'mm/dd/yy HH:MM:SS')]);
-   CellNum = 5;
 disp('Section 5 done');
 %% 6.Calibrate pressure and decimate and apply bench cals to other sensors
 % Makes some variables (calibrated and decimated tag frame matrices Gt, At, Mt). 

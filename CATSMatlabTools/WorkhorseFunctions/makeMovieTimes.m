@@ -220,10 +220,10 @@ vidNam = oi;
 % the timestamp written on the frame.
 % frameTimes = cell(max(movN),1); oframeTimes = frameTimes;
 if exist('vidNums','var') && ~isempty(vidNums) % if you signaled to only read a couple of the videos, load all the videos first
-    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN','vidDurs'); disp('existing movietimes file loaded');
+    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN'); disp('existing movietimes file loaded');
     catch
         try
-            load([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','oframeTimes','vidDN','vidDurs');
+            load([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','oframeTimes','vidDN');
             disp('movieTimesTEMP file loaded');
         catch
             disp('WARNING: No old frameTimes found, resulting frameTimes file will only be for indicated videos'); 

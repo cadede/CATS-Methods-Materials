@@ -88,7 +88,7 @@ disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:
 synchaudio = 0;
 while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
     disp('Are there audio data to truncate? (i.e., was there a single audio file recorded on the diary that starts at the same time the tag was switched on?)');
-synchaudio = input('1 = yes, 2 = no (i.e. no audio or audio was extracted from videos as separate files) ');
+synchaudio = input('1 = yes, 2 = no (i.e. no audio, or there are multiple audio files with separate time stamps) ');
 end
 oi = pwd;
 try cd([fileloc 'raw\']); catch; cd(fileloc); end

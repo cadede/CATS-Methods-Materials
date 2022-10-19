@@ -31,14 +31,22 @@ headersG = {'GPSDate' 'GPSTime' 'UTCoffset_s' 'Latitude' 'Longitude' 'Alt1','Alt
 % dataGPS = readtable([filelocGPS filenameGPS],optsG);
 % need to process with milliseconds and without seperetely and combine
 %dateMill = datetime(dataGPS.Date, 'InputFormat', 'MM/dd/yyyy HH:mm:ss.SS');
-dataGPS.Properties.VariableNames([1 2 6 15 16 17 18 31]) = headersG;
+try dataGPS.Properties.VariableNames([1 2 6 15 16 17 18 31]) = headersG;
+catch
+    dataGPSN = readtable([filelocGPS filenameGPS],'ReadVariableNames',true,'Range','1:2');
+    headersN = dataGPSN.Properties.VariableNames;
+    headersN{find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Date'),headersN,'uniformoutput',false)),1)} = 'GPSDate';
+    headersN{find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Time'),headersN,'uniformoutput',false)),1)} = 'GPSTime';
+    dataGPS.Properties.VariableNames = headersN;
+    
+end
 % dataGPS(dataGPS.ID~=gpsID,:) = [];
 % dateFull = datenum(dataGPS.GPSDate,'dd.mm.yyyy')+datenum(dataGPS.GPSTime,'HH:MM:SS.fff')-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
 GPSDN = datenum(dataGPS.GPSDate)+datenum(dataGPS.GPSTime);%-floor(datenum(dataGPS.GPSTime)); %datetime(dataGPS.DateTimeUTC, 'inputformat', 'M/d/yyyy HH:mm:ss');
 % dataGPS.datetimeUTC = dateFull;
 % dataGPS(:,[2 7:10])=[]; % remove unused columns
 dataGPS.DNUTC = GPSDN;% not sure what UTC offset does, but would also have to adjust data to match-dataGPS.UTCoffset_s/24/60/60;%datenum(dataGPS.datetimeUTC); % Convert to number format if needed
-disp('First 10 Timestamps of GPS Data');
+disp('First 10 Timestamps of GPS Data (UTC)');
 try disp(datestr(dataGPS.DNUTC(1:10),'dd-mmm-yyyy HH:MM:SS.fff')); catch
     disp(datestr(dataGPS.DNUTC(1:end),'dd-mmm-yyyy HH:MM:SS.fff'));
 end
@@ -56,9 +64,9 @@ prhfile = D{~cellfun(@isempty,cellfun(@(x) strfind(x,'prh.mat'),D,'uniformoutput
 load([fileloc prhfile]);
 
 % disp(['TagTurnedOn: ' datestr(DN(1),'mm/dd/yy HH:MM:SS.fff')]);
-disp(['TagOnAnimal: ' datestr(DN(find(tagon,1)),'mm/dd/yy HH:MM:SS.fff')]);
-disp(['TagOffAnimal: ' datestr(DN(find(tagon,1,'last')),'mm/dd/yy HH:MM:SS.fff')]);
-disp(['EndData: ' datestr(DN(end),'mm/dd/yy HH:MM:SS.fff')]);
+disp(['TagOnAnimal (local): ' datestr(DN(find(tagon,1)),'mm/dd/yy HH:MM:SS.fff')]);
+disp(['TagOffAnimal (local): ' datestr(DN(find(tagon,1,'last')),'mm/dd/yy HH:MM:SS.fff')]);
+disp(['EndData (local): ' datestr(DN(end),'mm/dd/yy HH:MM:SS.fff')]);
 
 %add GPS to PRH file
 % try
@@ -71,7 +79,10 @@ dataGPS.GPSDN = dataGPS.DNUTC+GPSoffset/24; %This converts GPS to same offest as
 Lat = runmean(dataGPS.Latitude,10); Long = runmean(dataGPS.Longitude,10);
 Lat = Lat(1:10:end); Long = Long(1:10:end);
 dataGPS = dataGPS(1:10:end,:); dataGPS.Lat = Lat; dataGPS.Long = Long;
-repI = find(diff(dataGPS.DistTrav)==0)+1;
+try repI = find(diff(dataGPS.DistTrav)==0)+1;
+catch
+    repI = find(abs(diff(dataGPS.Latitude))>.0001|abs(diff(dataGPS.Longitude))>.0001)+1;
+end
 % repI = find(abs(diff(dataGPS.Lat)) < .0001 & abs(diff(dataGPS.Long)) <.0001)+1;
 dataGPS(repI,:) = [];
 % Remove points from recovery

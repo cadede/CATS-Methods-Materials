@@ -343,7 +343,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             end
         else ddd = 2;
         end
-        if ddd == 2
+        if ddd == 2 && ~ignorebadTimeStamps
             [DN,~,~,drops] = checkbadframes(DN);
             if size(DN,2)>size(DN,1); DN = DN'; end
             for ii = 1:length(drops(1,:))
