@@ -270,7 +270,7 @@ if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = na
 
 % if checkaudiofs; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end); end
 
-for n = 2:length(filename)
+for n = startn:length(filename)
     if ~CONTINUE || n>startn || j == 1
         vidN = viddeploy(strcmp(filename{n},vidNam(viddeploy)));
         if isempty(vidN); continue; end
@@ -427,7 +427,7 @@ for n = 2:length(filename)
                         for varj = 1:size(varT,2)
                             try varT.(varj)(numrows+1:newrows) = nan; catch; end
                         end
-                    elseif strcmp(vars{vari}(1:2),'DN')
+                    elseif strcmp(vars{vari}(1),'D') && strcmp(vars{vari}(2),'N')
                         dfdf = diff(varT(numrows-1:numrows));
                         newT = (varT(numrows)+dfdf:dfdf:varT(numrows)+dfdf*(newrows-numrows))';
                         varT(numrows+1:newrows) = newT;
