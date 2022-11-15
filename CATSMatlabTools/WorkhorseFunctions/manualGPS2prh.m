@@ -251,7 +251,7 @@ if size(GPS,1)<=2
     GPS = nan(length(p),2);
     GPSerr = nan(length(p),3);
 end
-GPS(1,:) = oGPS;
+GPS(1:2,:) = [oGPS; oGPS];
 for i = 1:length(gDN)
     [~,b] = min(abs(DN-gDN(i)));
 %     if sum(isnan(GPS(max(3,b-60*fs):min(length(p),b+60*fs),1))) == length(GPS(max(3,b-60*fs):min(length(p),b+60*fs),1)) %if there are no tag hits within 60 seconds

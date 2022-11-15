@@ -270,7 +270,7 @@ if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = na
 
 % if checkaudiofs; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end); end
 
-for n = startn:length(filename)
+for n = 2:length(filename)
     if ~CONTINUE || n>startn || j == 1
         vidN = viddeploy(strcmp(filename{n},vidNam(viddeploy)));
         if isempty(vidN); continue; end
@@ -411,6 +411,34 @@ for n = startn:length(filename)
         vidstamp = vidstamp + startref(n)/24/60/60;
         dataendtime = (vidstampend -vidstamp1)*24*60*60;
         [~,b] = min(abs(DN-vidstamp1));
+        % new section 11.15.22, adds nans to end of variables in the
+        % situation where the videos extend longer than the data (rare but
+        % possible if there was an error in the data collection process)
+        if round(fs*(dataendtime)+b)+30*fs>length(DN2)
+            numrows = length(DN2);
+            newrows = round(fs*(dataendtime)+b)+32*fs; % go 32 seconds longer for a buffer
+            vars = who;
+            for vari = 1:length(vars)
+                eval(['varT = ' vars{vari} ';']);
+                if any(size(varT) == numrows)
+                    dim = find(size(varT) == numrows);
+                    if dim == 2; varT = varT'; end
+                    if istable(varT)
+                        for varj = 1:size(varT,2)
+                            try varT.(varj)(numrows+1:newrows) = nan; catch; end
+                        end
+                    elseif strcmp(vars{vari}(1:2),'DN')
+                        dfdf = diff(varT(numrows-1:numrows));
+                        newT = (varT(numrows)+dfdf:dfdf:varT(numrows)+dfdf*(newrows-numrows))';
+                        varT(numrows+1:newrows) = newT;
+                    else
+                        varT = [varT; zeros(newrows-size(varT,1),size(varT,2))];
+                    end
+                    if dim == 2; varT = varT'; end
+                    eval([vars{vari} '= varT' ';']);
+                end
+            end
+        end
         if justflownoise
             [ax1, h1, h2]= plotyy(DN2(b:round(fs*(dataendtime)+b)),p(b:round(fs*(dataendtime)+b)),DN2(b:round(fs*(dataendtime)+b)),speedFN(b:round(fs*(dataendtime)+b),:)); hold on;
         else

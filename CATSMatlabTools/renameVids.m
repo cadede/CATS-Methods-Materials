@@ -22,8 +22,10 @@ for i = 1:length(filename)
     vn = str2num(filename{i}(vn+1:dI-1));
     vn2 = str2num(filename{i}(vn2+1:dI2-1));
     if ~isempty(I); f = [filename{i}(1:I-1) '.mp4']; else f = filename{i}; end
-    if vidT;
-        if  i==1 ; v = mmread([fileloc filename{i}],[1 10]); dur = v.totalDuration;
+   if vidT
+        if  i==1 ; try v = mmread([fileloc filename{i}],[1 10]); dur = v.totalDuration;
+            catch; vid2 = VideoReader([fileloc filename{i}]); dur = vid2.Duration;
+            end
             if dur < vidDurs(vn); vidDN(vn) = vidDN(vn) + (vidDurs(vn)-dur)/24/60/60; end
         end
         f = [f(1:end-4) ' (' datestr(vidDN(vn),'mm.dd HHMMSS') ').mp4'];

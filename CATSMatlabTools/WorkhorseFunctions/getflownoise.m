@@ -3,6 +3,7 @@ function [DB,AUD] = getflownoise(audiodir,vars)
 % reads wav files in a directory and converts them to low-frequency
 % flownoise, bandpass filtered between 66 and 94 Hz using the script
 % CATSrms
+dbstop if error
 
 names = fieldnames(vars);
 for i = 1:length(names)
@@ -19,25 +20,33 @@ if isempty(audiofiles) % check for other wav files not from movies (acousonde/dt
     if ~isempty(wavfiles);
         for n = 1:length(wavfiles) %for some reason if this is in with the next for loop it messes up
             clear aud;
-%             [~,aud]= mmread([audiodir '' wavfiles(n).name], [],[],true); %just audio
-aud = struct();
-try
-            [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
-catch
-    audioI = audioinfo([audiodir '' wavfiles(n).name]);
-   [aud.data,aud.rate] = audioread([audiodir '' wavfiles(n).name]);
-   aud.bits = audioI.BitsPerSample;
-end
+            %             [~,aud]= mmread([audiodir '' wavfiles(n).name], [],[],true); %just audio
+            aud = struct();
+            try
+                [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
+            catch
+                audioI = audioinfo([audiodir '' wavfiles(n).name]);
+                [aud.data,aud.rate] = audioread([audiodir '' wavfiles(n).name]);
+                aud.bits = audioI.BitsPerSample;
+            end
             aud.nrChannels = size(aud.data,2);
             aud.totalDuration = size(aud.data,1)/aud.rate;
             lastwarn('');
+            if aud.rate>24000 
+                warning('For flownoise files, audio.mat files are being decimated to 24 kHz');
+                aud.data = decdc(aud.data,aud.rate/24000);
+                aud.rate = 24000;
+                audend = '_24kHz';
+            else
+                audend = '';
+            end
             try
-                save([audiodir '' wavfiles(n).name(1:end-4) 'audio.mat'],'aud');
+                save([audiodir '' wavfiles(n).name(1:end-4) audend 'audio.mat'],'aud');
                 if ~isempty(lastwarn)
                     error(lastwarn);
                 end
             catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-                save([audiodir '' wavfiles(n).name(1:end-4) 'audio.mat'],'aud','-v7.3');
+                save([audiodir '' wavfiles(n).name(1:end-4) audend 'audio.mat'],'aud','-v7.3');
                 disp('Made a version 7.3 file (audio was big)');
             end
         end
@@ -72,6 +81,8 @@ if ~nocam || ~noaud
             DBdf = 15;
         elseif aud.rate == 96000
             DBdf = 30;
+        elseif aud.rate == 240000
+            DBdf = 120;
         elseif aud.rate == 3200
             DBdf = 1;
         elseif aud.rate == 25811
@@ -115,6 +126,7 @@ if ~nocam || ~noaud
             DBaud(I:I+length(DBt)-1) = DBt;
         else
             [~,I] = min(abs(DNaud-(audStart+length(DBt)/fs/24/60/60))); % from the end
+            I = I-1;
             DBaud(1:I) = DBt(length(DBt)-I+1:end);
         end
         for j = 1:length(DBt)
