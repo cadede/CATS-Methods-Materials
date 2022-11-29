@@ -3,13 +3,13 @@ clearvars -except CAL
 % first load in appropriate cal file 
 % load data from swv files
 % set these valu
-folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\zc17_205a\';
-fileprefix = 'zc205a';
+folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\zc22_212a\';
+fileprefix = 'zc22_212a';
 % ODN = datenum([2015 07 31 8 4s6 52]);
 df = 1;
-name = 'zc17_205a';
+name = 'zc22_212a';
 
- d3 = readd3xml([folder fileprefix '001.xml']);
+ d3 = readd3xml([folder fileprefix '003.xml']);
  ODN = datenum(d3.CFG{1}.TIME,'yyyy,mm,dd,HH,MM,SS');
  disp(['Start Time: ' datestr(ODN)]);
  X=d3readswv(folder,fileprefix,df);

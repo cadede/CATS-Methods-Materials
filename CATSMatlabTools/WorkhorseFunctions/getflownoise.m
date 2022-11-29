@@ -63,7 +63,12 @@ if ~isempty(audstart); disp(['Audio start time is ' datestr(audstart,'dd-mmm-yyy
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
-        if isempty(audstart); vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
+        if isempty(audstart); 
+            if ~isempty(regexp(audiofiles(i).name,'kHz'))
+                vidnum = audiofiles(i).name(1:regexp(audiofiles(i).name,'_'));
+            else vidnum = audiofiles(i).name;
+            end
+            vidnum = audiofiles(i).name(regexp(vidnum,'\d'));
             vidnum = str2num(vidnum(end-3:end));
         else vidnum = [];
         end
