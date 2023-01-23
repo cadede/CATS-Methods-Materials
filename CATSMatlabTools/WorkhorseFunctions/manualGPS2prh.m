@@ -117,9 +117,9 @@ end
 % catch for macs that use a simple version of excel to read datenumbers
 if abs(gDN(1)-DN(1)) > 1000
     gDN = gDN+693960;
-    if abs(gDN(1)-DN(1)) > 3
-        error('Problem reading timestamps')
-    end
+end
+if abs(gDN(1)-DN(1)) > 3
+    error('Problem reading timestamps (start times are more than 3 days off).  Check DN variable in prh file and the time column in GPS excel sheet.  Dates should be in mm/dd/yyyy HH:MM:SS format')
 end
 
 lat = vertcat(hits{:,latcol}); long = vertcat(hits{:,longcol});
@@ -251,7 +251,7 @@ if size(GPS,1)<=2
     GPS = nan(length(p),2);
     GPSerr = nan(length(p),3);
 end
-GPS(1,:) = oGPS;
+GPS(1:2,:) = [oGPS; oGPS];
 for i = 1:length(gDN)
     [~,b] = min(abs(DN-gDN(i)));
 %     if sum(isnan(GPS(max(3,b-60*fs):min(length(p),b+60*fs),1))) == length(GPS(max(3,b-60*fs):min(length(p),b+60*fs),1)) %if there are no tag hits within 60 seconds

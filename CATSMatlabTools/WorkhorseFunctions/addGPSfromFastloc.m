@@ -17,7 +17,7 @@ catch
     cd (cdir);
 end
 % tag 70 is fastGPS 1231, 71 is 1232;
-if INFO.tagnum == 70; gpsID = 1231; elseif INFO.tagnum == 71; gpsID = 1232;
+if str2num(INFO.tagnum) == 70; gpsID = 1231; elseif str2num(INFO.tagnum) == 71; gpsID = 1232;
 else gpsID = input('Input fastGPS ID # for this deployment: ');
 end
 disp(['gpsID = ' num2str(gpsID)]);
