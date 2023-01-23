@@ -3,13 +3,14 @@ function [DB,AUD] = getflownoise(audiodir,vars)
 % reads wav files in a directory and converts them to low-frequency
 % flownoise, bandpass filtered between 66 and 94 Hz using the script
 % CATSrms
+dbstop if error
 
 names = fieldnames(vars);
 for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);
 end
 
-
+if exist('audstart','var') && isnan(audstart); audstart = []; end
 DB = nan(size(Depth,1),1);
 DNaud = DN(1):1/fs/24/60/60:DN(end);
 DBaud = nan(size(DNaud));
@@ -19,19 +20,33 @@ if isempty(audiofiles) % check for other wav files not from movies (acousonde/dt
     if ~isempty(wavfiles);
         for n = 1:length(wavfiles) %for some reason if this is in with the next for loop it messes up
             clear aud;
-%             [~,aud]= mmread([audiodir '' wavfiles(n).name], [],[],true); %just audio
-aud = struct();
-            [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
+            %             [~,aud]= mmread([audiodir '' wavfiles(n).name], [],[],true); %just audio
+            aud = struct();
+            try
+                [aud.data,aud.rate,aud.bits] = wavread([audiodir '' wavfiles(n).name]);
+            catch
+                audioI = audioinfo([audiodir '' wavfiles(n).name]);
+                [aud.data,aud.rate] = audioread([audiodir '' wavfiles(n).name]);
+                aud.bits = audioI.BitsPerSample;
+            end
             aud.nrChannels = size(aud.data,2);
             aud.totalDuration = size(aud.data,1)/aud.rate;
             lastwarn('');
+            if aud.rate>24000 
+                warning('For flownoise files, audio.mat files are being decimated to 24 kHz');
+                aud.data = decdc(aud.data,aud.rate/24000);
+                aud.rate = 24000;
+                audend = '_24kHz';
+            else
+                audend = '';
+            end
             try
-                save([audiodir '' wavfiles(n).name(1:end-4) 'audio.mat'],'aud');
+                save([audiodir '' wavfiles(n).name(1:end-4) audend 'audio.mat'],'aud');
                 if ~isempty(lastwarn)
                     error(lastwarn);
                 end
             catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-                save([audiodir '' wavfiles(n).name(1:end-4) 'audio.mat'],'aud','-v7.3');
+                save([audiodir '' wavfiles(n).name(1:end-4) audend 'audio.mat'],'aud','-v7.3');
                 disp('Made a version 7.3 file (audio was big)');
             end
         end
@@ -43,13 +58,21 @@ else noaud = false;
 end
 AUD = struct();
 audStart = 0;
-if isempty(vidDN); disp('assuming audiofiles are continuous with no gaps'); lastDur = 0; end
+if isempty(vidDN)||~isempty(audstart); disp('assuming audiofiles are continuous with no gaps'); lastDur = 0; end
+if ~isempty(audstart); disp(['Audio start time is ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff')]); end
 
 if ~nocam || ~noaud
     for i = 1:length(audiofiles)
-        vidnum = audiofiles(i).name(regexp(audiofiles(i).name,'\d'));
+        if isempty(audstart); 
+            if ~isempty(regexp(audiofiles(i).name,'kHz'))
+                vidnum = audiofiles(i).name(1:regexp(audiofiles(i).name,'_'));
+            else vidnum = audiofiles(i).name;
+            end
+            vidnum = audiofiles(i).name(regexp(vidnum,'\d'));
             vidnum = str2num(vidnum(end-3:end));
-        if audStart>DN(find(tagondec,1,'last')) || ((vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var'))
+        else vidnum = [];
+        end
+        if isempty(audstart) && (audStart>DN(find(tagondec,1,'last')) || ((vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')))
                 warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
                 continue
         end
@@ -63,11 +86,15 @@ if ~nocam || ~noaud
             DBdf = 15;
         elseif aud.rate == 96000
             DBdf = 30;
+        elseif aud.rate == 240000
+            DBdf = 120;
         elseif aud.rate == 3200
             DBdf = 1;
+        elseif aud.rate == 10100
+            DBdf = 4;
         elseif aud.rate == 25811
             DBdf = 53;
-        else error('new sampling rate, check your decimation factor to ensure an integer bin');
+        else error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
         end
         try
         [DBt, offset] = CATSrms(aud,fs,DBdf); %offset is in seconds
@@ -80,20 +107,22 @@ if ~nocam || ~noaud
 %              if isempty(vidnum); vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'C')+1:max(regexp(audiofiles(i).name,'\d')))); end
 %         elseif kitten
            
-            disp(['Audio number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          if ~isempty(vidnum); disp(['Audio number ' num2str(vidnum) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          else disp(['Audio number ' num2str(i) ' being read, sample rate is ' num2str(aud.rate) ' Hz']);
+          end
 
 %         elseif tagnum<20 && tagnum>12
 %             vidnum = i;
 %         else
 %             vidnum = str2num(audiofiles(i).name(regexp(audiofiles(i).name,'\d')));
 %         end
-        try audStart = vidDN(vidnum)+offset/24/60/60;
+        try if ~isempty(audstart); error(' '); end; audStart = vidDN(vidnum)+offset/24/60/60; 
         catch
             if i == 1; disp('assuming audiofiles start at beginning of file and are continuous');
-                audStart = DN(1) +offset/24/60/60;
-            elseif (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
+                if isempty(audstart); audStart = DN(1) +offset/24/60/60; else audStart = audstart; end
+            elseif ~isempty(vidnum) && (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
                 warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);
-                continue
+%                 continue
             else
                 audStart = audStart+lastDur;
             end
@@ -104,6 +133,7 @@ if ~nocam || ~noaud
             DBaud(I:I+length(DBt)-1) = DBt;
         else
             [~,I] = min(abs(DNaud-(audStart+length(DBt)/fs/24/60/60))); % from the end
+            I = I-1;
             DBaud(1:I) = DBt(length(DBt)-I+1:end);
         end
         for j = 1:length(DBt)

@@ -44,7 +44,7 @@ oi = get(gcf,'outerposition');
 set(gcf,'outerposition',[oi(1:2) oi(4)*1.1 oi(4)])
 p1 = plot(T0(tagon,1),T0(tagon,2)); hold on;
 set(gca,'Position',[0.13 0.11 .775 .815]);
-
+if tagon(1); tagon(1) = false; end
 if isempty(G0)
     % if there is not a tagon GPS location
     [x1,y1,z1] = deg2utm(GPS(Gi(1),1),GPS(Gi(1),2));

@@ -31,10 +31,18 @@ if strcmpi(tagtype,'Wireless') || strcmpi(tagtype,'motus') || strcmpi(tagtype,'a
     axAo = [x y z];
     axMo = [x y z];
     axGo = [x y z]; % no gyros in acousonde
+elseif strcmpi(tagtype,'Technosmart')
+   axAo = [x -y -z];
+   axMo = [-y x z];
+   axGo = [x -y -z];
 elseif strcmpi(tagtype,'Beacon')
    axAo = [-y x z];
    axMo = [-y x z];
    axGo = [-y x z];
+elseif strcmpi(tagtype,'Mini')
+    axAo = [y x -z];
+    axMo = [x y z];
+    axGo = [y x -z]; % no
 elseif strcmpi(tagtype,'platypus')
 axAo = [x -y -z];
 axMo = [-x -z y];
@@ -46,6 +54,10 @@ axGo = [-x -y z];
 elseif strcmpi(tagtype,'LittleLeonardo')
     axAo = [y x -z];
     axMo = [x y z];
+    axGo = [x y z]; % no gyros or mag
+elseif strcmpi(tagtype,'LLspeed')
+    axAo = [y x z];
+    axMo = [-y -x -z];
     axGo = [x y z]; % no gyros or mag
 elseif strcmpi(tagtype,'TDR10')
 axAo = [-x y z];

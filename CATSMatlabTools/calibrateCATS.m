@@ -97,9 +97,11 @@ end
 if abs(nanmean(M)-1)>.02
     warning (['Calibration of accelerometers is inconsistent, mean of M = ' num2str(nanmean(M))]);
 end
-
+try
 if strcmpi(tagtype(1:5),'TDR10') || strcmpi(tagtype(1:5),'Littl') 
     save([fileloc 'TDR10cal' tagnum '.mat'],'acal','aconst');
+end
+catch
 end
 disp('Step 1 successfully completed')
 %% 2.  Now enter files where gyro calibration is found (only run this cell if you have gyro data)
@@ -113,7 +115,7 @@ disp('Step 1 successfully completed')
 
 clearvars -except fileloc filename tagtype data tagnum benchfile benchloc benchdata acal aconst txtdata
 
-if ~(strcmpi(tagtype,'acousonde') || strcmpi(tagtype(1:5),'TDR10'));
+if ~(strcmpi(tagtype,'acousonde') || (length(tagtype)>=5 && strcmpi(tagtype(1:5),'TDR10')));
     cf = pwd; if ischar(fileloc); cd(fileloc); end
     [filename2,fileloc2]=uigetfile('*.mat', 'select mat file with gyro calibrations','multiselect','on');
     cd(fileloc2);
@@ -124,7 +126,8 @@ if ~(strcmpi(tagtype,'acousonde') || strcmpi(tagtype(1:5),'TDR10'));
         data =  load([fileloc filename]); data = data.data;
     end
     if ~strcmp(benchfile2,benchfile); benchfile = benchfile2; benchloc = benchloc2;
-        [benchdata, ~] = xlsread([benchloc benchfile]);
+        [benchdata, txtdata,alldata] = xlsread([benchloc benchfile]);
+        if ~isnumeric(alldata{2,2}); benchdata = [nan(2,size(benchdata,2)); benchdata]; end
     end
 
         starts = benchdata(13:30,2); %13:30 are the row numbers in the excel file
@@ -280,8 +283,14 @@ for pos = unique(positions)'
         end
         %         disp([samps std(co(rows5m,:))']);
         samp = round(nanmean(samps)); % one will be a nan
+        % can use these lines (with end on 290) to manually set sample rate
+        % if compass reading was wobbly and peaks hard to detect.  try code
+        % similar to [x,y] = ginput(2) (and click on the distance between n
+        % peaks), then use diff(x)/n to set your "samp" below
+%          if pos == 3 && rpm == 33; samp = 91; elseif pos == 3 && rpm == 45; samp = 67;
+%          elseif pos == 5 && rpm == 33; samp = 87; elseif pos == 5 && rpm == 45; samp = 66; else
         if any(abs(samps-samp)>0.05*samp); error('Check rotation rate calculations, compass peaks do not line up.'); end
-        
+%          end
         %         plot(oico(rows5m,pax),'g');
         [ax,h1,h2] = plotyy(1:length(rows5m),oico(rows5m,pax),1:length(rows5m),oigy(rows5m,:)); set(h2,'linewidth',3); set(h1,'color','g');
         set(ax(1),'yticklabel',[]);
@@ -345,7 +354,8 @@ cd(cf);
         data =  load([fileloc filename]); data = data.data;
     end
     if ~strcmp(benchfile2,benchfile); benchfile = benchfile2; benchloc = benchloc2;
-        [benchdata, txtdata] = xlsread([benchloc benchfile]);
+       [benchdata, txtdata,alldata] = xlsread([benchloc benchfile]);
+        if ~isnumeric(alldata{2,2}); benchdata = [nan(2,size(benchdata,2)); benchdata]; end
     end
 %
 

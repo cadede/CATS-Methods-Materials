@@ -8,6 +8,8 @@ nout = length(Depth);
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
 Temp = decimateM(Temp,ofs,Hzs.THz,df,nout,'THz');
 
+% try extTemp = data.extTemp; y = -2E-21x5 + 3E-16x4 - 2E-11x3 + 7E-07x2 - 0.014x + 164.12
+
 try try Light = decimateM(data.Light,ofs,Hzs.lHz,df,nout,'lHz'); %decdc(data.Light,df); 
         LightIR = nan(size(Light)); 
     catch 
@@ -49,10 +51,17 @@ numrows = nout; %size(Depth,1);
 %     Mt = filterMag(Mt,ofs,tagon);
 % else
 try
-    Mt = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); 
-catch; Mt = nan(size(Depth,1),3);
+    Mt = [data.Comp1 data.Comp2 data.Comp3];
+catch
+    Mt = nan(size(Depth,1),3);
     warning ('No magnetometer detected, Mt is nans');
 end
+% could try below lines to get rid of data spikes, but may get hung up.
+% try
+%     Mt = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); 
+% catch; Mt = nan(size(Depth,1),3);
+%     warning ('No magnetometer detected, Mt is nans');
+% end
 % end
 I = isnan(Mt);
 if sum(I(:,1)) ~=size(I,1)

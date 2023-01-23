@@ -55,11 +55,11 @@ end
 %
 disp(['ID = ' whaleID]);
 % grab the movie files from the directory
-m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||(strcmp(m2{i}(end-2:end),'wav')&&audioonly)||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
+m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; for i = 3:length(m2); if length(m2{i})<=3 || ~(strcmp(m2{i}(end-2:end),'raw')||(strcmp(m2{i}(end-2:end),'wav'))||strcmpi(m2{i}(end-2:end),'mov')||strcmpi(m2{i}(end-2:end),'mp4')); todel(i) = true; end; end; m2(todel) = [];
 % these try catch help choose which files to import
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
-    for i = 1:length(m2); m2times(i) = datenum(m2{i}(min(regexp(m2{i},'-'))+1:max(regexp(m2{i},'-'))-1),'yyyymmdd-HHMMSS'); end
+    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
     rootDIR = folder; loc1 = strfind(movieloc,'CATS'); if ~isempty(loc1); rootDIR = movieloc(1:loc1+4); end
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch;  titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
@@ -84,7 +84,7 @@ end
 
 try % find all movies on whale to get frameTimes
     m2times = nan(size(m2));
-    for i = 1:length(m2); m2times(i) = datenum(m2{i}(min(regexp(m2{i},'-'))+1:max(regexp(m2{i},'-'))-1),'yyyymmdd-HHMMSS'); end
+    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
     rootDIR = strfind(movieloc,'CATS'); rootDIR = movieloc(1:rootDIR+4);
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch; try [~,~,txt] = xlsread([fileloc filename]); catch; cd(fileloc); titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end; end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));
@@ -109,7 +109,7 @@ for n = 1:length(movies)
     lastnum = regexpi(movies{n},'.mp4');
     if isempty(lastnum); lastnum = regexpi(movies{n},'.mov'); end
     if isempty(lastnum); lastnum = regexpi(movies{n},'.raw'); end
-     if isempty(lastnum)&&audioonly; lastnum = regexpi(movies{n},'.wav'); end
+     if isempty(lastnum); lastnum = regexpi(movies{n},'.wav'); end
     movN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     else audN(n) = str2num(movies{n}(lastnum-3:lastnum-1));
 %     end
@@ -147,7 +147,9 @@ if ~exist (DIR,'dir')
     mkdir (DIR);
 end
 
-if timestamps; oframeTimes = frameTimes; end
+% if timestamps; 
+    oframeTimes = frameTimes; 
+% end
 
 warning('off','all');
 %
@@ -162,7 +164,7 @@ if  ripAudio
     for i = 1:length(D); for j = 1:length(F{i}); D1{end+1} = [D{i} '\' F{i}{j}]; if strcmp(F{i}{j}(end-3:end),'.wav'); wavfiles{end+1} = F{i}{j}; wavstr{end+1} = D1{end}; disp(wavstr{end}); end; end; end
     for i = 1:length(movies); if strcmp(movies{i}(end-2:end),'raw'); disp([movieloc movies{i}]); end; end
     readaudiofiles2;
-    disp(['Check that audio files were successfully written, then if you''re sure, you can delete files after ' LastOnMovie]);
+    disp(['Check that audio files were successfully written, then if you''re sure, you can delete movie/audio files after ' LastOnMovie]);
     disp('Any premade wav files were read and left in their original directory');
 else
     disp('no audio was extracted from vids');
@@ -203,6 +205,7 @@ for i = 1:length(movies)
         end
     end
 end
+vidDursTemp = vidDurs;
 oi = nan(size(vidDurs));
 if ~timestamps; oi(vidNum) = vidDN(ismember(cellstr(vertcat(D.name)),movies)); end
 vidDN = oi;
@@ -217,10 +220,10 @@ vidNam = oi;
 % the timestamp written on the frame.
 % frameTimes = cell(max(movN),1); oframeTimes = frameTimes;
 if exist('vidNums','var') && ~isempty(vidNums) % if you signaled to only read a couple of the videos, load all the videos first
-    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN','vidDurs'); disp('existing movietimes file loaded');
+    try load([dataloc datafile(1:end-4) 'movieTimes.mat'],'frameTimes','oframeTimes','vidDN'); disp('existing movietimes file loaded');
     catch
         try
-            load([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','oframeTimes','vidDN','vidDurs');
+            load([dataloc datafile(1:end-4) 'movieTimesTEMP.mat'],'frameTimes','oframeTimes','vidDN');
             disp('movieTimesTEMP file loaded');
         catch
             disp('WARNING: No old frameTimes found, resulting frameTimes file will only be for indicated videos'); 
@@ -236,16 +239,20 @@ end
  badvidDN = false(size(vidDN)); viddifs = zeros(size(badvidDN));
 for n = 1:length(movies) 
     if isempty(intersect(movN(n),vidNums)); continue; end
-    if audioonly; vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff'); 
+    if audioonly || strcmp(movies{n}(end-2:end),'wav'); slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff'); 
         try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
         continue; 
     end
-    try vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
+    try slashI = regexp(movies{n},'-'); vidDN(movN(n)) = datenum(movies{n}(slashI(end-3)+1:slashI(end)-1),'yyyymmdd-HHMMSS-fff');
     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
         badvidDN(movN(n)) = true;
          d = regexp(movies{n},'-');
         if ~strcmp(movies{n}(end-2:end),'raw')
-            day = datenum(movies{n}(d(1)+1:d(2)-1),'yyyymmdd');
+            try day = datenum(movies{n}(d(1)+1:d(2)-1),'yyyymmdd');
+            catch; try day = datenum(movies{n}(d(end-3)+1:d(end-2)-1),'yyyymmdd');
+                catch; day = datenum(movies{n}(d(end-2)+1:d(end-1)-1),'yyyymmdd');
+                end
+            end
             starttime = 0; endtime = dur; videoL = dur+1; DAY = 0; badmovie = false;
             readwirelessvideo2;
             oi = checkbadframes(vid.times);
@@ -255,7 +262,7 @@ for n = 1:length(movies)
                 disp(['Video ' num2str(movN(n)) ' calculated to start at ' datestr(vidDN(movN(n)),'yyyy-mmm-dd HH:MM:SS.fff')]);
                 badvidDN(movN(n)) = false;
             else
-                 try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
+                 try vidDN(movN(n)) = datenum(movies{n}(d(end-2)+1:d(end)-1),'yyyymmdd-HHMMSS');
                      warning(['movie file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
                      disp('RECOMMEND synching movie times via surfacings');
                      badvidDN(movN(n)) = false;
@@ -263,13 +270,14 @@ for n = 1:length(movies)
                  end
             end
         else
-            try vidDN(movN(n)) = datenum(movies{n}(d(1)+1:d(3)-1),'yyyymmdd-HHMMSS');
+            try vidDN(movN(n)) = datenum(movies{n}(d(end-2)+1:d(end)-1),'yyyymmdd-HHMMSS');
             disp(['Audio file ' num2str(movN(n)) ' start time could only be read to the nearest second: ' datestr(vidDN(movN(n)))]);
             badvidDN(movN(n)) = false;
             catch; warning('Could not read audio time stamp');
             end
         end
     end
+    vidDurs(movN(n)) = vidDursTemp(movN(n));
     if strcmp(movies{n}(end-2:end),'raw') || n >  mlast-m1+1;
         vidNam{movN(n)} = movies{n};
        if movN(n)>movN(mlast-m1+1); vidNam{movN(n)} = []; vidDurs(movN(n)) = nan; end
@@ -320,7 +328,8 @@ for n = 1:length(movies)
     if ~simpleread
         [frameTimes{movN(n)},numbad,numbadsect] = checkbadframes(frameTimes{movN(n)});
         lbl = [' with ' num2str(numbad) ' frames that could not be read and were interpolated, and ' num2str(numbadsect) ' frames that were shifted and corrected'];
-    else if abs(viddif)>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp- can choose to offset movie start time at end of process']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
+    elseif timestamps
+        if abs(viddif)>timewarn; lbl = [', end frame of movie appears to be ' num2str(viddif) ' s off from video''s time stamp- can choose to offset movie start time at end of process']; else lbl = [', and end of video is within time differential threshold (' num2str(viddif) 's)']; end
         viddifs(movN(n)) = viddif;
     end
     
@@ -351,7 +360,10 @@ if timestamps && ~simpleread  && ~audioonly% if vid start time is read from the 
     for n = 1:length(movies)
         if isempty(intersect(movN(n),vidNums)); continue; end
         if ~strcmp(movies{n}(end-2:end),'raw') && n<=  mlast-m1+1;
-            DAY = floor(datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS'));
+            slashI = regexp(movies{n},'-');
+            try DAY = floor(datenum(movies{n}(slashI(end-3)+1:slashI(end)-2),'yyyymmdd-HHMMSS'));
+            catch; DAY = floor(datenum(movies{n}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'));
+            end
             vidDN(movN(n)) = DAY+vidDN(movN(n))-floor(vidDN(movN(n)));
             continue;
         end

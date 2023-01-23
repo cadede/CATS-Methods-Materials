@@ -1,4 +1,4 @@
-function [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file)
+function [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file)
 
 % this looks for the txt file that has information about sample rates and
 % reports the sample rate of each sensor.
@@ -40,6 +40,8 @@ catch
     UTC = false;
 end
 ints = find(~cellfun(@isempty, strfind(Hzs,'interval')));
+odn = Hzs{find(~cellfun(@isempty, strfind(Hzs,'first_entry')))};
+ODN = datenum(odn(regexp(odn,'=')+1:regexp(odn,'(')-1),'dd.mm.yyyy HH:MM:SS')+UTC/24;
 Hzs = Hzs(ints(1)-3:end); ints = ints-(ints(1))+3+1;
 % start reading and downsampling data
 acc = find(~cellfun(@isempty,strfind(Hzs,'Accel')),1,'last'); acc = Hzs{ints(find(ints>acc,1,'first'))};

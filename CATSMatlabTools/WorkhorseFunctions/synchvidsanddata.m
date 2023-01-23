@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj] = synchvidsanddata(data,headers,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsanddata(data,headers,tagon,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
 
 % this function looks to see if any adjustment is needed for the video and
 % data times, based on inputs from the meta data xls file, and then also
@@ -8,8 +8,80 @@ function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj] = synchvidsanddata(dat
 
 dbstop if error;
 global fileloc filename
-if nargin<11; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
+if nargin<12; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
+ Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
+% synch 
+try if viddata.vid4k
+        synchaudio = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
+        
+    else audstart = [];
+    end
+catch
+    audstart = []; viddata.vid4k = false;
+    disp('To synch an audio file, add a true ''vid4k'' boolean variable to your movieTimes file');
+end
+cf = pwd;
+if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
+    timestamp = input('Use tag on animal time as synch point? (1 = yes, 2 = no) ');
+    if timestamp == 2; timestamp = input('Enter time of synch point in date vector format ([yyyy mm dd HH MM SS]): ');
+        timestamp = datenum(timestamp);
+    else timestamp = find(tagon,1); timestamp = DN(timestamp);
+    end
+    try cd([fileloc 'AudioData\']); catch; cd(fileloc); end
+    [~,I] = min(abs(DN-timestamp)); I = I-fs*10:I+fs*10;
+    [audfile,audloc] = uigetfile('*.wav','Get first audio file from "AudioData" folder (assumes all audiofiles from here are consecutive with no gaps)');
+    if exist([audloc audfile(1:end-4) 'audio.mat'],'file'); load([audloc audfile(1:end-4) 'audio.mat']); else
+        aud = struct();
+        try [aud.data,aud.rate,aud.bits] = wavread([audloc audfile]);
+        catch
+            audioI = audioinfo([audloc audfile]);
+            [aud.data,aud.rate] = audioread([audloc audfile]);
+            aud.bits = audioI.BitsPerSample;
+        end
+    end
+    FF = figure(100); clf;
+    audioI = round((timestamp-DN(1))*24*60*60*aud.rate); audioI = audioI-aud.rate*10:audioI+aud.rate*10;
+    sp1 = subplot(2,1,1); hold on;
+    ax = plotyy(DN(I),data.Pressure(I),DN(I),Atemp(I,3)); legend('Depth','Az')
+    set(ax(1),'ydir','rev')
+    set(gca,'xticklabel',datestr(get(gca,'xtick'),'HH:MM:SS'));
+    set(ax,'xlim',[DN(I(1)) DN(I(end))]);
+    t = title('Click on synch location in upper graph (will select peak within 1s)');
+    set(ax,'nextplot','add')
+    subplot(2,1,2);
+    pI = (1:length(audioI))/aud.rate;
+    plot(pI,aud.data(audioI));
+    xlabel('Seconds')
+    xlim([pI(1) pI(end)])
+    [x,~] = ginput(1);
+    [~,x] = min(abs(DN-x));
+    [i1,mag] = peakfinder(Atemp(x-fs:x+fs,3));
+    [~,i] = max(mag); i1 = i1(i);
+    x = x-fs-1+i1;
+    plot(ax(2),DN(x),mag(i),'rs','markerfacecolor','r')
+    set(ax,'xlim',[DN(x-10*fs) DN(x+10*fs)])
+    set(t,'string','');
+    subplot(2,1,2); hold on;
+    title('Click on synch location in lower graph (will select peak within 1s)');
+    [x2,~] = ginput(1);
+    x2 = x2*aud.rate;
+    x2 = audioI(1)-1+round(x2);
+    [i1,mag] = peakfinder(aud.data(x2-aud.rate:x2+aud.rate));
+    [~,i] = max(mag); i1 = i1(i);
+    x2 = x2-aud.rate-1+i1;
+    plot(pI(x2-audioI(1)+1),mag(i),'rs','markerfacecolor','r')
+    audioI2 = x2-audioI(1)+1-10*aud.rate:x2-audioI(1)+1+10*aud.rate;
+    xlim([audioI2(1) audioI2(end)]/aud.rate)
+    audstart = DN(x)-x2/aud.rate/24/60/60;
+    disp(['Old Audio start time: ' datestr(DN(1), 'dd-mmm-yyyy HH:MM:SS.fff')]);
+    disp(['New Audio Start time: ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff') '. Will be asked to rename audio files after prh process is complete.']);
+%     close(FF);
+else
+    audstart = nan;
+end
+
+cd(cf); 
 
 try if sum(data.Camera) == 0; nocam = true; else nocam = false; end; catch; disp('Could not automatically detect camera status, maintaining user input'); end
 if strcmp(headers{5,1},'Time Style'); rowstart = 8; else rowstart = 7; end 
@@ -133,7 +205,6 @@ else
         %         end
         
         tagslip = [1 1];% tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
-        Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
         njerkTemp = (9.81*fs)*sqrt(diff(Atemp).^2*ones(3,1)); %temp jerk for guessing at tag slip
         
         
@@ -296,6 +367,10 @@ else
             [~,sI] = min(abs(DN-vidDN(i)));
             [~,eI] = min(abs(DN-(vidDN(i)+vidDurs(i)/60/60/24))); %round(sI + vidDurs(i)*fs);
             camon(sI:eI) = true; %min(eI,length(p))) = true;
+        end
+        if ~isempty(audstart) && ~isnan(audstart)
+            [~,I] = min(abs(DN-audstart));
+            audon(I:end) = true;
         end
         
     if any(isnan(vidDN(~cellfun(@isempty,vidNam)))) || any(diff(vidDN(~cellfun(@isempty,vidNam)))<0) || any(isnan(vidDurs(~cellfun(@isempty,vidNam))))

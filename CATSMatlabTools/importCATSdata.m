@@ -1,4 +1,6 @@
-function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll)
+function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importAll,ignorebadTimeStamps)
+dbstop if error
+
 %
 % David Cade
 % version 11.23.2020
@@ -16,6 +18,12 @@ function [data, Adata, Atime, Hzs] = importCATSdata(fileloc, filename,FS,importA
 % true.  setting this to true ensures that all csvs are read (default is to
 % stop once a file has no depth change throughout after a period where there were depth changes).  If false,
 % data stops once pressure remains at the surface for an entire csv read.
+% importCATSdata([],[],[],[],true); % set the 5th parameter to true if you
+% want to ignore any bad timestamps and read data in order, recording
+% whatever the timestamps says. This flag is only useful to speed up the
+% process in the rare case where the internal clock of the cats tag is
+% giving errors.
+
 % [data, Adata, Atime, Hzs] = importCATSdata(...);
 %
 %set FS if you want to set the frequency of data table (you will have to
@@ -62,6 +70,8 @@ if nargin <2 || isempty(fileloc) || isempty(filename)
 end
 if nargin<4; importAll = false;
 end
+if nargin<5; ignorebadTimeStamps = false;
+end
 % 
 if iscell(filename); fname = filename{1}; else fname = filename; end
 %
@@ -81,7 +91,7 @@ warning('on','all')
 warning('off','MATLAB:textscan:AllNatSuggestFormat')
 % allows you to start the import at a file number above 0
 if regexp(filename(end-7:end-4),'_\d\d\d')
-    i = strfind(filename,'_');
+    i = max(strfind(filename,'_'));
     i = str2num(filename(i+1:i+3));
 else
     i = 0;
@@ -152,13 +162,15 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
                         headers(~cellfun(@isempty,strfind(headers,'Pressure'))) = {'Pressure'}; end;
                 end;
         end
-        if sum(cellfun(@(x) strcmp(x,'Pressure'),headers)) == 0;
+        if sum(~cellfun(@isempty,strfind(headers,'Pressure'))) == 0;
            warning('No Pressure data detected, continue? 1 = yes, 2 = no');
            x = input('?');
            if x ~=1;
                error ('Fix pressure data');
            else noPress = true;
-           end            
+           end  
+        else
+            headers(~cellfun(@isempty,strfind(headers,'Pressure'))) = {'Pressure'};
         end
         %This adds a numeral to every subsequently found version of
         %Temperature that is in the csv
@@ -168,7 +180,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         % Magnetometers are described as "Comp" for compass
         try headers(~cellfun(@isempty,strfind(headers,'Comp'))) = {'Comp1' 'Comp2' 'Comp3'};  catch; headers(~cellfun(@isempty,strfind(headers,'Magnet'))) = {'Comp1' 'Comp2' 'Comp3'}; end
         headers(~cellfun(@isempty,strfind(headers,'Gyr'))) = {'Gyr1' 'Gyr2' 'Gyr3'};
-        headers(~cellfun(@isempty,strfind(headers,'Acc'))) = {'Acc1' 'Acc2' 'Acc3'};
+        headers(find(~cellfun(@isempty,strfind(headers,'Acc')),3)) = {'Acc1' 'Acc2' 'Acc3'};
         try headers(~cellfun(@isempty,strfind(headers,'Speed'))) = {'Speed'}; catch; end
         delcol = [];
         if sum(~cellfun(@isempty,strfind(headers,'Date'))) == 2; % if there is both local and UTC time.
@@ -188,8 +200,8 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try delcol = [delcol find(~cellfun(@isempty,strfind(headers,'CC vid. size')),1)];
         catch; end
         data(:,delcol) = []; headers(delcol) = [];
-        if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTCflag = true; else UTCflag = false; end
-        headers(~cellfun(@isempty,strfind(headers,'Date'))) = {'Date'};
+        try if ~isempty(strfind(headers{~cellfun(@isempty,strfind(headers,'Date'))},'UTC')); UTCflag = true; else UTCflag = false; end; catch; UTCflag = false; end
+    try    headers(~cellfun(@isempty,strfind(headers,'Date'))) = {'Date'}; catch; warning('No date column detected'); end
         headers(~cellfun(@isempty,strfind(headers,'Time'))) = {'Time'};
         try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat1' 'GPSsat2'}; catch; try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat'}; catch; end; end
         try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA' 'BATTmAh'}; catch;  try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA'}; catch; try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv'}; catch; end;  end; end
@@ -200,10 +212,13 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
         data.Properties.VariableNames = headers;
         
-        [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,file);
+        [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file);
         if ~UTCflag; UTCoffset = 0; else UTCoffset = UTC; end
+        datafs = max([gyrHz magHz pHz lHz GPSHz accHz]);
+        if accHz ~= datafs;  warning('Accelerometer data appears to be sampled at less than other data sources.'); end
+        
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
-        else fs = max([gyrHz magHz pHz lHz GPSHz]);
+        else fs = min(max([gyrHz magHz pHz lHz GPSHz]),accHz);
         end
         data = data(find(~strcmp(data.Acc1,'0'),1,'first'):end,:);
         if noPress; data.Pressure = zeros(size(data,1),1); headers{end+1} = 'Pressure'; end 
@@ -221,7 +236,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         end
         if noPress; dataT.Pressure = zeros(size(dataT,1),1); end
         dataT.Properties.VariableNames = headers;
-        DT = datenum(dataT.Date,'dd.mm.yyyy');
+        try DT = datenum(dataT.Date,'dd.mm.yyyy'); catch; warning('Could not read date, check format?'); end
         if any(abs(diff(DT))>5);
             stupidi = find(abs(diff(DT))>1,1);
             dataT = dataT(1:stupidi,:);
@@ -282,13 +297,21 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     
     timescal = datenum(oiT(:,1:8));
     
-    DN = timescal-floor(timescal)+datenum(dataT.Date,'dd.mm.yyyy');
+    try DN = timescal-floor(timescal)+datenum(dataT.Date,'dd.mm.yyyy'); dateflag = false;
+    catch; warning('No date imported'); DN1 = input('Input tag start date in datevec format? '); DN1 = datenum([DN1(1:3) 0 0 0]);
+        DN = timescal-floor(timescal)+DN1*ones(size(dataT.Time)); dateflag = true; headers = [headers {'Date'}];
+    end
+      
     isb = arrayfun(@(x) strcmp(x,' '),oiT(:,end)); % some bad imports skipped a few seconds of data by going from 10.9 to 10.10 seconds (e.g.)
     if any(isb)
         bad10 = find(~isb);
-        DN(bad10) = DN(bad10)+1/24/60/60; % add a second back
-        oiT(bad10,10:end-1) = oiT(bad10,11:end); %move the values forward
-        oiT(:,end) = []; % get rid of the extra column
+        if ~ignorebadTimeStamps
+            DN(bad10) = DN(bad10)+1/24/60/60; % add a second back
+            oiT(bad10,10:end-1) = oiT(bad10,11:end); %move the values forward
+            oiT(:,end) = []; % get rid of the extra column
+        else
+            warning('See below, time stamp issue below not corrected');
+        end
         warning(['SOME TIMESTAMPS STARTING ROW ' num2str(bad10(1)) ' AND ENDING ROW ' num2str(bad10(end)) ' IN CSV ' num2str(i) ' DON''T COUNT ACCURATELY.  SHOULD BE FIXED BUT HIGHLY RECOMMEND REDOWNLOADING DATA TO ENSURE NOTHING WAS MISSED OR FIXED INACCURATELY.']);
     end
     
@@ -324,7 +347,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
             end
         else ddd = 2;
         end
-        if ddd == 2
+        if ddd == 2 && ~ignorebadTimeStamps
             [DN,~,~,drops] = checkbadframes(DN);
             if size(DN,2)>size(DN,1); DN = DN'; end
             for ii = 1:length(drops(1,:))
@@ -334,7 +357,9 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     end %from video processing, looks for out of order time stamps and adjust them
      d = diff(DN*24*60*60);
     
-    
+     % test sample rate
+        datafs2 = round(mean(1./d));
+    if datafs~=datafs2; error('problem with sample rate'); end
     
     skippeddata = find(d>1.5*1/accHz); %
     numgaps = 0;
@@ -374,13 +399,20 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         extraData = [];
     end
     dataT.Time = DN-floor(DN);
-    dataT.Date = floor(DN);
+    dataT.Date = floor(DN); if dateflag; newday = find(diff(dataT.Time)<0 & dataT.Time(2:end)<1/60/60/24); dataT.Date(newday+1:end)=dataT.Date(newday+1:end)+1; end
     
-    Atime = [Atime; DN];
-    Adata = [Adata; oi];
+    if accHz == datafs
+        Atime = [Atime; DN];
+        Adata = [Adata; oi];
+    else
+        oi = oi(1:datafs/accHz:end,:);
+        ADN = round(DN(1:datafs/accHz:end)*24*60*60*accHz)/accHz/24/60/60;
+        Atime = [Atime; ADN];
+        Adata = [Adata; oi];
+    end
     
     % downsample data
-    acc = decdc(oi,accHz/fs); %used to round these values, but doesn't work if they are pre-calibrated.
+    acc = decdc(oi,datafs/fs); %used to round these values, but doesn't work if they are pre-calibrated.
     % for other, non acc data, sample it (data are repeated values);
     % takes into account different kinds of imported data (numbers or
     % strings)
@@ -388,14 +420,14 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     % that's not the accelerometer (often 50 Hz).
     if exist('FS','var') && ~isempty(FS)
         if ~iscell(dataT.Gyr1); gyr = [dataT.Gyr1 dataT.Gyr2 dataT.Gyr3]; else gyr = [str2num(char(dataT.Gyr1)) str2num(char(dataT.Gyr2)) str2num(char(dataT.Gyr3))]; end
-        gyr = gyr(1:accHz/fs:end,:);
+        gyr = gyr(1:datafs/fs:end,:);
         if ~iscell(dataT.Comp1); comp = [dataT.Comp1 dataT.Comp2 dataT.Comp3]; else comp = [str2num(char(dataT.Comp1)) str2num(char(dataT.Comp2)) str2num(char(dataT.Comp3))]; end
-        comp = comp(1:accHz/fs:end,:);
+        comp = comp(1:datafs/fs:end,:);
     end
     if noPress && ~any(cellfun(@(x) strcmp(x,'Pressure'),headers)); dataT.Pressure = zeros(size(dataT.Comp1)); headers{end+1} = 'Pressure'; end
     if ~iscell(dataT.Pressure); p = dataT.Pressure; else p = str2num(char(dataT.Pressure)); end
-    p = p(1:accHz/fs:end);
-    samples = abs(round(dataT.Time*24*60*60*fs)-dataT.Time*24*60*60*fs)<1/(accHz*1.5); %find the values closest to the rounded frequencies and sample those.
+    p = p(1:datafs/fs:end);
+    samples = abs(round(dataT.Time*24*60*60*fs)-dataT.Time*24*60*60*fs)<1/(datafs*1.5); %find the values closest to the rounded frequencies and sample those.
     for ii = length(badrows):-1:1
         if samples(badrows(ii))
             nextgoodrow = badrows(ii)+1;
@@ -462,7 +494,7 @@ if ~exist('THz','var'); THz = nan; end; if ~exist('T1Hz','var'); T1Hz = nan; end
 datafs = fs;
 Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
 try
-    save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs');
+    save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','ODN');
     if ~isempty(notes); save([newfileloc file(1:end-3) 'mat'],'notes','-append'); end
     if ~isempty(lastwarn)
         error(lastwarn);
@@ -470,8 +502,8 @@ try
     disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
     disp(newfileloc)
 catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-    if isempty (notes); save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','-v7.3');
-    else save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','notes','Hzs','-v7.3'); end
+    if isempty (notes); save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','Hzs','ODN','-v7.3');
+    else save([newfileloc file(1:end-3) 'mat'],'data','Adata','Atime','notes','Hzs','ODN','-v7.3'); end
     disp('Made a version 7.3 file in order to include all');
     disp(['Import successful! ' file(1:end-3) 'mat created in :' ]);
     disp(newfileloc)

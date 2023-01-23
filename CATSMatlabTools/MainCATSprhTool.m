@@ -17,7 +17,7 @@
 
 dbstop if error;
 disp('Section completed')
-%% 1 Read time stamps on video files (can skip for data only)
+%% 1 Read time stamps on video files (CAN SKIP THIS CELL IF NO VIDEOS)
 % runs for a long time (~ 2x as long as the amount of video you have)
 % Saves output so can run this and come back to it later
 % outputs: AudioData folder with audio info for each file
@@ -44,8 +44,10 @@ disp('Section completed')
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
+vid4k = true; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
 % set to true if there are are no audio files to read.
-readaudiofiles = true; % set to false if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+readaudiofiles = true; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+
 
 % these will be less commonly adjusted
 audioonly = false; % set to true for tags that do not have video (currently only works if you have wav files, if you only have ".raw" versions of audio files and no video files, we will have to make some adjustments still to ensure data is converted at the right sample rate.
@@ -57,8 +59,13 @@ ignorebadaudio = false; % set to true if raw files appear to be corrupted/wrong 
 % whaleID allows you to look up tag off and on times from a TAG GUIDE.xlx.
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
-
-makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly,ignorebadaudio); %workhorse script
+if vid4k
+    readtimestamps = false; % timestamp reading for 4k video not yet enabled/tested. Filename timestamps appear to be up to 1 s off so should use surfacing method via excel template to synch video and data.
+    readaudiofiles = false; % assumes that audio is downloaded separately. Currently reading audio from 4k video is not supported. wav files will be written on to data video at stitch video/audio step.
+    make4kMovieTimes(dur,folder,readaudiofiles,readtimestamps,whaleID);
+else
+    makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly,ignorebadaudio); %workhorse script
+end
 disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
 % Always run this section, then can jump to any previously completed
@@ -89,20 +96,24 @@ disp('Section 1 completed');
 % files from each audio file (created as part of step 1). 
 
 % variables to set
-decfac = 5; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
+decfac = 2; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 % Can set "folder" below to start looking for files in a specific place on your computer
-folder = 'e:/CATS/tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
+folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
 
 % import files
 global fileloc filename
-cf = pwd; try cd([vol '://' folder]); catch; end
+cf = pwd; try cd(folder); catch; end
 [filename,fileloc]=uigetfile('*.mat', 'select CATS data (imported mat file)'); 
 cd(fileloc);
+if ispc
 [headerfile,headerloc]=uigetfile('*xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
+else
+[headerfile,headerloc]=uigetfile('*.xls*', 'select data file with header info (i.e. spYYMMDD-tag#)');
+end
 cd(cf);
 [~,~,headers]= xlsread([headerloc headerfile]);
 tagnum = cell2mat(headers(4,2)) %displays the tag number, necessary to be correct to import the correct calibration file
-
+if ~ischar(tagnum); tagnum = num2str(tagnum); end
 % look for progress Index in info file, tell you cell to continue to 
 warning('off','MATLAB:load:variableNotFound');
 if ~isempty(strfind(filename,'truncate'))
@@ -146,7 +157,7 @@ end
 % can set to a specific start time in matlab datenumber format.  
 % Leave as nan to use the graphical interface, or 
 % set to 0 if you do not want to truncate the start time at all.
-truncstart = nan;
+truncstart = 0;
 
 % Follow the prompts at the top of the plot, will need to press enter twice
 % to accept the default selection, or follow prompts to choose the location
@@ -165,11 +176,13 @@ else
     if ~exist('Hzs','var'),[accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
         Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
     end
-    [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart); % workhorse script in this section
-          save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
-    disp('Check to ensure these times are before tag on and after tag off (or check plot)');
+    if ~exist('ODN','var'); error('ODN variable (time, as a datenumber, tag was originally turned on in local time), not included in mat file. Rerun importCATSdata (from csv 1) or check txt file for "first_entry" and manually add ODN variable to mat file'); end
+    [data,Adata,Atime,datagaps,ODN,ofs,Afs] = truncatedata(data,Adata,Atime,Hzs,fileloc,filename,truncstart,ODN,tagnum); % workhorse script in this section
+    save([fileloc filename(1:end-4) 'Info.mat'],'ofs','Afs','datagaps','-append');
+    disp('Check to ensure these times are before deployment and after tag off, and that any periods before deployment where data started and stopped are excluded (or check plot)');
     figure; plot(data.Pressure); set(gca,'ydir','rev')
 end
+
 if ~exist('Hzs','var')
     [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz] = sampledRates(fileloc,filename);
     Hzs = struct('accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz);
@@ -185,7 +198,7 @@ try CAL = load([rootDIR 'Calibrations' '//CATScal' num2str(tagnum) '.mat']);
 catch
     [calfile,calfileloc]=uigetfile('*.mat', 'select CATS cal file'); 
     CAL = load([calfileloc calfile]);
-    if isempty(regexp(calfile,num2str(tagnum))); error('Cal file does not match tag num, restart cell at next line to continue'); end
+    if isempty(regexp(calfile,num2str(tagnum))); error('Cal file does not match tag num, if this is okay, restart cell at next line to continue'); end
  disp(['CATScal' num2str(tagnum) '.mat loaded']);
 end
 cd(cf);
@@ -200,7 +213,35 @@ disp('Section 3 finished');
     if ~exist('Afs','var'); Afs = round(1/mean(diff(Atime(50:100))*24*60*60)); warning(['No Afs variable found, calculated ' num2str(Afs) ' Hz as original sampling rate of data table']); end
 
       save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','-append');
-%% 4. adjust video times to match data times 
+      
+      
+      %% 4.(old cell 5) get tagon and tagoff times 
+% choose tagon and tagoff times by zooming in and selecting the boundaries of
+% time on the whale.
+% output: tagon index of when the tag is on animal
+% After finishing this, recommend updating a TAG GUIDE with the actual tag on and tag off
+% times as well as the total Video Time
+
+if CellNum<3; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
+    if x~=1; error('Previous cell has not been completed'); end
+end
+
+load([fileloc filename(1:end-4) 'Info.mat'],'ofs');
+if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
+
+% tests for existence of pressure data (since most scripts rely on having pressure data)
+if ~exist('nopress','var') && sum(isnan(data.Pressure)) == length(data.Pressure) || sum(diff(data.Pressure) == 0) == length(data.Pressure) -1; nopress = true; else nopress = false; end
+timedif = cell2mat(headers(3,2)); % 
+% inputs: Depth variable
+%          fs (sampling rate)
+%          starttime (matlab datenumber of the starttime- put 0 if unknown)
+%          At (another comparable variable.  Set up to be Acceleration, but could use temperature or even depth again just to make the script work if no other data is available)
+% output: tagon (an index of values for when the tag was on the whale
+tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
+   CellNum = 4;
+         save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
+     disp('Section 4 done');
+%% 5.(old cell 4) adjust video times to match data times 
 % This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
 % for pre-wireless data:
 % If you are using the excel sheet to synch vids and data from animal surfacings (uncommon), it makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
@@ -212,18 +253,18 @@ disp('Section 3 finished');
 %video and the data). This may or may not be the future default until the
 %processor speeds of CATS tags are sufficient to handle video/data time
 %synchs independently.
-synchusingvidtimestamps = false; % for newer videos where timestamp from data is imprinted on video
-nocam = false; %false; % set to true if this is a data only tag. If there is just audio, keep at true.  Will have to set audon independently
+synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
+nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
 audioonly = false; % set to true if tag has no camera but does have audio
 
-if CellNum<3; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
+if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
 
 GPS = cell2mat(headers(2,2:3)); %from above file
 whaleName = char(headers(1,2));
 timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
-load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum');
+load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum','tagon');
 if CellNum < 3; error('Step 3 has not been run'); end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
@@ -231,64 +272,61 @@ DNorig = data.Date+data.Time+timedif/24;
 if nocam
     camon = false(size(DNorig)); audon = false(size(DNorig)); vidDN = []; tagslip = [1 1]; vidDurs = [];
     if audioonly
+        try
          viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
          vidDN = viddata.vidDN; vidDurs = viddata.vidDurs;
+         catch
+            warning('movieTimes file does not exist, if this is a CATS tag, press ''ctrl-c'' to quit and then run cell one on the audio files.');
+            warning('If this is not a cats tag press enter to try to read the start time of each audio file from the file name of files within the AudioData folder');
+            warning('If there is an error, create a movieTimes file with a "vidDN" and "vidDurs" variable that matches the start time and duration of each audio file');
+            pause;
+            disp('Make a movieTimes file by reading timestamps from file names (e.g. for acousonde)? For dtag or continuous wav files with no gaps, press no')
+            xx = input('1 = yes, 2 = no? ');
+            if xx == 1
+            wavFilestoMovieTimes
+            else
+                vidDN = [];
+                audon = true(size(tagon));
+                audstart = ODN;
+            end
+        end
+         
          for i = 1:length(vidDN)
              if ~isnan(vidDN(i))
                  [~,a] = min(abs(DNorig-vidDN(i))); 
-                 [~,b] = min(abs(DNorig-(vidDN(i)+vidDurs(i)/24/60/60)))
+                 [~,b] = min(abs(DNorig-(vidDN(i)+vidDurs(i)/24/60/60)));
                  audon(a:b)= true;
              end
          end
+         if ~isempty(vidDN); audstart = vidDN(find(~isnan(vidDN),1)); end% audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
+%          audstart = nan; 
+    else; audstart = nan;
     end
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to
-   % synchronize video and data using surfacings for videos that do not
+   % synchronize video and data (and audio for newer tags) using surfacings for videos that do not
    % have a record of their start times (i.e. collected independently of the diary data)
-   [camon,audon,vidDN,vidDurs,nocam,tagslip] =  synchvidsanddata(data,headers,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchusingvidtimestamps);
+   [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchusingvidtimestamps);
 end
-   CellNum = 4;
-     save([fileloc filename(1:end-4) 'Info.mat'],'camon','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
-disp('Section 4 done');
-%% 5. get tagon and tagoff times 
-% choose tagon and tagoff times by zooming in and selecting the boundaries of
-% time on the whale.
-% output: tagon index of when the tag is on animal
-% After finishing this, recommend updating a TAG GUIDE with the actual tag on and tag off
-% times as well as the total Video Time
+   CellNum = 5;
+     save([fileloc filename(1:end-4) 'Info.mat'],'camon','audstart','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
 
-load([fileloc filename(1:end-4) 'Info.mat'],'ofs','camon','audon','nopress','Afs');
-if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
-    if x~=1; error('Previous cell has not been completed'); end
-end
-
-if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
-
-% tests for existence of pressure data (since most scripts rely on having pressure data)
-if ~exist('nopress','var') && sum(isnan(data.Pressure)) == length(data.Pressure) || sum(diff(data.Pressure) == 0) == length(data.Pressure) -1; nopress = true; else nopress = false; end
-
-% inputs: Depth variable
-%          fs (sampling rate)
-%          starttime (matlab datenumber of the starttime- put 0 if unknown)
-%          At (another comparable variable.  Set up to be Acceleration, but could use temperature or even depth again just to make the script work if no other data is available)
-% output: tagon (an index of values for when the tag was on the whale
-tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]); % final input could be anything you wish to use as confirmation (i.e. if you don't have Acc in your data, could use temperature etc.)
 
 % 
 disp('Info. to enter into TAG GUIDE if desired:');
-disp(['Total Cam Time: ' datestr(sum(camon&tagon)/ofs/24/60/60,'HH:MM:SS')]);
-disp(['Total Aud Time (in addition to cam time): ' datestr(sum(audon&tagon)/ofs/24/60/60,'HH:MM:SS')]);
+camtime = sum(camon&tagon)/ofs/24/60/60;
+disp(['Total Cam Time: ' datestr(camtime,'HH:MM:SS')]);
+audtime = sum((audon | camon)&tagon)/ofs/24/60/60;
+disp(['Total Aud Time (includes camera time): ' num2str(floor(audtime*24)) ':' datestr(audtime,'MM:SS')]);
 disp(['Original data start time: ' datestr(ODN,'mm/dd/yy HH:MM:SS')]);
-   CellNum = 5;
-      save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
 disp('Section 5 done');
 %% 6.Calibrate pressure and decimate and apply bench cals to other sensors
 % Makes some variables (calibrated and decimated tag frame matrices Gt, At, Mt). 
 % Pressure is adjusted using the internal temperature 
 
 % Matlab packages required: Signal Processing Toolbox, Statistics and
-% Machine Learning Toolbox
+% Machine Learning Toolbox2
 
 if ~exist('data','var');  load([fileloc filename(1:end-4) 'truncate.mat'],'data','Hzs'); end
 load([fileloc filename(1:end-4) 'Info.mat'],'ofs','DNorig','df','GPS','nopress','CAL','tagon','camon','audon','tagslip','Hzs','Afs');
@@ -335,7 +373,8 @@ if any(diff(DN)<0 | diff(DN)>1.5/24/60/60/fs); error('Error in time order (DN va
 % This uses bench cals acal, magcal, gycal to orient the axes to NED
 [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
 CellNum = 6;
-save([fileloc filename(1:end-4) 'Info.mat'],'DN','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
+if sum(isnan(Mt_bench(:,1))) == size(Mt_bench,1); nomag = true; else nomag = false; end
+save([fileloc filename(1:end-4) 'Info.mat'],'DN','nomag','fs','ofs','CAL','camondec','tagondec','audondec','tagslipdec','CellNum','Temp','Light','inc','dec','b','-append');
 disp('Section 6 done');
 %% 7a.  In situ cals
 % Test an in situ calibration of acclerometer using spherical_cal script from animaltags.org.
@@ -347,7 +386,7 @@ disp('Section 6 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','DN','camondec','camon','nocam','df','CAL','Hzs','b','ofs','Afs');
+load([fileloc filename(1:end-4) 'Info.mat'],'tagondec','DN','camondec','nomag','camon','nocam','df','CAL','Hzs','b','ofs','Afs');
 if CellNum<6; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
 end
@@ -385,10 +424,21 @@ if CellNum<6.5; x = input('Previous cell has not been completed, continue anyway
 end
 
 % Matlab packages required: Signal Processing Toolbox
-I = tagondec;
+
+%
+I = tagondec; 
+% lowpassfreq = .05; % magnetometers should not need this filter to calibrate, but can be helpful if there are spikes from metal as part of the tag.  In that case, uncomment these lines.
+% % and change "data" in calM function to data2;
+% Mto = [data.Comp1 data.Comp2 data.Comp3];
+% Mto = fir_nodelay([data.Comp1,data.Comp2,data.Comp3],128,lowpassfreq/(ofs/2),'low'); % only keeps signals below 3 Hz
+% data2 = data; data2.Comp1 = Mto(:,1); data2.Comp2 = Mto(:,2); data2.Comp3 = Mto(:,3);
+if nomag
+    warning('No magnetometer present'); Mt = nan(size(At)); CAL.Mcal = CAL.Acal;
+else
 [Mt,Mcal] = calM(data,DN,I,camondec,camon,nocam,ofs,Hzs.magHz,df,CAL,Temp,b); % can input a thirteenth variable, I, that is the index of where to perform the calibration.  You would use this if there are bad parts of the data somewhere that is throwing off the in situ cal.  A thirteenth variable, resThresh, could be set to lower or raise the threshold of what is acceptible before trying alternate calibration methods (e.g. cam on/camoff)
 
 CAL.Mcal = Mcal;
+end
 Mt_mag = sqrt(sum(Mt.^2,2));
    CellNum = 7;
 save([fileloc filename(1:end-4) 'Info.mat'],'CAL','CellNum','-append');
@@ -429,7 +479,7 @@ slips = IDtagslips(DN,At,Depth,fs,tagondec,prelimslips,camondec);
 CellNum = 7.5;
 save([fileloc filename(1:end-4) 'Info.mat'],'slips','CellNum','-append');
 
-disp('section 8.1 completed');
+disp('section 8a completed');
 
 %% 8b rotate tag frame to animal frame and calculate animal pitch, roll, heading
 % iteratively goes tag slip section by tag slip section, rotating tag frame to whale frame
@@ -457,6 +507,7 @@ allowpitchflip = false; % set to true if the direction of your gimbal rotation c
 end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
  if ~exist('Depth','var') || ~exist('At','var') || ~exist('Mt','var') || ~exist('Gt','var')
+      load([fileloc filename(1:end-4) 'Info.mat'],'DN','CAL','camondec','ofs','df','fs','tagondec','nopress');
     [Depth,At,Mt,Gt] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
 end
  try  load([fileloc filename(1:end-4) 'Info.mat'],'W','calperiodI'); catch; end
@@ -491,7 +542,7 @@ plotprh;
 disp('Press Enter to accept all calibrations (or ctrl-C to break and restart)');
 pause
 save([fileloc filename(1:end-4) 'Info.mat'],'slips','oldslips','CellNum','W','calperiodI','Wchange','Wchangeend','tagprh','speedper','-append');
-disp('Section 8.2 done');
+disp('Section 8b done');
 
 
 %% 9. (removed- unreliable script,need a new method)- calibrate gyroscopes in situ.  Recalculate pitch, roll and heading using gyroscopes to be more accurate during times of high specific acceleration
@@ -503,9 +554,9 @@ disp('Section 8.2 done');
 
 % Matlab packages required: Signal Processing Toolbox
 
-vars = load([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','vidNum','fs','ofs','camondec','tagondec','nocam','nopress','df','CAL','Hzs','DN','whaleName');
+vars = load([fileloc filename(1:end-4) 'Info.mat'],'vidDN','audstart','vidDurs','vidNum','fs','ofs','camondec','tagondec','nocam','nopress','df','CAL','Hzs','DN','whaleName');
 if isempty(vars.vidDN) 
-    try load([fileloc filename(1:end-4) 'movieTimes.mat']); vars.vidDN = vidDN; vars.vidDurs = vidDurs; save([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','-append'); %vars.vidNam = v2.vidNum;
+    try load([fileloc filename(1:end-4) 'movieTimes.mat']); vars.vidDN = vidDN; vars.vidDurs = vidDurs; save([fileloc filename(1:end-4) 'Info.mat'],'vidDN','vidDurs','vidNam','-append'); %vars.vidNam = v2.vidNum;
     catch; warning('vidDN variable is empty (no timestamps from video files), will try assuming audio files start at start of data files'); 
     end
 end
@@ -519,6 +570,9 @@ if ~exist('Depth','var')
     Depth = applyCal2(data,vars.DN,vars.CAL,vars.camondec,vars.ofs,vars.Hzs,vars.df);   
 end
 vars.Depth = Depth;
+try audstart = vars.audstart; catch; end
+if ~exist('audstart'); audstart = ODN; warning('no audstart variable found, assuming audio starts at original data start time'); end
+vars.audstart = audstart;
 
 audiodir = [fileloc 'AudioData//'];
 
@@ -530,9 +584,13 @@ else
 end
 
 if s == 1
-    [flownoise,AUD] = getflownoise(audiodir,vars);
+   try [flownoise,AUD] = getflownoise(audiodir,vars);
     disp('Now making full deployment audio file');
-    try; stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); catch; disp('error in stitch audio'); end
+    try if isempty(audstart); stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); end; catch; disp('error in stitch audio'); end
+   catch disp('error in read audio- continue without making flownoise? 1 = yes, 2= no');
+       ss = input('?');
+       if ss == 2; error('error in read audio, run get flownoise line above to find source of error'); else flownoise = nan(size(Depth)); AUD = []; end
+   end
 end
 
 tag1 = find(vars.tagondec,1);
@@ -564,7 +622,7 @@ disp('Section 10a finished');
 
 %% 10b calculates tag jiggle RMS across all three axes.  
 % Makes a summary variable with the amplitude of vibrations (tag jiggle) as
-% measured by high frequency accerlometers, filtered from 10-90 Hz.  If the
+% measured by high frequency accelerometers, filtered from 10-90 Hz.  If the
 % sample rate is < 180 Hz, only a high pass filter at 10 Hz is used.
 % The fourth column of J is themagnitude of the overall Jiggle for
 % comparison in the next step.
@@ -592,11 +650,13 @@ if exist('Acal','var') && ~isempty(Acal)
 else
     A = (Adata-repmat(aconst,size(Adata,1),1))*acal;
 end
+if Afs>180; maxfilt = 90; else maxfilt = round(.9*Afs/2); warning('Acc sample rate is less than 200 Hz, results of speed calibraiton may be unreliable'); end
+if Afs>100; minfilt = 10; else minfilt = ceil(.1*Afs/2); end
 try 
-JX = TagJiggle(A(:,1),Afs,fs,[10 90],.5,Atime+timedif/24,DN); % 10 and 90 are the high-pass and low-pass filter frequencies. The higher number will have to be < .5* Afs.
-JY = TagJiggle(A(:,2),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
-JZ = TagJiggle(A(:,3),Afs,fs,[10 90],.5,Atime+timedif/24,DN);
-J = TagJiggle(A,Afs,fs,[10 90],.5,Atime+timedif/24,DN);
+JX = TagJiggle(A(:,1),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN); % 10 and 90 are the high-pass and low-pass filter frequencies. The higher number will have to be < .5* Afs.
+JY = TagJiggle(A(:,2),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
+JZ = TagJiggle(A(:,3),Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
+J = TagJiggle(A,Afs,fs,[minfilt maxfilt],.5,Atime+timedif/24,DN);
 Jig = [JX JY JZ J];
 catch
     warning('Error running TagJiggle, perhaps acc sample rate is lower than 180?  Can adjust high-pass filter in above lines to try again');
@@ -615,7 +675,7 @@ disp('Section 10b finished');
 % acoustics (and likely video)
 JJ = J; JJ(isnan(JJ)) = 0; JJ = runmean(JJ,fs);
 D = flownoise; D(isnan(D)|isinf(D)) = min(D(~isinf(D)));  D = runmean(D,fs);
-figure; plotyy(DN,JJ,DN,D);
+figure; if sum(isnan(D))~=length(D); plotyy(DN,JJ,DN,D); else plot(DN,JJ,DN,D); end
 legend('JiggleRMS','FlownoiseRMS')
 
 % should not have to run this (only for older tags that potentially had an offset between listed and actual video start times)
@@ -660,14 +720,22 @@ end
 
 
 % set threshold parameters
-minDepth = 10;
-minPitch = 45;
+minDepth = 2;
+minPitch = 20;
 % speedEnds = speedper(:,2);
-minSpeed = 1;
+minSpeed = .4;
 % speedEnds([1 4 5 end-1:end]) = [];
+% speedper = [1 430000; 430000 speedper(end)];
 
 if sum(isnan(flownoise)) == length(flownoise)
     RMS2 = []; lab = '';% could set RMS2 = Jig(:,4); lab = 'magJ'; if you want to compare the multiaxes model jig to the overall magnitude model
+    try paddles = data.Speed; 
+        RMS2 = decimateM(paddles,ofs,Hzs.SHz,df,length(JJ),'paddles',true); 
+        RMS2 = runmean(RMS2,fs);
+        lab = 'PW';
+        Paddles = RMS2;
+    catch
+    end
 else
     RMS2 = flownoise; lab = 'FN';
 end
@@ -684,19 +752,19 @@ else
 end
     JigRMS = table(X, Y, Z, Mag);
 
+%
 
-
-if sum(isnan(flownoise)) ~= length(flownoise)
-    s = input('Would you like to recalibrate speed from flow noise using its own sections (1 = yes, 2 = no- click no if current calibration is good)? ');
+if ~isempty(RMS2) %sum(isnan(flownoise)) ~= length(flownoise)
+    s = input('Would you like to recalibrate speed from 2nd variable using its own sections (1 = yes, 2 = no- click no if current calibration is good)? ');
     if s == 1
         disp('Can quit out of this and start cell again later if the results don''t seem to be improving');
-        [~,speedFN,speedstatsFN] = SpeedFromRMS3(flownoise,'FN',[],'',fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
+        [~,speedFN,speedstatsFN] = SpeedFromRMS3(RMS2,lab,[],'',fs,Depth,pitch,roll,DN,speedper,slips,tagondec,.5,0.5,minDepth,minPitch,minSpeed,.2);
         if sum(isnan(JigRMS.X)) == length(JigRMS.X)
             speedstats = speedstatsFN;
         end
         oi = speedFN.Properties.VariableNames;
-        oi(cellfun(@(x) strcmp('section',x), oi)) = {'FNsection'};
-        oi(cellfun(@(x) strcmp('sectionUsed',x), oi)) = {'FNsectionUsed'};
+        oi(cellfun(@(x) strcmp('section',x), oi)) = {[lab 'FNsection']};
+        oi(cellfun(@(x) strcmp('sectionUsed',x), oi)) = {[lab 'sectionUsed']};
         speedFN.Properties.VariableNames = oi;
         for i = 1:length(oi); speed.(oi{i}) = speedFN.(oi{i}); end
         speedstats.FN.Models = speedstatsFN.Models;
@@ -705,7 +773,7 @@ if sum(isnan(flownoise)) ~= length(flownoise)
         speedstats.FN.r2used = speedstatsFN.r2used;
         speedstats.FN.sections_end_index = speedstatsFN.sections_end_index;
         for fig = [1 301:300+size(speedstats.r2used,1)]
-            saveas(fig,[fileloc 'SpeedPlots//flownoisefig' num2str(fig) '.bmp']);
+            saveas(fig,[fileloc 'SpeedPlots//' lab 'fig' num2str(fig) '.bmp']);
         end
     end
 else
@@ -718,7 +786,7 @@ CellNum = 11;
 
 disp('Section 11 (speed) finished');
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
-
+try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % %% if you want to apply speed using speed calibrations from another tag,
 % % uncomment this section
 % 
@@ -740,7 +808,7 @@ save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-ap
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes ='New vid times from surfacings (not jig/flownoise offset)';
+notes = '';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -750,7 +818,10 @@ end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 % if ~exist('At','var');
     [p,At,Mt,Gt,T,TempI,Light] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
+%     Mt = fir_nodelay(Mt,128,2/(ofs/2),'low');
 % end
+
+
 if ~exist('head','var')
     [Aw,Mw,Gw] = applyW(W,slips(1:end-1,2),slips(2:end,1),At,Mt,Gt);
     [pitch,roll,head] = calcprh(Aw,Mw,dec);
@@ -762,11 +833,13 @@ CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
-if ~exist('vidNam','var')&& ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); end
+if ~exist('vidNam','var')&& ~nocam || sum(~isnan(vidDN))>0; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam','vid4k'); end
 if exist('frameTimes','var') && length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
 
-if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes)); end
-if nocam; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; viddeploy = [];  if ~exist('speed','var'); speed = table(nan(size(p)),nan(size(p)),nan(size(p)),'VariableNames',{'JJ' 'FN','SP'}); end; end
+if ~nocam; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1))&~cellfun(@isempty,frameTimes));
+elseif sum(audondec) ~= 0 && sum(~isnan(vidDN))>0; viddeploy = find(vidDN<DN(find(tagon,1,'last')) & vidDN+vidDurs/24/60/60>DN(find(tagon,1)));
+end
+if nocam && sum(audondec) == 0; flownoise = nan(size(p)); vidDN = []; vidNam = []; vidDurs = []; viddeploy = [];  if ~exist('speed','var'); speed = table(nan(size(p)),nan(size(p)),nan(size(p)),'VariableNames',{'JJ' 'FN','SP'}); end; end
 audon = audondec; 
 
 INFO = struct;
@@ -782,8 +855,11 @@ INFO.calperiod = cellfun(@(x) DN(x),calperiodI,'uniformoutput',false);
 INFO.calperiodI = calperiodI;
 INFO.Wchange = Wchange; %tagslip indices used for tag rotation to animal frame (like Wcalperiods, but trying to find the actual slip)
 INFO.tagslip = slips;
+try if vid4k; INFO.vid4k = true; else INFO.vid4k = false; end
+catch; INFO.vid4k = false;
+end
 try INFO.TempInternal = TempI; catch; end
-if nopress; INFO.NoPressure = true; end % if there's a tag with a messed up pressure sensor
+if exist('nopress','var') && nopress; INFO.NoPressure = true; end % if there's a tag with a messed up pressure sensor
 a = [];
 try 
     UTC = Hzs.UTC;
@@ -800,6 +876,23 @@ disp(['UTC = ' num2str(INFO.UTC) ', if incorrect, set INFO.UTC and resave prhfil
 INFO.prhcreated = date;
 INFO.creator = creator;
 INFO.Hzs = Hzs; %original data sample rates
+
+
+try GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
+    disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
+    y = input('(1 = yes, 2 = no) ');
+    INFO.GPSoffset = GPSoffset;
+    if y == 1
+        DN = DN + GPSoffset;
+        vidDN = vidDN + GPSoffset;
+        audstart = audstart + GPSoffset;
+        
+        INFO.TimeNote = 'IMU time offset to match GPS time';
+    end
+catch
+end
+
+AUD.start = audstart;
 try
     INFO.aud = AUD;
 catch
@@ -809,8 +902,22 @@ end
 CellNum = 12;
 prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
+if exist('Paddles','var'); save([fileloc prhfile],'Paddles','-append'); end
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
+
+% % if you got a warning about speed being too big (only for very large
+% % files), can split speed up before trying the -v7.3 switch
+%  speed2 = speed(:,[1 3:7 9:end]);
+% speed = speed(:,[2 8]);
+% save([fileloc prhfile],'speed','-append')
+% for i = 1:2:size(speed2,2)
+%     var = speed2(:,i:min(i+1,size(speed2,2)));
+%     eval(['speeddetails' num2str((i+1)/2) ' = var;'])
+%     save([fileloc prhfile],['speeddetails' num2str((i+1)/2)],'-append');
+%     copyfile([fileloc prhfile],[fileloc prhfile(1:end-4) num2str((i+1)/2) '.mat']) % in case there is an error, can use this line to ensure the most recent version still exists
+% end
+
 %% 13a. Adds tag GPS data to data structure. 
 % User: first construct a pos file from ubx file using Ublox conversion or similar, or put GPS data from fastloc GPS in a "fastgps" folder then run this code 
 % if you have GPS data from another source, can skip this section in favor
@@ -819,20 +926,25 @@ disp('Section 12 finished, prh file and INFO saved');
 % Matlab packages required: Mapping toolbox
 
 
-clearvars -except prhfile fileloc filename 
+clearvars -except fileloc filename 
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
-try
-addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
-catch
-    %note, to use addGPSfromFastloc, you will need to program your specific
-    %tagnums and fastloc ID#s into the script (or enter it when prompted)
-   disp('Error in using pos, looking for fastloc GPS folder');
-   addGPSfromFastloc(fileloc,INFO)
+try vid4k = INFO.vid4k; catch; vid4k = false; end
+if vid4k
+    disp('Importing gps.csv file');
+    addGPSfromcsv(fileloc,INFO);
+else
+    try
+        addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
+    catch
+        %note, to use addGPSfromFastloc, you will need to program your specific
+        %tagnums and fastloc ID#s into the script (or enter it when prompted)
+        disp('Error in using pos, looking for fastloc GPS folder');
+        addGPSfromFastloc(fileloc,INFO)
+    end
 end
-
 disp('Section 13a finished');
 disp('GPS data added from pos file, could plot points using script below or move to next step')% ting data (even if map doesn''t plot, you can move to 13b');
 % try
@@ -932,7 +1044,7 @@ savefig(102,[fileloc 'QL//' INFO.whaleName 'geotrack.fig']);
 %
 prh2Acq(fileloc,prhfile);
 
-rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
+rootDIR = fileloc(1:strfind(fileloc,'tag_data_raw')-1);
 try
 copyfile([fileloc INFO.whaleName ' ' num2str(fs) 'Hzprh.mat'],[rootDIR 'tag_data//prh//' INFO.whaleName ' ' num2str(fs) 'Hzprh.mat']);
 catch; disp('could not copy file to tag_data/prh directory');

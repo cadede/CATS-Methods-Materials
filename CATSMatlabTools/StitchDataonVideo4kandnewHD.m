@@ -26,7 +26,7 @@
 % that n may not be 10, as the first video of the deployment may not be 1.
 % e.g., if the first video is 5, n in this example would be 6. To check
 % this, type filename{6} and the name of video 10 would be displayed.
-clear all;
+
 tic;
 
 autocrop = true; % if you want to automatically crop the video to 60 seconds before tag on and 30 seconds after tagon, if false enter start, end below
@@ -40,7 +40,7 @@ justflownoise = true; % Recommended to set to true to display one speed metric. 
 justjiggle = true; % set to true if you want to use jiggle instead of flow noise
 combinesmall = true; % set to 0 if you do NOT want small video files to be combined into one larger video.  Default settings are 40 minutes of total video time as long as gaps between videos are less than 20 minutes.  Search for "combinesmall" below to change these defaults.
 smallfont = false; %processors seem to handle font size differently.  For some newer videos you may need to set this to true to keep the font reasonable in the data box
-dur = 15; % how much of the video (s) to read each iteration.  inf = make the whole video.  if you're having memory problems, try lowering the duration
+dur = 15; % how much of the video (s) to read each iteration.  inf = make the whole video.  if you're having memory problems, I feel bad for you, son.  Try lowering the duration
 comp = 5; % 0 means, use the last listed video compressor.  Change this number to use a different one.  run the "list" line later to see all compresors, MJPEG seems to work well
 % boxP = 300/2560;  % proportion of the bottom graph you want to be the data box
 boxsize = 0; %boxP*2560; %size of data box in pixels.  300 works for current font size and height
@@ -132,13 +132,14 @@ njerk = (9.81*fs)*sqrt(diff(Aw).^2*ones(3,1)) ; njerk(end+1) = njerk(end);
 
 % size of single video
 tic
-[vid,~] = mmread([fileloc filename{1}], [1 2],[],false,true);
+% [vid,~] = mmread([fileloc filename{1}], [1 2],[],false,true);
+  vid = VideoReader([fileloc filename{1}]);
 toc
-if abs(vid.width/vid.height-16/9)>.1; warning ('Single video is not 16 x 9. '); end
-vidW = vid.width; vidH = vid.height;
+if abs(vid.Width/vid.Height-16/9)>.1; warning ('Single video is not 16 x 9. '); end
+vidW = vid.Width; vidH = vid.Height;
 ysize = round(2.15/14.3*vidH*14.3/10);%260;%215; % vertical pixel size of graph % assumes a screen area of a media player that is 14.3 cm tall by 30.8 wide
 xsize = round(21.5/17.7*vidW);
-if vidW > 1500; adF = 2; else adF = 0; end % adjust fontsize slightly
+if vidW > 2500; adF = 14; elseif vidW > 1500; adF = 2; else adF = 0; end % adjust fontsize slightly
 scrn = get(0,'screensize');
  % matlab 2015b and higher can sometimes misread the screensize for some reason?
 FIG = figure('position',scrn);
@@ -158,7 +159,7 @@ nonpat = nan(size(viddeploy));
 labs = num2str(viddeploy); %labs = labs(:,5:6);
 vidDurs2 = vidDurs; vidDurs2(viddeploy(1)) = vidDurs2(viddeploy(1)) - starttime(1);
 vidDN2 = vidDN; vidDN2(viddeploy(1)) = vidDN2(viddeploy(1))+starttime(1)/24/60/60;
-if combinesmall; combos = getcombos(vidDN2,vidDurs,viddeploy,2400,1200); else combos = num2cell(viddeploy); end
+if combinesmall; combos = getcombos(vidDN2,vidDurs,viddeploy,1400,1200); else combos = num2cell(viddeploy); end
 for i = 1:length(combos); for j = 2:length(combos{i}); labs(viddeploy==combos{i}(j),:) = ' '; end; end
 for i = 1:length(viddeploy)
     [~,a1] = min(abs(DN-(vidDN(viddeploy(i))+starttime(i)/24/60/60)));
@@ -244,6 +245,10 @@ startref = starttime; % for adjusting starttime for wireless videos
  prh = [bodypitch -bodyroll bodyhead]; %negative roll 'cause that's how tagtools rolls.
  rot_3d_model_NED(F,prh(find(tagon,1),:));
  prh(~tagon,:) = nan;
+ %% test
+   vid.CurrentTime = 49;
+   vidFrame = readFrame(vid);
+ 
  
  
 %% Section 2- start cycling through videos.  See note at the beginning about restarting if the process is interupted
@@ -398,7 +403,7 @@ for n = startn:length(filename)
         end
         j = j+1;
         
-        %         if vid.width == 1280; vidW = 2560; else vidW = vid.width; end
+        %         if vid.Width == 1280; vidW = 2560; else vidW = vid.Width; end
         %         boxsize = vidW*boxP;
         
         % make figure
@@ -411,34 +416,6 @@ for n = startn:length(filename)
         vidstamp = vidstamp + startref(n)/24/60/60;
         dataendtime = (vidstampend -vidstamp1)*24*60*60;
         [~,b] = min(abs(DN-vidstamp1));
-        % new section 11.15.22, adds nans to end of variables in the
-        % situation where the videos extend longer than the data (rare but
-        % possible if there was an error in the data collection process)
-        if round(fs*(dataendtime)+b)+30*fs>length(DN2)
-            numrows = length(DN2);
-            newrows = round(fs*(dataendtime)+b)+32*fs; % go 32 seconds longer for a buffer
-            vars = who;
-            for vari = 1:length(vars)
-                eval(['varT = ' vars{vari} ';']);
-                if any(size(varT) == numrows)
-                    dim = find(size(varT) == numrows);
-                    if dim == 2; varT = varT'; end
-                    if istable(varT)
-                        for varj = 1:size(varT,2)
-                            try varT.(varj)(numrows+1:newrows) = nan; catch; end
-                        end
-                    elseif strcmp(vars{vari}(1),'D') && strcmp(vars{vari}(2),'N')
-                        dfdf = diff(varT(numrows-1:numrows));
-                        newT = (varT(numrows)+dfdf:dfdf:varT(numrows)+dfdf*(newrows-numrows))';
-                        varT(numrows+1:newrows) = newT;
-                    else
-                        varT = [varT; zeros(newrows-size(varT,1),size(varT,2))];
-                    end
-                    if dim == 2; varT = varT'; end
-                    eval([vars{vari} '= varT' ';']);
-                end
-            end
-        end
         if justflownoise
             [ax1, h1, h2]= plotyy(DN2(b:round(fs*(dataendtime)+b)),p(b:round(fs*(dataendtime)+b)),DN2(b:round(fs*(dataendtime)+b)),speedFN(b:round(fs*(dataendtime)+b),:)); hold on;
         else
@@ -614,7 +591,7 @@ for n = startn:length(filename)
             %                 topM.cdata= [zeros(size(topM.cdata,1),floor((2560-size(topM.cdata,2))/2),size(topM.cdata,3)) topM.cdata zeros(size(topM.cdata,1),ceil((2560-size(topM.cdata,2))/2),size(topM.cdata,3))];
             %             end
         end
-        %         if vidW == 2560; vidH = vid.height/2; else vidH = vid.height; end
+        %         if vidW == 2560; vidH = vid.Height/2; else vidH = vid.Height; end
         oi = uint8(zeros(vidH+2*ysize + 2*gap,xsize,3)); % a matrix for each recreated frame
         
         % info pane
@@ -788,13 +765,13 @@ for n = startn:length(filename)
                 Df.cdata = Df.cdata(ceil(dsize(1)/2-dH/2 + 1):floor(dsize(1)/2+dH/2),ceil(dsize(2)/2-dW/2 + 1):floor(dsize(2)/2+dW/2),:);
                 dsize = size(Df.cdata); if dsize(1)~=dH; Df.cdata(end+1,:,:) = 1; end; if dsize(2)~=dW; Df.cdata(:,end+1,:) = 1; end
             end
-            %             if vidW == 2560; vidH = vid.height/2; else vidH = vid.height; end
+            %             if vidW == 2560; vidH = vid.Height/2; else vidH = vid.Height; end
             %             oi = uint8(zeros(vidH+round((1+lowrat)*ysize) + 2*gap,vidW,3));
             oi = uint8(zeros(vidH+2*ysize + 2*gap,xsize,3)); %
-            %             oi(1:vidH,1:vid.width,:) = vid.frames(i).cdata;
-            oi(1:vidH,xsize-vid.width+1:xsize,:) = vid.frames(i).cdata;
+            %             oi(1:vidH,1:vid.Width,:) = vid.frames(i).cdata;
+            oi(1:vidH,xsize-vid.Width+1:xsize,:) = vid.frames(i).cdata;
             %             if vidW == 2560
-            %             oi(1:vidH,vid.width+1:end,:) = vid.frames(i).cdata(vid.height/2+1:end,:,:);
+            %             oi(1:vidH,vid.Width+1:end,:) = vid.frames(i).cdata(vid.Height/2+1:end,:,:);
             %             end
             %             if swapRL; OI = oi(1:vidH,1:size(oi,2)/2,:); oi(1:vidH,1:size(oi,2)/2,:) = oi(1:vidH,size(oi,2)/2+1:size(oi,2),:); oi(1:vidH,size(oi,2)/2+1:size(oi,2),:) = OI; end %swaps L and R frames
             oi(vidH+gap+1:vidH+gap+ysize,:,:) = M.cdata(1:ysize,1:xsize,:);
@@ -810,9 +787,9 @@ for n = startn:length(filename)
             if ~exist ([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{n}(1:end-4)],'dir'); mkdir ([filedest 'partial//' prhfile(1:regexp(prhfile,' ')-1) '//' filename{n}(1:end-4)]); end
             dirN = n; %else dirN stays the same
         end
-        vid.width = xsize;
-        vid.height = vidH+2*ysize + 2*gap;
-        if vid.height/2 ~= round(vid.height/2); vid.height = vid.height+1; end
+        vid.Width = xsize;
+        vid.Height = vidH+2*ysize + 2*gap;
+        if vid.Height/2 ~= round(vid.Height/2); vid.Height = vid.Height+1; end
         list = mmwrite('','ListAviVideoEncoders');
         if ~comp; conf.videoCompressor = char(list(end)); else conf.videoCompressor = char(list(comp)); end
         %         list = mmwrite('','ListAviAudioEncoders');
