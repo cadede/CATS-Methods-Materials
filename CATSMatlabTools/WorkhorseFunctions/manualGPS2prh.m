@@ -67,7 +67,7 @@ if ~ischar(GPSfile);
     catch; [TG,TGloc] = uigetfile('*.xlsx','Select Tag Guide with tag on and recovery info'); 
         [~,~,txt] = xlsread([TGloc TG]);
     end
-    row = find(cellfun(@(x) strcmp(x,getWhaleID(prhfile)),txt(:,1)));
+    row = find(cellfun(@(x) strcmpi(x,getWhaleID(prhfile)),txt(:,1)));
     col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Tag_On'),txt(3,:),'uniformoutput',false)));
     hits(2,1) = txt(row,col);
     col = find(~cellfun(@isempty,cellfun(@(x) strfind(x,'Recover_Time'),txt(3,:),'uniformoutput',false)));

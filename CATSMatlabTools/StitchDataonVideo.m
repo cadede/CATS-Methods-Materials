@@ -46,7 +46,7 @@ comp = 5; % 0 means, use the last listed video compressor.  Change this number t
 boxsize = 0; %boxP*2560; %size of data box in pixels.  300 works for current font size and height
 filtspeed = true; % if you want to smooth the speed
 
-Hz = 10; %refresh rate of graph (good idea to match this with your sample rate of your data)
+
 gap = 2; %pixels between video and graph
 lowrat = 1; % the ratio of the size of the lower graph to the upper one
 
@@ -74,7 +74,7 @@ if sum(filedest==0) || isempty(filedest); filedest = fileloc; end
 load([prhloc prhfile]); %viddeploy(1) = [];
 if sum(isnan(flownoise)) == length(flownoise); noaud = true; else noaud = false; end
 % if there is no audio on the file, the flag here shoudl be set to true
-
+Hz = fs; %refresh rate of graph (good idea to match this with your sample rate of your data)
 
 if autocrop
     if find(tagon,1)>60*fs
@@ -103,7 +103,7 @@ catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellf
         end
     end
 end
-if ~wireless; oframeTimes = frameTimes; end
+if ~wireless || ~exist('oframeTimes','var'); oframeTimes = frameTimes; disp('frameTimes files in movieTimes is unadjusted from initial read (time stamps do not reflect times embedded on video)'); end
 
 if ~exist('speed','var');
     speed = table(speedFN, cell(size(speedFN)),'VariableNames',{'comp','type'});  speed.type(:) = {'FN'};

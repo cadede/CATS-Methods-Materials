@@ -188,9 +188,15 @@ k = 1; vidNam = {}; vidNum = [];
 for i = 1:length(movies)
     if ~strcmp(movies{i}(end-2:end),'raw') && ~strcmp(movies{i}(end-2:end),'wav')
 %         vid = mmread([movieloc movies{i}],[1 10]); % just read a few frames to get the total duration
-        vid = VideoReader([movieloc movies{i}]);
-        if isnan(vidDurs(movN(i)))
-            vidDurs(movN(i)) = vid.Duration;
+        try vid = VideoReader([movieloc movies{i}]);
+            
+            if isnan(vidDurs(movN(i)))
+                vidDurs(movN(i)) = vid.Duration;
+            end
+        catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a few frames to get the total duration, this was for old style videos, and seems to work for some 4ks
+            if isnan(vidDurs(movN(i)))
+                vidDurs(movN(i)) = vid.totalDuration;
+            end
         end
         vidNam(k,1) = movies(i); 
         vidNum(k,1) = str2num(vidNam{k}(end-7:end-4)); k = k+1;
@@ -281,8 +287,12 @@ for n = 1:length(movies)
     videoL = dur+1;
     DAY = 0;
     badmovie = false;
+    try
     OBJ =  VideoReader([movieloc movies{n}]);
     fr = OBJ.FrameRate;
+     catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a 
+         fr = vid.rate;
+    end
 frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
    
 %     while endtime<videoL+dur;
