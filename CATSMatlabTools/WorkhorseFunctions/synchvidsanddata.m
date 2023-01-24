@@ -109,14 +109,19 @@ else
      
     if synchusingvidtimestamps
         UTC = Hzs.UTC;
-        timedif = cell2mat(headers(3,2));
+        vidtimedif = cell2mat(headers(3,2));
         vidDNorig = vidDN;
+        if vidtimedif ~=0; warning('Time Difference does not = 0. Do video starttimes need to be adjusted by timedif?');
+            pp = input('1 = yes, 2 = no  ');
+            if pp == 2; vidtimedif = 0;
+            end
+        end
         if data.Date(1)<datenum([2017 09 01]) % old versions of tag where time stamps were in UTC
-            vidDN = vidDN + data.Date(1)+UTC/24+timedif/24;
+            vidDN = vidDN + data.Date(1)+UTC/24+vidtimedif/24;
             disp('Old file detected, assuming time stamps are in UTC');
         elseif vidDN(find(~isnan(vidDN),1))<10 % confirm that new vidDN takes into account full date
-            vidDN = vidDN + data.Date(1)+timedif/24;
-        else vidDN = vidDN + timedif/24;
+            vidDN = vidDN + data.Date(1)+vidtimedif/24;
+        else vidDN = vidDN + vidtimedif/24;
         end
         if sum(vidDN<DN(1)) + sum(vidDN>DN(end))>1; warning('multiple vidDN are outside range of data. This may be okay if more videos are included in movieTimes outside of those on whale (so just continue), but check that any timedif in xls header file should apply to both data and video.  If, for example, data were downloaded on a computer in a different timezone than for which the tag was programmed, video and data will be offset by different amounts and will have to be adjused for, potentially by unhighlighting the line above this one'); end
     end
@@ -176,7 +181,9 @@ else
             end
 
         end
-        DN = data.Date+data.Time+timedif/24;
+        % took out DN because it is automatically imported from the
+        % function
+%         DN = data.Date+data.Time+timedif/24;
 
         %adjust the video date numbers by assuming video 1 started with the start
         %of the tag

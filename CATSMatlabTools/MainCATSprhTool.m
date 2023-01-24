@@ -96,7 +96,7 @@ disp('Section 1 completed');
 % files from each audio file (created as part of step 1). 
 
 % variables to set
-decfac = 2; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
+decfac = 1; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 % Can set "folder" below to start looking for files in a specific place on your computer
 folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
 
@@ -783,7 +783,7 @@ end
 
 
 CellNum = 11;
-
+if ~exist('speedstats','var'); speedstats = struct(); end
 disp('Section 11 (speed) finished');
 save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
 try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
@@ -827,7 +827,7 @@ if ~exist('head','var')
     [pitch,roll,head] = calcprh(Aw,Mw,dec);
 end
 if ~exist('speed','var')
-    speed = applySpeed(JigRMS,'JJ',flownoise,'FN',tagondec,p,pitch,roll,fs,speedstats);
+    try speed = applySpeed(JigRMS,'JJ',flownoise,'FN',tagondec,p,pitch,roll,fs,speedstats); catch; warning('Speed could not be calculated'); end
 end
 CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is empty, bench cal was used. If temp was used in Mag cal, there will be a "temp" variable in the structure; use appycalT to apply that structure to mag and temp data.  Axes must be corrected to NED before applying 3d cals, but not before applying original style bench cals since they take that into account';
 tagon = tagondec; camon = camondec; tagslip = slips; 

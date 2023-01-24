@@ -1,6 +1,6 @@
 function [Mt,Mcalnew] = calM(data,DN,tagondec,camondec,camon,nocam,ofs,magHz,df,CAL,Temp,b,I,resThresh)
 
-
+dbstop if error
 % this function performs an in situ calibration on the magnetometer data,
 % based on the spherical_cal scripts at animaltags.org
 % 
@@ -192,6 +192,7 @@ if (std(oi)/mean(oi)>resThresh || isnan(std(oi)/mean(oi)) || axB<10) && ~nocam
 %      Mnan = isnan(Mt(:,1));
      sI = find(diff(TRANS) == 1); %find the transitions 
      eI = find(diff(TRANS) == -1);
+     if sI(1) == 1; sI(1) = sI(1)+1; end
      if length(sI)~=length(eI); error('TRANS has a funny length'); end
      Mjumps = percentile(abs(diff(Mt)),.97); %the big jumps are spikes from magnetometer, so just even them out.
      for i = 1:length(sI);

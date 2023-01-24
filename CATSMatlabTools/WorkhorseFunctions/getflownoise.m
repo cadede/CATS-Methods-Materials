@@ -34,9 +34,9 @@ if isempty(audiofiles) % check for other wav files not from movies (acousonde/dt
             lastwarn('');
             if aud.rate>24000 
                 warning('For flownoise files, audio.mat files are being decimated to 24 kHz');
-                aud.data = decdc(aud.data,aud.rate/24000);
-                aud.rate = 24000;
-                audend = '_24kHz';
+                aud.data = decdc(aud.data,ceil(aud.rate/24000));
+                aud.rate = aud.rate/(ceil(aud.rate/24000));
+                audend = ['_' num2str(aud.rate/1000) 'kHz'];
             else
                 audend = '';
             end
