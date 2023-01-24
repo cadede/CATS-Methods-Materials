@@ -41,7 +41,7 @@ if ~exist('whaleID','var') || isempty(whaleID)
         try
             if strcmp(movieloc(slashes(i)+9),'-')
                 datenum(movieloc(slashes(i)+3:slashes(i)+8),'yymmdd');
-                whaleID = movieloc(slashes(i)+1:min(slashes(i)+11,slashes(i+1)-1));
+                whaleID = movieloc(slashes(i)+1:max(slashes(i)+11,slashes(i+1)-1));
             end
         catch
             continue
@@ -290,10 +290,12 @@ for n = 1:length(movies)
     try
     OBJ =  VideoReader([movieloc movies{n}]);
     fr = OBJ.FrameRate;
+    frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
      catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a 
          fr = vid.rate;
+         frameTimes{vidNum(n)} = 1/fr:1/fr:vid.totalDuration;
     end
-frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
+
    
 %     while endtime<videoL+dur;
 %         clear M vid aud;
@@ -429,12 +431,14 @@ if ~audioonly
 %     end
 % end
 
-% frameSize = [vid.width vid.height];
-frameSize = [OBJ.Width OBJ.Height];
+try frameSize = [OBJ.Width OBJ.Height];
+catch
+    frameSize = [vid.width vid.height];
+end
 else
     frameSize = [nan nan];
 end
-vidDurs(movN(mlast-mfirst+1)+1:end) = []; frameTimes(movN( mlast-mfirst+1)+1:end) = []; vidDN(movN( mlast-mfirst+1)+1:end) = []; vidNam(movN( mlast-mfirst+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
+vidDurs(movN(mlast-m1+1)+1:end) = []; frameTimes(movN( mlast-m1+1)+1:end) = []; vidDN(movN( mlast-m1+1)+1:end) = []; vidNam(movN( mlast-m1+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
 vid4k = true;
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize','vid4k');
 if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end
