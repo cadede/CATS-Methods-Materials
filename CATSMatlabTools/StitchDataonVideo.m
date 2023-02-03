@@ -344,7 +344,7 @@ for n = startn:length(filename)
                     end
                 end
             end
-            sf = find(oframeTimes{vidN} == vid.times(1));
+            sf = find(oframeTimes{vidN} >= vid.times(1),1,'first');
             if isempty(sf); error('vid.times(1) not fround in oframeTimes'); end
             if length(sf)>1  
                 sf = sf(sf == endf+1);

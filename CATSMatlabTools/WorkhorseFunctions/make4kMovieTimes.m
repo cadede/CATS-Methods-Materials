@@ -246,8 +246,11 @@ for n = 1:length(movies)
         try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
         continue; 
     end
+    dashes = regexp(movies{n},'-');
+        vidDN(movN(n)) = datenum(movies{n}(dashes(end-3)+1:dashes(end)-1),'yyyymmdd-HHMMSS-fff');
+    
 %     try 
-        vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
+%         vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
 %     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
 %         badvidDN(movN(n)) = true;
 %          d = regexp(movies{n},'-');

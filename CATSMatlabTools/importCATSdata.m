@@ -237,7 +237,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         if noPress; dataT.Pressure = zeros(size(dataT,1),1); end
         dataT.Properties.VariableNames = headers;
         try DT = datenum(dataT.Date,'dd.mm.yyyy'); catch; warning('Could not read date, check format?'); end
-        if any(abs(diff(DT))>5);
+        if any(abs(diff(DT))>5)&&~ignorebadTimeStamps
             stupidi = find(abs(diff(DT))>1,1);
             dataT = dataT(1:stupidi,:);
             disp(['There is bad data of some kind starting at line ' num2str(stupidi + 1) ' in csv ' num2str(i-1) '. Stopping import at this point.']);

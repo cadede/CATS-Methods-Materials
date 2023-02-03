@@ -96,7 +96,7 @@ disp('Section 1 completed');
 % files from each audio file (created as part of step 1). 
 
 % variables to set
-decfac = 1; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
+decfac = 2; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 % Can set "folder" below to start looking for files in a specific place on your computer
 folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
 
