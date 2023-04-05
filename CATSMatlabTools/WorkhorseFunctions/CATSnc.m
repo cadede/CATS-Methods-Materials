@@ -482,6 +482,7 @@ end
 % Populate the sensor struct with Speed data from PRH
 speedJJ.depid = prefix ;
 speedJJ.creation_date = datestr(now,'dd-mmm-yyyy HH:MM:SS');
+if sum(isnan(speed.JJ)) ~= length(speed.JJ);
 speedJJ.data = speed.JJ;
 speedJJ.sampling_rate = fs;
 try speedJJ.speed_calibration_periods_end_times = round(speedstats.sections_end_index/fs); 
@@ -493,9 +494,10 @@ end
 try speedJJ.speed_jiggleRMS = speed.JRMS; catch; speedJJ.speed_jiggleRMS = speed.JJRMS; end
 speedJJ.start_offset = 0;
 speedJJ.history = 'sens_struct';
-speedJJ.author = 'Dave Cade, davecade@stanford.edu';
+% speedJJ.author = 'Dave Cade, davecade@stanford.edu';
 
 add_nc([prhfileloc ncfile],speedJJ) ;
+end
 disp('Section 4 (Add Jiggle Speed) finished');
 
 %% 5. Add Speed from FN
@@ -513,6 +515,7 @@ speedFN.data = speed.FN;
 catch; speedFN.data = nan(size(speedJJ));
 end
 speedFN.sampling_rate = fs;
+try
 try speedFN.speed_calibration_periods_end_times = round(speedstats.sections_end_index/fs); 
 catch; speedFN.speed_calibration_periods_end_times = INFO.tagslip.SpeedPeriods/fs;
 end
@@ -528,7 +531,8 @@ speedFN.speed_flownoiseRMS = flownoise;
 speedFN.start_offset = 0;
 speedFN.history = 'sens_struct';
 % speedFN.author = 'Dave Cade, davecade@stanford.edu';
-
+catch;
+end
 add_nc([prhfileloc ncfile],speedFN) ;
 disp('Section 5 (Add Speed from FN) finished');
 
@@ -537,7 +541,11 @@ clearvars -except prhfileloc ncfile
 oi = load_nc([prhfileloc ncfile]);
 load_nc([prhfileloc ncfile]);
 pitch = oi.pitch;
-[ax,h]=plott(P, pitch, roll, head, speedJJ);
+try [ax,h]=plott(P, pitch, roll, head, speedJJ);
+catch; try [ax,h]=plott(P, pitch, roll, head, speedFN);
+    catch; [ax,h]=plott(P, pitch, roll, head);
+    end
+end
 a=findobj(ax,'type','axe');
 b = get( get(a(1),'YLabel') );
 set( get(a(1),'YLabel'), 'String', 'Depth' );
@@ -547,7 +555,10 @@ b = get( get(a(3),'YLabel') );
 set( get(a(3),'YLabel'), 'String', 'Roll' );
 b = get( get(a(4),'YLabel') );
 set( get(a(4),'YLabel'), 'String', 'Heading' );
+try
 b = get( get(a(5),'YLabel') );
 set( get(a(5),'YLabel'), 'String', 'Speed' );
+catch;
+end
 
 disp('Section 6 (Plot) finished');

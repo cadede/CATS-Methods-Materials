@@ -39,7 +39,7 @@ swapRL = false; % set to true if you want R and L cameras to be reversed (good f
 justflownoise = true; % Recommended to set to true to display one speed metric.  False uses a composite speed metric that has not been shown to be more useful
 justjiggle = true; % set to true if you want to use jiggle instead of flow noise
 combinesmall = true; % set to 0 if you do NOT want small video files to be combined into one larger video.  Default settings are 40 minutes of total video time as long as gaps between videos are less than 20 minutes.  Search for "combinesmall" below to change these defaults.
-smallfont = false; %processors seem to handle font size differently.  For some newer videos you may need to set this to true to keep the font reasonable in the data box
+smallfont = true; %processors seem to handle font size differently.  For some newer videos you may need to set this to true to keep the font reasonable in the data box
 dur = 15; % how much of the video (s) to read each iteration.  inf = make the whole video.  if you're having memory problems, try lowering the duration
 comp = 5; % 0 means, use the last listed video compressor.  Change this number to use a different one.  run the "list" line later to see all compresors, MJPEG seems to work well
 % boxP = 300/2560;  % proportion of the bottom graph you want to be the data box
@@ -344,7 +344,7 @@ for n = startn:length(filename)
                     end
                 end
             end
-            sf = find(oframeTimes{vidN} == vid.times(1));
+            sf = find(abs(oframeTimes{vidN}-vid.times(1))<0.001);
             if isempty(sf); error('vid.times(1) not fround in oframeTimes'); end
             if length(sf)>1  
                 sf = sf(sf == endf+1);

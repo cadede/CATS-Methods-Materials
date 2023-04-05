@@ -214,6 +214,9 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file);
         if ~UTCflag; UTCoffset = 0; else UTCoffset = UTC; end
+        datafs = max([gyrHz magHz pHz lHz GPSHz accHz]);
+        if accHz ~= datafs;  warning('Accelerometer data appears to be sampled at less than other data sources.'); end
+        
         if exist('FS','var') && ~isempty(FS); fs = FS; %if you preset the maxFS, else use the max of the others
         else fs = min(max([gyrHz magHz pHz lHz GPSHz]),accHz);
         end
@@ -234,7 +237,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         if noPress; dataT.Pressure = zeros(size(dataT,1),1); end
         dataT.Properties.VariableNames = headers;
         try DT = datenum(dataT.Date,'dd.mm.yyyy'); catch; warning('Could not read date, check format?'); end
-        if any(abs(diff(DT))>5);
+        if any(abs(diff(DT))>5)&&~ignorebadTimeStamps
             stupidi = find(abs(diff(DT))>1,1);
             dataT = dataT(1:stupidi,:);
             disp(['There is bad data of some kind starting at line ' num2str(stupidi + 1) ' in csv ' num2str(i-1) '. Stopping import at this point.']);
@@ -298,6 +301,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     catch; warning('No date imported'); DN1 = input('Input tag start date in datevec format? '); DN1 = datenum([DN1(1:3) 0 0 0]);
         DN = timescal-floor(timescal)+DN1*ones(size(dataT.Time)); dateflag = true; headers = [headers {'Date'}];
     end
+      
     isb = arrayfun(@(x) strcmp(x,' '),oiT(:,end)); % some bad imports skipped a few seconds of data by going from 10.9 to 10.10 seconds (e.g.)
     if any(isb)
         bad10 = find(~isb);
@@ -353,7 +357,9 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     end %from video processing, looks for out of order time stamps and adjust them
      d = diff(DN*24*60*60);
     
-    
+     % test sample rate
+        datafs2 = round(mean(1./d));
+    if datafs~=datafs2; error('problem with sample rate'); end
     
     skippeddata = find(d>1.5*1/accHz); %
     numgaps = 0;
@@ -395,11 +401,18 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     dataT.Time = DN-floor(DN);
     dataT.Date = floor(DN); if dateflag; newday = find(diff(dataT.Time)<0 & dataT.Time(2:end)<1/60/60/24); dataT.Date(newday+1:end)=dataT.Date(newday+1:end)+1; end
     
-    Atime = [Atime; DN];
-    Adata = [Adata; oi];
+    if accHz == datafs
+        Atime = [Atime; DN];
+        Adata = [Adata; oi];
+    else
+        oi = oi(1:datafs/accHz:end,:);
+        ADN = round(DN(1:datafs/accHz:end)*24*60*60*accHz)/accHz/24/60/60;
+        Atime = [Atime; ADN];
+        Adata = [Adata; oi];
+    end
     
     % downsample data
-    acc = decdc(oi,accHz/fs); %used to round these values, but doesn't work if they are pre-calibrated.
+    acc = decdc(oi,datafs/fs); %used to round these values, but doesn't work if they are pre-calibrated.
     % for other, non acc data, sample it (data are repeated values);
     % takes into account different kinds of imported data (numbers or
     % strings)
@@ -407,14 +420,14 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
     % that's not the accelerometer (often 50 Hz).
     if exist('FS','var') && ~isempty(FS)
         if ~iscell(dataT.Gyr1); gyr = [dataT.Gyr1 dataT.Gyr2 dataT.Gyr3]; else gyr = [str2num(char(dataT.Gyr1)) str2num(char(dataT.Gyr2)) str2num(char(dataT.Gyr3))]; end
-        gyr = gyr(1:accHz/fs:end,:);
+        gyr = gyr(1:datafs/fs:end,:);
         if ~iscell(dataT.Comp1); comp = [dataT.Comp1 dataT.Comp2 dataT.Comp3]; else comp = [str2num(char(dataT.Comp1)) str2num(char(dataT.Comp2)) str2num(char(dataT.Comp3))]; end
-        comp = comp(1:accHz/fs:end,:);
+        comp = comp(1:datafs/fs:end,:);
     end
     if noPress && ~any(cellfun(@(x) strcmp(x,'Pressure'),headers)); dataT.Pressure = zeros(size(dataT.Comp1)); headers{end+1} = 'Pressure'; end
     if ~iscell(dataT.Pressure); p = dataT.Pressure; else p = str2num(char(dataT.Pressure)); end
-    p = p(1:accHz/fs:end);
-    samples = abs(round(dataT.Time*24*60*60*fs)-dataT.Time*24*60*60*fs)<1/(accHz*1.5); %find the values closest to the rounded frequencies and sample those.
+    p = p(1:datafs/fs:end);
+    samples = abs(round(dataT.Time*24*60*60*fs)-dataT.Time*24*60*60*fs)<1/(datafs*1.5); %find the values closest to the rounded frequencies and sample those.
     for ii = length(badrows):-1:1
         if samples(badrows(ii))
             nextgoodrow = badrows(ii)+1;

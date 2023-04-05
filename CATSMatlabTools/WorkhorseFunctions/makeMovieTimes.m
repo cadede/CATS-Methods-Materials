@@ -45,7 +45,7 @@ if ~exist('whaleID','var') || isempty(whaleID);
         try
             if strcmp(movieloc(slashes(i)+9),'-')
                 datenum(movieloc(slashes(i)+3:slashes(i)+8),'yymmdd');
-                whaleID = movieloc(slashes(i)+1:min(slashes(i)+11,slashes(i+1)-1));
+                whaleID = movieloc(slashes(i)+1:max(slashes(i)+11,slashes(i+1)-1));
             end
         catch
             continue

@@ -69,7 +69,7 @@ try data.Speed = Speed; catch; data.Speed = nan(size(data.Acc1)); end
 Adata = [data.Acc1 data.Acc2 data.Acc3];
 Atime = DN;
 Hzs = struct();%'accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
-Hzs.accHz = Afs; Hzs.pHz = dfs; Hzs.THz = dfs; Hzs.datafs = Afs; Hzs.SHz = dfs;
+Hzs.accHz = Afs; Hzs.magHz = Afs; Hzs.pHz = dfs; Hzs.THz = dfs; Hzs.datafs = Afs; Hzs.SHz = dfs;
 try t = data.Comp1(1)+1; catch; data.Comp1 = nan(size(data.Acc1));
 data.Comp2 = data.Comp1; data.Comp3 = data.Comp2;
 end

@@ -129,6 +129,7 @@ fprintf(fidOut,'vec_file %s\r\n',[folder outfile]);
 if strcmpi(whaleName(1:2),'mn'); AN = 'HUMPBACK'; elseif strcmpi(whaleName(1:2),'bw')||strcmpi(whaleName(1:2),'bp')||strcmpi(whaleName(1:2),'bb')||strcmpi(whaleName(1:2),'be'); AN = 'BLUE';
 elseif strcmp(whaleName(1:2),'oo')||strcmp(whaleName(1:2),'rt')||strcmp(whaleName(1:2),'cm'); AN = 'DOLPHIN'; 
 elseif strcmp(whaleName(1:2),'zc'); AN = 'BEAKED';
+elseif strcmp(whaleName(1:2),'mb'); AN = 'MANATEE';
 else;    AN = 'HUMPBACK'; end
 fprintf(fidOut,'animal %s\r\n',AN);
 DV = datevec(DN(find(tagon,1)));

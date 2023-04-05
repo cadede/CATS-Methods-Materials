@@ -41,7 +41,7 @@ if ~exist('whaleID','var') || isempty(whaleID)
         try
             if strcmp(movieloc(slashes(i)+9),'-')
                 datenum(movieloc(slashes(i)+3:slashes(i)+8),'yymmdd');
-                whaleID = movieloc(slashes(i)+1:min(slashes(i)+11,slashes(i+1)-1));
+                whaleID = movieloc(slashes(i)+1:max(slashes(i)+11,slashes(i+1)-1));
             end
         catch
             continue
@@ -188,9 +188,15 @@ k = 1; vidNam = {}; vidNum = [];
 for i = 1:length(movies)
     if ~strcmp(movies{i}(end-2:end),'raw') && ~strcmp(movies{i}(end-2:end),'wav')
 %         vid = mmread([movieloc movies{i}],[1 10]); % just read a few frames to get the total duration
-        vid = VideoReader([movieloc movies{i}]);
-        if isnan(vidDurs(movN(i)))
-            vidDurs(movN(i)) = vid.Duration;
+        try vid = VideoReader([movieloc movies{i}]);
+            
+            if isnan(vidDurs(movN(i)))
+                vidDurs(movN(i)) = vid.Duration;
+            end
+        catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a few frames to get the total duration, this was for old style videos, and seems to work for some 4ks
+            if isnan(vidDurs(movN(i)))
+                vidDurs(movN(i)) = vid.totalDuration;
+            end
         end
         vidNam(k,1) = movies(i); 
         vidNum(k,1) = str2num(vidNam{k}(end-7:end-4)); k = k+1;
@@ -240,8 +246,11 @@ for n = 1:length(movies)
         try if abs(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60))>60/24/60/60; disp(['WARNING!: audio ' num2str(movN(n)) ' appears to start ' num2str(vidDN(movN(n)) - (vidDN(movN(n)-1) + vidDurs(movN(n)-1)/24/60/60)) ' s from the end of the previous file, perhaps check your audio rate?']); end; catch; end
         continue; 
     end
+    dashes = regexp(movies{n},'-');
+        vidDN(movN(n)) = datenum(movies{n}(dashes(end-3)+1:dashes(end)-1),'yyyymmdd-HHMMSS-fff');
+    
 %     try 
-        vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
+%         vidDN(movN(n)) = datenum(movies{n}(min(regexp(movies{n},'-'))+1:max(regexp(movies{n},'-'))-1),'yyyymmdd-HHMMSS-fff');
 %     catch; warning(['Cannot read precise video start time from video ' num2str(movN(n)) ', will try to read video from timestamps on video, else may need to adjust manually'])
 %         badvidDN(movN(n)) = true;
 %          d = regexp(movies{n},'-');
@@ -281,9 +290,15 @@ for n = 1:length(movies)
     videoL = dur+1;
     DAY = 0;
     badmovie = false;
+    try
     OBJ =  VideoReader([movieloc movies{n}]);
     fr = OBJ.FrameRate;
-frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
+    frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
+     catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a 
+         fr = vid.rate;
+         frameTimes{vidNum(n)} = 1/fr:1/fr:vid.totalDuration;
+    end
+
    
 %     while endtime<videoL+dur;
 %         clear M vid aud;
@@ -419,12 +434,14 @@ if ~audioonly
 %     end
 % end
 
-% frameSize = [vid.width vid.height];
-frameSize = [OBJ.Width OBJ.Height];
+try frameSize = [OBJ.Width OBJ.Height];
+catch
+    frameSize = [vid.width vid.height];
+end
 else
     frameSize = [nan nan];
 end
-vidDurs(movN(mlast-mfirst+1)+1:end) = []; frameTimes(movN( mlast-mfirst+1)+1:end) = []; vidDN(movN( mlast-mfirst+1)+1:end) = []; vidNam(movN( mlast-mfirst+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
+vidDurs(movN(mlast-m1+1)+1:end) = []; frameTimes(movN( mlast-m1+1)+1:end) = []; vidDN(movN( mlast-m1+1)+1:end) = []; vidNam(movN( mlast-m1+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
 vid4k = true;
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize','vid4k');
 if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end

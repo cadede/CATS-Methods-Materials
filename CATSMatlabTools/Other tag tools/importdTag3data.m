@@ -3,11 +3,11 @@ clearvars -except CAL
 % first load in appropriate cal file 
 % load data from swv files
 % set these valu
-folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\zc22_212a\';
-fileprefix = 'zc22_212a';
+folder = 'D:\Tag Data\EE\From Fleur\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\zc18_185a\';
+fileprefix = 'zc185a';
 % ODN = datenum([2015 07 31 8 4s6 52]);
 df = 1;
-name = 'zc22_212a';
+name = 'zc18_185a';
 
  d3 = readd3xml([folder fileprefix '003.xml']);
  ODN = datenum(d3.CFG{1}.TIME,'yyyy,mm,dd,HH,MM,SS');

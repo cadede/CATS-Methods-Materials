@@ -20,7 +20,10 @@ disp(['Acc sample rate: fs = ' num2str(Afs) ' Hz']);
 
 %
 ODN2 = data.Date(1)+data.Time(1);
-if abs(ODN-ODN2)>1/24/60/60; error('Data start time (ODN variable) does not match the start time of "data" variable, check txt file and rerun importCATSdata if necessary, starting from csv1');
+if abs(ODN-ODN2)>1/24/60/60; warning(['Data start time (ODN variable) does not match the start time of "data" variable, ODN is ' num2str((ODN-ODN2)*24) ' hrs ahead of data table.']);
+    warning('If this is a known issue, it can be accounted for in the Time Difference slot in the header file. If this issue is not understood, suggest quitting and locating source of the error.');
+    warning('If no ODN, rerun importCATSdata if necessary, starting from csv1 or create ODN variable from data start time in txt file');
+    quitprogram = input('Continue despite offset? 1 = yes, 2 = no'); if quitprogram == 2; error('function terminated'); end
 end
 if sum(data.Pressure) == 0; disp('No pressure sensor'); data.Pressure(:) = 30; p = data.Pressure; nopress = true;
 else
