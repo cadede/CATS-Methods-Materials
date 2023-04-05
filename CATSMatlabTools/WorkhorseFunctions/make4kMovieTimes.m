@@ -444,7 +444,8 @@ end
 vidDurs(movN(mlast-m1+1)+1:end) = []; frameTimes(movN( mlast-m1+1)+1:end) = []; vidDN(movN( mlast-m1+1)+1:end) = []; vidNam(movN( mlast-m1+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
 vid4k = true;
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize','vid4k');
-if timestamps; save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append'); end
+if ~timestamps || ~exist('oframeTimes','var'); oframeTimes = frameTimes; end
+save([dataloc datafile(1:end-4) 'movieTimes.mat'],'oframeTimes','-append');
 disp('movieTimes file saved successfully, truncated to only include on whale files.');
 
 warning('on','all');
