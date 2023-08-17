@@ -19,7 +19,7 @@ if size(frame,1) == 720 && size(frame,2) == 1280
 elseif size(frame,1)  == 1080 && size(frame,2) == 1920
     I = frame(1055:1064,[1675:1695 1699:1718 1723:1743 1746:1772],:);
 %     incgray = true;
-else error ('Check your frame size!');
+else error ('Double check that you have timestamps in the bottom right of your screen in a black box, else set vid4k = true to run make4kmovieTimes instead of this script. Alternatively, could be a frame size issue');
 end
 I = 255-I;
 % image(I);

@@ -808,7 +808,7 @@ try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = 'Mag axis orientation set by trial and error. Appears to need correction of -1 for all axes. Acc needed -1 for y axis (per tag orientation picture).';
+notes = 'Gaps present in file. In painted with nans. flow noise not created due to gaps in files. d4 set up as Left hand orientation, so swapped z-axis for M and A.';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -1090,8 +1090,8 @@ end
 Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
 % Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
 % truncated to tagon time
-DN2 = DN(tagon);
-T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),'VariableNames',{'Time','Lat','Long'});
+DN2 = DN(tagon); p2 = p(tagon);
+T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),p2(1:fs:end),'VariableNames',{'Time','Lat','Long','Depth'});
 writetable(T,[fileloc INFO.whaleName '_1HzgeoPtrackLatLong.csv']);
 
 

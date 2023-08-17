@@ -1,30 +1,34 @@
-function [data, Adata, Atime] = importTDR10toCATS(fileloc, filename)
+function [data, Adata, Atime] = importTDR10toCATS(DAP,fileloc, filename)
 %
 % David Cade and James Fahlbusch
-% version 12.1.2020
+% version 8.15.2023
 % Goldbogen Lab
 % Stanford University
 %
 % This script imports data from the Wildlife Computers TDR10F to the new 
 % CATS data processing standards (11/2020), which includes the addition of 
-% Adata, Atime and Hzs to the output of the script
+% Adata, Atime and Hzs to the output of the script. This version now
+% accepts archive output from both DAP 3.0.0 and 3.0.067. The default DAP
+% version is 3.0.0 and you must specify in the input if you are using
+% 3.0.067.
 %
 % format:
-% importTDR10toCATS(fileloc, filename);
-% importTDR10toCATS();
+% importTDR10toCATS(DAP,fileloc, filename);
+% importTDR10toCATS(DAP);
+% importTDR10toCATS(); 
 % [data, Adata, Atime] = importTDR10toCATS(...);
 %
 % filename is the Archive CSV file outputted by DAP Processor
 %
 % NOTE: Raw data from TDR10 is in GMT; No conversion to Local time takes place in this script
 
-% nargin = 0; %uncomment this line if you are running from the code (not as a function)
-if nargin <2;
+if ~exist('DAP','var') || isempty(DAP); DAP = '3.0.0'; end
+if ~exist('fileloc','var') || ~exist('filename','var') || isempty(fileloc) || isempty(filename);  
     [filename,fileloc] = uigetfile('*.csv','Select the Wildlife Computers Archive CSV file (exported from DAP Processor).');
 end
 
 %% 1. Import Section
-        vers = version('-release'); if strcmp(vers(end),'a'); vers = str2num(vers(1:4)); else vers = str2num(vers(1:4))+0.1; end
+        vers = version('-release'); if strcmp(vers(end),'a') || strcmp(vers(end),'b'); vers = str2num(vers(1:4)); else vers = str2num(vers(1:4))+0.1; end
         if vers<2020
             opts = detectImportOptions([fileloc filename]);
             opts.ExtraColumnsRule = 'ignore';
@@ -32,7 +36,11 @@ end
             headers = opts.VariableNames;
             clearvars opts
         else 
-            data = readtable([fileloc filename],'Format','%s%f%f%f%f%f%f%f%f%f%u%f%s');
+            try 
+                data = readtable([fileloc filename],'Format','%s%f%f%f%f%f%f%f%f%f%u%f%s');
+            catch
+                data = readtable([fileloc filename],'Format','%s%f%f%f%f%f%f%f%f%f%u%f%f%f%f%s');
+            end
             headers = data.Properties.VariableNames;
         end
         %Change the uncorrected depth field name to pressure
@@ -61,11 +69,15 @@ end
     % sometimes doesn't (i.e. at the top of every second, Wildlife Computers
     % omits the decimal seconds instead of .00000)
     % Need to process with milliseconds and without seperetely and combine
-    dateMill = datetime(data.Time, 'inputformat', 'MM/dd/yyyy HH:mm:ss.SSSSS'); 
-    dateFull = datetime(data.Time, 'inputformat', 'MM/dd/yyyy HH:mm:ss');
+    if strcmp(DAP, '3.0.0')
+        dateMill = datetime(data.Time, 'inputformat', 'MM/dd/yyyy HH:mm:ss.SSSSS'); 
+        dateFull = datetime(data.Time, 'inputformat', 'MM/dd/yyyy HH:mm:ss');
+    elseif strcmp(DAP, '3.0.067')
+        dateMill = datetime(data.Time, 'inputformat', 'HH:mm:ss.SSSSS dd-MMM-yyyy'); 
+        dateFull = datetime(data.Time, 'inputformat', 'HH:mm:ss dd-MMM-yyyy');
+    end
     dateNaT = isnat(dateMill);
     dateMill(dateNaT) = dateFull(dateNaT);
-    %plot(diff(dateMill)) % not working
     datetimeUTC = dateMill;
     clearvars dateFull dateMill dateNaT 
     % This generates enormous files when saving data. 
@@ -132,6 +144,10 @@ end
     try data(:,'Events') = []; catch end
     try data(:,'BatteryVoltage') = []; catch end
     try data(:,'Wet_Dry') = []; catch end
+    try data(:,'Dry') = []; catch end
+    try data(:,'DAPCorrectedLightLevel') = []; catch end
+    try data(:,'DAPSmoothedLightLevel') = []; catch end
+    
 %   Create repeated values for variables sampled at lower rates (e.g.Temp, Light)
 % Temp
     % Create Temp at fs Hz by repeating 1Hz values
@@ -298,49 +314,54 @@ end
     oi = get(gca,'children'); oi=[oi(i+1:end); oi(1:i)];
     set(gca,'children',oi);
     annotation('textbox', [0.05, .05, 0, 0], 'string', 'Yellow box highlights the portion of data that will be saved','FitBoxToText','on')
+    pause;
+    disp('Would you like to truncate the data (e.g. to remove off-animal data)?')
+    xx = input('1 = yes, 2 = no? ');
+    if xx == 1
 
-    TEX = text(.5,max(Depth),'LEFT click to CHANGE the boundary of the data, RIGHT click to ZOOM in. Press Enter when done.','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
-    [x,~,button] = ginput(1);
-    zoom reset; fact = 20;
-    while ~isempty(button)
-        % regraph
-        delete(pat); pat = nan(size(tagonI));
-        for i = 1:length(tagonI)
-            pat(i) = rectangle('position',[tagonI(i) -10 tagoff(i)-tagonI(i) 600],'facecolor',[1 1 .4]); 
-        end;  oi = get(gca,'children'); oi=[oi(i+1:end); oi(1:i)]; set(gca,'children',oi);
-        if button == 3
-            fact = fact/2;
-            xlim([x-fact*60*fs x+fact*60*fs]); %surrounds the point by fact minutes
-            delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in, press "a" to ADD a set of boundaries, press "d" to delete a boundary','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
-            [x,~,button] = ginput(1);
-            if button == 3; continue; end
-        end
-        if button == 1
-            [~,e] = min(abs([tagonI tagoff]-x));
-            if e>length(tagonI); tagoff(e-length(tagonI)) = x;
-            else tagonI(e) = x; end
-            zoom out; delete(pat); pat = nan(size(tagonI));
-            for i = 1:length(tagonI);
+        TEX = text(.5,max(Depth),'LEFT click to CHANGE the boundary of the data, RIGHT click to ZOOM in. Press Enter when done.','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
+        [x,~,button] = ginput(1);
+        zoom reset; fact = 20;
+        while ~isempty(button)
+            % regraph
+            delete(pat); pat = nan(size(tagonI));
+            for i = 1:length(tagonI)
                 pat(i) = rectangle('position',[tagonI(i) -10 tagoff(i)-tagonI(i) 600],'facecolor',[1 1 .4]); 
             end;  oi = get(gca,'children'); oi=[oi(i+1:end); oi(1:i)]; set(gca,'children',oi);
-            delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in, press "a" to ADD a set of boundaries, press "d" to delete a boundary','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
-            [x,~,button] = ginput(1); fact = 20; continue;
+            if button == 3
+                fact = fact/2;
+                xlim([x-fact*60*fs x+fact*60*fs]); %surrounds the point by fact minutes
+                delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in, press "a" to ADD a set of boundaries, press "d" to delete a boundary','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
+                [x,~,button] = ginput(1);
+                if button == 3; continue; end
+            end
+            if button == 1
+                [~,e] = min(abs([tagonI tagoff]-x));
+                if e>length(tagonI); tagoff(e-length(tagonI)) = x;
+                else tagonI(e) = x; end
+                zoom out; delete(pat); pat = nan(size(tagonI));
+                for i = 1:length(tagonI);
+                    pat(i) = rectangle('position',[tagonI(i) -10 tagoff(i)-tagonI(i) 600],'facecolor',[1 1 .4]); 
+                end;  oi = get(gca,'children'); oi=[oi(i+1:end); oi(1:i)]; set(gca,'children',oi);
+                delete (TEX); TEX = text(min(get(gca,'xlim')),max(get(gca,'ylim')),'LEFT click to CHANGE a boundary for tag on/tag off, RIGHT click to ZOOM in, press "a" to ADD a set of boundaries, press "d" to delete a boundary','verticalalignment','bottom','fontweight','bold','horizontalalignment','left');
+                [x,~,button] = ginput(1); fact = 20; continue;
+            end
         end
+        %
+        if tagonI < 100
+            tagonI = 1;
+        end
+        tagoff = round(tagoff, 0);
+
+        oi = zeros(size(Depth));
+        for i = 1:length(tagonI)
+            oi(tagonI(i):tagoff(i)) = 1;
+        end
+        tagon = logical(oi);
+        % remove the data the was off-whale
+        data(~tagon,:)=[]; 
+        clearvars pat fact oi useold x TEX s e button
     end
-    %
-    if tagonI < 100
-        tagonI = 1;
-    end
-    tagoff = round(tagoff, 0);
-    
-    oi = zeros(size(Depth));
-    for i = 1:length(tagonI)
-        oi(tagonI(i):tagoff(i)) = 1;
-    end
-    tagon = logical(oi);
-    % remove the data the was off-whale
-    data(~tagon,:)=[]; 
-    clearvars pat fact oi useold x TEX s e button
     disp('Section 2a (Truncate Data) finished');
     
 %% 3. Save Imported File
@@ -378,6 +399,7 @@ if any(data.Pressure>10)&&min(data.Pressure)<.5*max(data.Pressure) % plot someth
         subplot(3,1,3); plot(time(oi3),p(oi3)); ylim([-5 max(p(oi3))]); xlim(time([oi3(1) oi3(end)])); set(gca,'xticklabel',datestr(get(gca,'xtick'),'mm/dd/yy HH:MM'),'ydir','rev');
         legend('Depth','Location','best');
         saveas(1,[fileloc filename(1:end-4) '_TDR3.bmp']);
+        saveas(1,[fileloc filename(1:end-4) '_TDR3.jpg']);
     end
 end
 disp('Section 4 (Plot) finished');

@@ -5,6 +5,8 @@ dbstop if error
 % based on the spherical_cal scripts at animaltags.org
 % 
 % oi = filterCATS([data.Comp1 data.Comp2 data.Comp3],ceil(ofs/8),round(ofs),.05); 
+% I2 = find(abs(diff(oi))>2);
+% oi([I2;I2-1; I2+1]) = nan;
 % data.Comp1 = oi(:,1); data.Comp2 = oi(:,2); data.Comp3 = oi(:,3);
 
 nout = length(DN);
