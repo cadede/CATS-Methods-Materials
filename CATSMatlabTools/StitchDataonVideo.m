@@ -110,7 +110,7 @@ if ~exist('speed','var');
 end
 
 if justflownoise
-    if justjiggle; speedFN = speed.PW; 
+    if justjiggle; speedFN = speed.JJ; 
     elseif ~exist('speedFN','var'); 
         speedFN = speed.FN; 
     end
