@@ -103,7 +103,7 @@ catch; try D = dir(fileloc(1:end)); D = {D.name}'; load([fileloc(1:end) D{~cellf
         end
     end
 end
-if ~wireless; oframeTimes = frameTimes; end
+if ~wireless || ~exist('oframeTimes','var'); oframeTimes = frameTimes; disp('Appears that frameTimes were not adjusted via timestamps on video frames, setting original frame Times variable (oframeTimes) to equal frameTimes'); end
 
 if ~exist('speed','var');
     speed = table(speedFN, cell(size(speedFN)),'VariableNames',{'comp','type'});  speed.type(:) = {'FN'};

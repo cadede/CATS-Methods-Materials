@@ -14,6 +14,7 @@ function [data, Adata, Atime, Hzs] = importAGMdata(FS)
 % rate, else data will be at the same sample rate as the accelerometer
 dbstop if error
   [file,fileloc] = uigetfile('*.csv','select csv file with AGM data');
+  UTC = import('UTC offset? ');
   
 %   if exist([depthloc 'Acc.txt'],'file'); accloc = depthloc; accfile = 'Acc.txt';
 %   else
@@ -38,7 +39,18 @@ Adata = [data.Acc1 data.Acc2 data.Acc3]; Atime = DN;
 
 Hzs = struct();%'accHz',accHz,'gyrHz',gyrHz,'magHz',magHz,'pHz',pHz,'lHz',lHz,'GPSHz',GPSHz,'UTC',UTC,'THz',THz,'T1Hz',T1Hz,'datafs',datafs);
 Hzs.accHz = Afs; Hzs.pHz = 1; Hzs.THz = 1; Hzs.datafs = Afs; Hzs.magHz = Afs; Hzs.gyrHz = Afs;
+Hzs.UTC = UTC;
 ODN = data.Date(1)+data.Time(1);
-   save([fileloc file(1:end-4) '.mat'],'data','Adata','Atime','Hzs','ODN');
+lastwarn('');
+    try
+        save([fileloc file(1:end-4) '.mat'],'data','Adata','Atime','Hzs','ODN');
+        if ~isempty(lastwarn)
+            error(lastwarn);
+        end
+    catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
+          save([fileloc file(1:end-4) '.mat'],'data','Adata','Atime','Hzs','ODN','-v7.3');
+        disp('Made a version 7.3 file (large data format) file');
+    end
+
 
 
