@@ -66,9 +66,9 @@ for i = [fnum1:-1:1 fnum1+1:length(filename)]
     vid = VideoReader([fileloc filename{i}]);
     vidDurs(movN(i)) = vid.Duration;
     if i <=fnum1
-        dn = datenum(dn1) - sum(vidDurs(i:fnum1-1))/60/60/24;
+        dn = datenum(dn1) - sum(vidDurs(movN(i:fnum1-1)))/60/60/24;
     else
-        dn = datenum(dn1) + sum(vidDurs(fnum1:i-1))/60/60/24;
+        dn = datenum(dn1) + sum(vidDurs(movN(fnum1:i-1)))/60/60/24;
     end
     ds = datestr(dn,'yyyymmdd-HHMMSS-fff');
     str = [lab '-' ds '-' sprintf('%05u',movN(i))];
