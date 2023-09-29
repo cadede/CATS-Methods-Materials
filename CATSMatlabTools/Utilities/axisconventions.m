@@ -39,6 +39,10 @@ elseif strcmpi(tagtype,'Beacon')
    axAo = [-y x z];
    axMo = [-y x z];
    axGo = [-y x z];
+elseif strcmpi(tagtype,'Trident')
+   axAo = [-y -x -z];
+   axMo = [-y -x -z];
+   axGo = [-y -x -z];
 elseif strcmpi(tagtype,'Mini')
     axAo = [y x -z];
     axMo = [x y z];

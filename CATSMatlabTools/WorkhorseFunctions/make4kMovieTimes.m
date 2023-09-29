@@ -114,7 +114,7 @@ for n = 1:length(movies)
 %     end
 end
 mfirst = movN(1);
-
+mlast = movN(end);
 
 % One version of CATS video files did not have video numbers (only times).  This adds them in. (Should be unnecessary now).
 % if any(diff(movN)<1) || any (diff(movN)>40)
