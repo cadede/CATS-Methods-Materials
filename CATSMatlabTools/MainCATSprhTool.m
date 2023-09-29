@@ -1,5 +1,3 @@
-%new
-
 % David Cade
 % version 5.19.2021
 % UC Santa Cruz
