@@ -441,7 +441,7 @@ end
 else
     frameSize = [nan nan];
 end
-vidDurs(movN(mlast-m1+1)+1:end) = []; frameTimes(movN( mlast-m1+1)+1:end) = []; vidDN(movN( mlast-m1+1)+1:end) = []; vidNam(movN( mlast-m1+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
+vidDurs(movN(mlast-mfirst+1)+1:end) = []; frameTimes(movN( mlast-mfirst+1)+1:end) = []; vidDN(movN( mlast-mfirst+1)+1:end) = []; vidNam(movN( mlast-mfirst+1)+1:end) = []; try oframeTimes(movN( mlast-mfirst+1)+1:end) = []; catch; end
 vid4k = true;
 save([dataloc datafile(1:end-4) 'movieTimes.mat'],'vidDurs','frameTimes','movies','vidDN','vidNam','frameSize','vid4k');
 if ~timestamps || ~exist('oframeTimes','var'); oframeTimes = frameTimes; end
