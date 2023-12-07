@@ -65,7 +65,8 @@ for sp = {'FN','JJ','SP','JRMS','JJr2','FNr2','section','JJP68','JJP95','JJ95','
     else speed.(sp{1}) = speedFN;
     end
 end
-for i =  unique(ispeed.section)'
+oi = ispeed.section; oi(isnan(oi)) = [];
+for i =  unique(oi)'
     Ii = find(ispeed.section==i,1);
     Ii(2) = find(ispeed.section == i,1,'last');
     In = find(speed.section==i,1);
