@@ -10,7 +10,7 @@ cd(prhloc)
 cd(cf);
 
 vars = load([prhloc prhfile],'vidDN','timedif','audstart','vidDurs','vidNum','fs','ofs','camon','tagon','nocam','noaud','nopress','df','CAL','Hzs','DN','whaleName'...
-    ,'p','pitch','A','At','roll');
+    ,'p','pitch','A','At','roll','INFO','CAL','OTAB');
 names = fieldnames(vars);
 for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);
@@ -30,13 +30,34 @@ if ~exist('At','var'); At = A; vars.At = At; end
 if ~exist('tagon','var'); tagon = gettagon(p,fs,DN(1),At); vars.tagon = tagon; end
 if ~exist('timedif','var'); timedif = 0; end
 vars.audstart = audstart;
+tag1 = find(vars.tagon,1);
+tag2 = find(vars.tagon,1,'last');
+try tagslip = INFO.tagslip; tagprh = INFO.tagprh;
+catch; try tagslip = OTAB(:,1:2); tagprh = OTAB(:,3:5);
+catch; try tagslip = CAL.OTAB(:,1:2); tagprh = CAL.OTAB(:,3:5);
+catch; try tagslip = d3initialCAL.OTAB(:,1:2); tagprh = d3initialCAL.OTAB(:,3:5);
+catch; try tagslip = d3initialCAL.CAL.OTAB(:,1:2); tagprh = d3initialCAL.CAL.OTAB(:,3:5);
+catch; warning('No tagslip information in INFO file or CAL file');
+    warning('Will use tag on and off as only tag slips for speed, else load CAL file with OTAB info');
+tagslip = [tag1 tag1; tag2 tag2];
+end; end; end; end; end
+speedper = [tagslip(:,1) [tagslip(1,2:end); tagslip(2,end)]]; 
+todel = [];
+for i = 2:size(speedper,1)
+    if ~any(abs(circ_dist(tagprh(i,:),tagprh(i-1,:))*180/pi)>15) %15 is arbitrary.  If the slippage in p,r and h of the tag is < 15 degrees, just consider the tag to have been stable
+        todel = [todel; i-1];
+        speedper(i,1) = speedper(i-1,1);
+    end
+end
+speedper(todel,:)= [];
+
+
 if ~exist('noaud','var') || ~noaud
 [flownoise,AUD] = getflownoise(audiodir,vars); noaud = false;
 else; noaud = true;
 end
 
-tag1 = find(vars.tagon,1);
-tag2 = find(vars.tagon,1,'last');
+
     disp('Done importing, check out figure 300 to examine data for outliers');
 % plot data.  Look for outliers, may have to remove data above a threshold
 % if there are spikes (sometimes happens at start and end of recordings)
@@ -94,8 +115,8 @@ minDepth = 5;
 minPitch = 45;
 minSpeed = 1;
 
-slips = [tag1 tag1; tag2 tag2];
-speedper = [tag1 tag2];
+slips = tagslip; %[tag1 tag1; tag2 tag2];
+% speedper = [tag1 tag2];
 
 % speedEnds([1 4 5 end-1:end]) = [];
 % speedper = [1 430000; 430000 speedper(end)];
