@@ -1,6 +1,7 @@
 % make dtag prh 2 cats data (requires d3 tag tools)
-clearvars -except CAL
-% first load in appropriate cal file 
+clearvars -except CAL DEPLOY
+% first load in appropriate cal file and using settagpath and d3loadcal to load "CAL" and "DEPLOY" (if a prh has been created
+% already in a dtag format)
 % loads data from swv files
 % set these valu
 folder = 'G:\Shared drives\Goldbogen Transfer\Energetics of Exposure\All prh files\SoCal beaked\bb12_214a\';
@@ -57,7 +58,7 @@ Hzs = struct('Afs',afs,'accHz',min(datafs,afs),'gyrHz',nan,'magHz',min(datafs,mf
 data = table(Date,Time,Pressure,Acc1,Acc2,Acc3,Comp1,Comp2,Comp3,Temp);
 
 d3initialCAL = CAL;
-save([folder name '.mat'],'data','Hzs','ODN','Adata','Atime','d3initialCAL')
+save([folder name '.mat'],'data','Hzs','ODN','Adata','Atime','d3initialCAL','DEPLOY')
 
 % figure; plot(DN,A)
 % acal = [1 0 0; 0 1 0; 0 0 -1];

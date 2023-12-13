@@ -10,7 +10,7 @@ cd(prhloc)
 cd(cf);
 
 vars = load([prhloc prhfile],'vidDN','timedif','audstart','vidDurs','vidNum','fs','ofs','camon','tagon','nocam','noaud','nopress','df','CAL','Hzs','DN','whaleName'...
-    ,'p','pitch','A','At','roll','INFO','CAL','OTAB');
+    ,'p','pitch','A','At','roll','INFO','CAL','OTAB','DEPLOY');
 names = fieldnames(vars);
 for i = 1:length(names)
     eval([names{i} ' = vars.' names{i} ';']);
@@ -32,16 +32,22 @@ if ~exist('timedif','var'); timedif = 0; end
 vars.audstart = audstart;
 tag1 = find(vars.tagon,1);
 tag2 = find(vars.tagon,1,'last');
-try tagslip = INFO.tagslip; tagprh = INFO.tagprh;
-catch; try tagslip = OTAB(:,1:2); tagprh = OTAB(:,3:5);
-catch; try tagslip = CAL.OTAB(:,1:2); tagprh = CAL.OTAB(:,3:5);
-catch; try tagslip = d3initialCAL.OTAB(:,1:2); tagprh = d3initialCAL.OTAB(:,3:5);
-catch; try tagslip = d3initialCAL.CAL.OTAB(:,1:2); tagprh = d3initialCAL.CAL.OTAB(:,3:5);
+if ~exist('OTAB','var'); try OTAB = CAL.OTAB;
+catch; try OTAB = d3initialCAL.OTAB;
+catch; try OTAB = d3initialCAL.CAL.OTAB;
+catch; try OTAB = DEPLOY.OTAB;
+catch; try OTAB = d3initialCAL.DEPLOY.OTAB;
+end; end; end; end; end; end
+
+try tagslip = INFO.tagslip;  try tagprh = INFO.tagprh; catch; end
+catch; try tagslip = [OTAB(:,1:2); [tag2 tag2]]; try tagprh = OTAB(:,3:5);  catch; end
 catch; warning('No tagslip information in INFO file or CAL file');
     warning('Will use tag on and off as only tag slips for speed, else load CAL file with OTAB info');
-tagslip = [tag1 tag1; tag2 tag2];
-end; end; end; end; end
-speedper = [tagslip(:,1) [tagslip(1,2:end); tagslip(2,end)]]; 
+tagslip = [tag1 tag1; tag2 tag2]; speedper = [tagslip(:,1) [tagslip(1,2:end); tagslip(2,end)]]; 
+end; end
+if any(tagslip==0); tagslip(tagslip == 0) = tag1; end
+speedper = [tagslip(1:end-1,1) [tagslip(2:end-1,1); tagslip(end,2)]];
+ 
 todel = [];
 for i = 2:size(speedper,1)
     if ~any(abs(circ_dist(tagprh(i,:),tagprh(i-1,:))*180/pi)>15) %15 is arbitrary.  If the slippage in p,r and h of the tag is < 15 degrees, just consider the tag to have been stable
