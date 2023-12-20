@@ -67,8 +67,12 @@ elseif strcmpi(tagtype,'TDR10')
 axAo = [-x y z];
 axMo = [x y z];
 axGo = [x y z]; % no gyros or mag
+elseif strcmpi(tagtype,'TDR10_New')
+axAo = [x y z];
+axMo = [x y z];
+axGo = [x y z]; % no gyros or mag
 elseif strcmpi(tagtype,'TDR10_rotate')
-axAo = [x -y z];
+axAo = [-x -y z];
 axMo = [x y z];
 axGo = [x y z];
 elseif strcmpi(tagtype,'kitten')
