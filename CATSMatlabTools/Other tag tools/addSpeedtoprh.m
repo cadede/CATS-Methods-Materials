@@ -40,7 +40,7 @@ catch; try OTAB = d3initialCAL.DEPLOY.OTAB;
 end; end; end; end; end; end
 
 try tagslip = INFO.tagslip;  try tagprh = INFO.tagprh; catch; end
-catch; try tagslip = [OTAB(:,1:2); [tag2 tag2]]; try tagprh = OTAB(:,3:5);  catch; end
+catch; try tagslip = [OTAB(:,1:2)*fs; [tag2 tag2]]; try tagprh = OTAB(:,3:5);  catch; end
 catch; warning('No tagslip information in INFO file or CAL file');
     warning('Will use tag on and off as only tag slips for speed, else load CAL file with OTAB info');
 tagslip = [tag1 tag1; tag2 tag2]; speedper = [tagslip(:,1) [tagslip(1,2:end); tagslip(2,end)]]; 
@@ -57,7 +57,7 @@ for i = 2:size(speedper,1)
 end
 speedper(todel,:)= [];
 
-
+%%
 if ~exist('noaud','var') || ~noaud
 [flownoise,AUD] = getflownoise(audiodir,vars); noaud = false;
 else; noaud = true;
