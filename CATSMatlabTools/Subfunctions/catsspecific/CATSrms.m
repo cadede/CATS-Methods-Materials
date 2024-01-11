@@ -30,6 +30,7 @@ elseif size(aud.data,2) == 1
 x = aud.data(:,1); % just use one channel of the data
 else
     maxRMS1 = max(aud.data(:,1)); maxRMS2 = max(aud.data(:,2)); 
+    figure(200); clf; plot(aud.data); legend('Channel 1', 'Channel 2');
     if maxRMS1<maxRMS2; x = aud.data(:,1); disp('First column is low gain, using that audio channel');
     else x = aud.data(:,2); disp('Second column is low gain, using that audio channel');
     end
