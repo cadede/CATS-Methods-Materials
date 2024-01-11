@@ -15,7 +15,7 @@ if useexistingcalibration; str = 'none';
 else; str = 'full';
 end
 
- d3 = readd3xml([folder fileprefix '003.xml']);
+ d3 = readd3xml([folder fileprefix '001.xml']);
  ODN = datenum(d3.CFG{1}.TIME,'yyyy,mm,dd,HH,MM,SS');
  disp(['Start Time: ' datestr(ODN)]);
  X=d3readswv(folder,fileprefix,df);

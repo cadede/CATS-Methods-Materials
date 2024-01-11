@@ -26,8 +26,13 @@ if nov - (1-1/fs)*afs/df > .01 % if your bin size isn't an integer, you have a p
 end
 if sum(aud.data(:,1)==0) == length(aud.data); disp('audiodata column 1 is empty, using audio channel 2');
     x = aud.data(:,2);
-else
+elseif size(aud.data,2) == 1
 x = aud.data(:,1); % just use one channel of the data
+else
+    maxRMS1 = max(aud.data(:,1)); maxRMS2 = max(aud.data(:,2)); 
+    if maxRMS1<maxRMS2; x = aud.data(:,1); disp('First column is low gain, using that audio channel');
+    else x = aud.data(:,2); disp('Second column is low gain, using that audio channel');
+    end
 end
 timeoffset = aud.totalDuration-length(x)/afs; %the amount of time after the start of the video that the audio starts
 xd = decdc(x,df); %x decimated

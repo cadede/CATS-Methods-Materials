@@ -7,11 +7,11 @@ clearvars -except CAL DEPLOY TAGON OTAB TAGLOC
 
 % data need to be in a folder structure such that swv files are in (e.g.)
 % [folder \zc10\zc10_272a\ with "name" as the deployment ID
-folder = 'G:\Shared drives\Goldbogen Transfer\Energetics of Exposure\All prh files\SoCal beaked\';
-fileprefix = 'zc272a';
+folder = 'G:\Shared drives\Goldbogen Transfer\Energetics of Exposure\B-stroke energetics manuscript\Data\dtg files\';
+fileprefix = 'ha176a';
 % ODN = datenum([2015 07 31 8 4s6 52]);
 df = 1;
-name = 'zc10_272a';
+name = 'ha13_176a';
 useexistingcalibration = true;
 
 if useexistingcalibration; str = 'none';
