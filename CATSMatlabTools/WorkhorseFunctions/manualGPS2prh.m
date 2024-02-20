@@ -87,6 +87,8 @@ if ~ischar(GPSfile);
             if t == 1;
                 tagoffGPS(1) = input('Lat?  ');
                 tagoffGPS(2) = input('Long?  ');
+            else
+                try hits(3,:) = []; catch; end
             end
         elseif (datenum(hits(end,1))-DN(find(tagon,1,'last'))) > 1/24 && INFO.tagnum<=47; % if it was more than an hour between tag off and tag recovery
             disp(['Tag recovery was ' num2str((datenum(hits(end,1))-DN(find(tagon,1,'last')))*24) ' hours after tag off, do you have a better tag off location (e.g. high quality Argos close to tagoff time?).  ']);
@@ -109,6 +111,12 @@ latcol = find(~cellfun(@isempty,cellfun(@(x) regexpi(x,'Lat'),hits(1,:),'uniform
 longcol =  find(~cellfun(@isempty,cellfun(@(x) regexpi(x,'Long'),hits(1,:),'uniformoutput',false)),1);
 hits = hits(2:end,:);
 %
+try 
+    hits(isnan(hits(:,latcol)),:) = [];
+catch
+    hits(isnan(vertcat(hits{:,latcol})),:) = [];
+end
+
 
 try gDN = datenum(hits(:,timecol));
 catch gDN = datenum(vertcat(hits{:,timecol}));

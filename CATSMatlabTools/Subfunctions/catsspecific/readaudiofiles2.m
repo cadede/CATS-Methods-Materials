@@ -98,20 +98,24 @@ for n = 1:length(movies)
         badaudio = false;
         fid = fopen([movieloc movies{n}]); 
         y = fread(fid,'int16'); bits = 16; fclose(fid);
-        if sum(y(2:2:end)==0) ~= length(y)/2
-            fid = fopen([movieloc movies{n}]); 
-            y = fread(fid,'int32'); bits = 32; fclose(fid);
-            if sum(y(2:2:end)==0) ~= length(y)/2
-                if ~ignorebadaudio
-                    error('Audio bit rate unknown (not 16 or 32 bits)');
-                else
-                    warning(['audio file ' movies{n} ' cannot be read properly, possibly encoding error']);
-                    disp('moving to "bad audio" directory and making an empty audio file in its place');
-                    fid = fopen([movieloc movies{n}]);
-                    y = fread(fid,'int16'); bits = 16; fclose(fid);
-                    badaudio = true;
+        if sum(y(2:2:end)==0) ~= length(y)/2 
+%             if sum(y(2:2:end)==0)/(length(y)/2)>.98 % have more tolerance
+%                 warning('Some non-zero values in channel 2, but seems to be 16 bit one channel data');
+%             else
+                fid = fopen([movieloc movies{n}]);
+                y = fread(fid,'int32'); bits = 32; fclose(fid);
+                if sum(y(2:2:end)==0) ~= length(y)/2
+                    if ~ignorebadaudio
+                        error('Audio bit rate unknown (not 16 or 32 bits)');
+                    else
+                        warning(['audio file ' movies{n} ' cannot be read properly, possibly encoding error']);
+                        disp('moving to "bad audio" directory and making an empty audio file in its place');
+                        fid = fopen([movieloc movies{n}]);
+                        y = fread(fid,'int16'); bits = 16; fclose(fid);
+                        badaudio = true;
+                    end
                 end
-            end
+%             end
         end
         
         y = y/2^(bits-1);

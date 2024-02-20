@@ -206,6 +206,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat1' 'GPSsat2'}; catch; try headers(~cellfun(@isempty,strfind(headers,'GPS'))) = {'GPSDate' 'GPSTime' 'GPSsat'}; catch; end; end
         try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA' 'BATTmAh'}; catch;  try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv' 'BATTmA'}; catch; try headers(~cellfun(@isempty,strfind(headers,'BATT'))) = {'BATTv'}; catch; end;  end; end
         try headers(~cellfun(@isempty,strfind(headers,'Camera time'))) = {'CamTime'}; catch; end
+        try headers(~cellfun(@isempty,strfind(headers,'Pitot'))) = {'Pitot' 'PitotT'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC status'))) = {'CamOn'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC vid. '))) = {'VidSize'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'EC ['))) = {'EC'}; catch; end

@@ -44,7 +44,7 @@ catch; warning('Could not find map image, select map file or press cancel to use
     cd(fileloc);
     [map,mapfl] = uigetfile('*.*','Select map image file');
     cd(cf);
-    if isempty(mapfl)||mapfl == 0; map = bf; mapfl = bfl; end
+    if isempty(mapfl)||all(mapfl == 0); map = bf; mapfl = bfl; end
 end
 try prhi =  D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),D,'uniformoutput',false))&isimag}; catch; end
 try prhi =  Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),Dql,'uniformoutput',false))&isimagql}; prhi = ['QL\' prhi]; catch; end
@@ -64,7 +64,7 @@ catch; warning('Could not find kml image, select kml file or press cancel to use
     cd(fileloc);
     [kml,kmlfl] = uigetfile('*.*','Select kml image file');
     cd(cf);
-    if isempty(kmlfl)||kmlfl == 0; kmlfl = bfl; kml = bf; end
+    if isempty(kmlfl)||all(kmlfl == 0); kmlfl = bfl; kml = bf; end
 end
 try
     try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
@@ -76,7 +76,7 @@ catch; warning('Could not find ptrack image, select ptrack file or press cancel 
     cd(fileloc);
     [gt,gtfl] = uigetfile('*.*','Select ptrack image file');
     cd(cf);
-    if isempty(gtfl)|| gtfl == 0; gt = bf; gtfl = bfl; end
+    if isempty(gtfl)|| all(gtfl == 0); gt = bf; gtfl = bfl; end
 end
 try
     try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
@@ -88,7 +88,7 @@ catch; warning('Could not find geotrack image, select ptrack or press cancel to 
     cd(fileloc);
     [pt,ptfl] = uigetfile('*.*','Select geotrack image file');
     cd(cf);
-    if isempty(ptfl)||ptfl==0; pt = bf; ptfl = bfl; end
+    if isempty(ptfl)||all(ptfl==0); pt = bf; ptfl = bfl; end
 end
 try try cam = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),Dql,'uniformoutput',false))&isimagql};
         cam = ['QL\' cam];
@@ -109,7 +109,7 @@ catch; warning('Could not find ID photo, select ID photo or press cancel to use 
     cd(fileloc);
     [ID,IDfl] = uigetfile('*.*','Select ID photo');
     cd(cf);
-    if isempty(IDfl)||IDfl == 0; ID = bf; IDfl = bfl; end
+    if isempty(IDfl)||all(IDfl == 0); ID = bf; IDfl = bfl; end
 end
 try
 TAG = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'TAG_'),D,'uniformoutput',false))}];
@@ -117,9 +117,9 @@ TAGfl = fileloc;
 [im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
 catch; warning('Could not find photo of tag on animal, select photo or press cancel to use blank file.');
     cd(fileloc);
-    [TAG,TAGfl] = uigetfile('*.*','Select ID photo');
+    [TAG,TAGfl] = uigetfile('*.*','Select tag on photo');
     cd(cf);
-    if isempty(TAGfl)||TAGfl==0; TAG = bf; TAGfl = bfl; end
+    if isempty(TAGfl)||all(TAGfl==0); TAG = bf; TAGfl = bfl; end
     
 end
 if sum(~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))) > 0
@@ -154,11 +154,18 @@ gt = im;
 pt = im;
 %note: fix this to be more flexible if no ID file or tag file exists (make
 %blank image)
+try
 [im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
 ID = im;
+catch
+    ID = ones(size(pt));
+end
+try
 [im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
 TAG = im;
-
+catch
+    TAG = ones(size(pt));
+end
 
 try
     fileloc2 = fileloc(1:regexp(fileloc,'tag_data')-1);

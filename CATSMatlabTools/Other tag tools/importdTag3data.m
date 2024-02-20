@@ -4,11 +4,11 @@ clearvars -except CAL DEPLOY
 % already in a dtag format)
 % loads data from swv files
 % set these valu
-folder = 'G:\Shared drives\Goldbogen Transfer\Energetics of Exposure\All prh files\SoCal beaked\bb12_214a\';
-fileprefix = 'bb12_214a';
+folder = '\\hmsjgsynology\musculus\Gold Data\Tag Data\Dtags\SOCAL\SOCAL11_Archive\Dtag\data\zc11\zc11_267a\';
+fileprefix = 'zc267a';
 % ODN = datenum([2015 07 31 8 4s6 52]);
 df = 1;
-name = 'bb12_214a';
+name = 'zc11_267a';
 useexistingcalibration = true;
 
 if useexistingcalibration; str = 'none';

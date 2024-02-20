@@ -11,7 +11,9 @@ global fileloc filename
 if nargin<12; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
  Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
-% synch 
+pconst = CAL.pconst; pcal = CAL.pcal;
+ 
+ % synch 
 try if viddata.vid4k
         synchaudio = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
         
@@ -91,8 +93,11 @@ if nocam
     tagslip = [1 1]; %tagslipC = 1; % confidence of tagslip.  1 if you see it move on a video, 0 if you estimate based on max jerk
     camon = false(size(DN)); audon = false(size(DN));
     if exist('pconst','var'); p = (data.Pressure-pconst)*pcal;
-        %     [~,peakmag] = peakfinder(p,3,min(p)+6,-1); p = p-max(min(peakmag),max(peakmag)-2);
     else p = data.Pressure;
+    end
+    [~,peakmag] = peakfinder(p,3,min(p)+6,-1);
+    if abs(mean(peakmag))>1;
+        p = p-max(min(peakmag),max(peakmag)-2);
     end
  vidDN = nan; vidDurs = 0;
 else
@@ -176,10 +181,12 @@ else
         end
         if nopress; p = data.Pressure; else
             if exist('pconst','var'); p = (data.Pressure-pconst)*pcal;
-                %             [~,peakmag] = peakfinder(p,3,min(p)+6,-1); p = p-max(min(peakmag),max(peakmag)-2);
             else p = data.Pressure;
             end
-
+            [~,peakmag] = peakfinder(p,3,min(p)+6,-1);
+            if abs(mean(peakmag))>1;
+                p = p-max(min(peakmag),max(peakmag)-2);
+            end
         end
         % took out DN because it is automatically imported from the
         % function
