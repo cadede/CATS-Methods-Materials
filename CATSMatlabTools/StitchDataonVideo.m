@@ -259,13 +259,14 @@ clear doublebits;
 startn = startn;
 
 % some new files had audio trouble.  If they are remade, this helps find
-% them.  You will want to move your wav files 
-if exist([fileloc 'for audio//'],'dir'); audioloc = [fileloc 'for audio//']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
-% if you need to read wav files, revisit making structure here.
-    elseif exist([fileloc 'wavfiles//'],'dir'); audioloc = [fileloc 'wavfiles//']; checkaudiofs = true; audioend = 'wav';
-elseif exist([fileloc(1:end-4) 'AudioData//'],'dir'); audioloc = [fileloc(1:end-4) 'AudioData//']; checkaudiofs = true; audioend = 'wav'; %'audio.mat';%
-else audioloc = fileloc; checkaudiofs = false;
-end
+% % them.  You will want to move your wav files 
+% if exist([fileloc 'for audio//'],'dir'); audioloc = [fileloc 'for audio//']; checkaudiofs = true; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end);
+% % if you need to read wav files, revisit making structure here.
+%     elseif exist([fileloc 'wavfiles//'],'dir'); audioloc = [fileloc 'wavfiles//']; checkaudiofs = true; audioend = 'wav';
+% elseif exist([fileloc(1:end-4) 'AudioData//'],'dir'); audioloc = [fileloc(1:end-4) 'AudioData//']; checkaudiofs = true; audioend = 'wav'; %'audio.mat';%
+% else audioloc = fileloc; checkaudiofs = false;
+% end
+audioloc = fileloc; checkaudiofs = false;
 if ~exist('T','var'); T = nan(size(p));end; if ~exist('Light','var'); Light = nan(size(p)); end
 
 % if checkaudiofs; audioend = dir(audioloc); audioend = audioend(end).name(end-2:end); end
