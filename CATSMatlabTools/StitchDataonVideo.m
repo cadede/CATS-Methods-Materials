@@ -136,6 +136,10 @@ tic
 toc
 if abs(vid.width/vid.height-16/9)>.1; warning ('Single video is not 16 x 9. '); end
 vidW = vid.width; vidH = vid.height;
+if vidW ~= frameSize(1) 
+    warning(['frameSize from movieTimes = ' num2str(frameSize) ', but selected movies are ' num2str([vidW vidH]) ', using selected size']);
+    frameSize = [vidW vidH];
+end
 ysize = round(2.15/14.3*vidH*14.3/10);%260;%215; % vertical pixel size of graph % assumes a screen area of a media player that is 14.3 cm tall by 30.8 wide
 xsize = round(21.5/17.7*vidW);
 if vidW > 1500; adF = 2; else adF = 0; end % adjust fontsize slightly

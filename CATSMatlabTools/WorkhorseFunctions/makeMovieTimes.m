@@ -143,10 +143,11 @@ frameTimes = cell(max(movN),1);
 vidDurs = nan(size(frameTimes));
 if strcmp(dataloc(end-3:end-1),'raw'); dataloc = dataloc(1:end-4); end
 DIR = [dataloc 'AudioData\'];
+if ripAudio
 if ~exist (DIR,'dir')
     mkdir (DIR);
 end
-
+end
 % if timestamps; 
     oframeTimes = frameTimes; 
 % end

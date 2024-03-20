@@ -15,5 +15,6 @@ for ii = 1:length(lats)
 end
 KML = ge_folder('Points',kmlstr);
 outfile = [fileloc(1) ':\' whaleName '.kml'];
+if ~ispc; outfile = [fileloc whaleName '.kml']; end
 try ge_output(outfile,KML); catch; d = regexp(fileloc,'\'); outfile = [fileloc(1:d(3)) whaleName '.kml']; ge_output(outfile,KML); end
-movefile(outfile,[fileloc '\' whaleName 'geoPtrack.kml'],'f'); % come long directory names were giving problems to ge
+if ispc; movefile(outfile,[fileloc '\' whaleName 'geoPtrack.kml'],'f'); end % some long directory names were giving problems to ge

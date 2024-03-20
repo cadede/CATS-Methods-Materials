@@ -14,7 +14,13 @@ load([INFOloc INFOfile]);%,'noc
 VARS = load([INFOloc INFOfile]);%,
 VARS = fieldnames(VARS);
 
-if abs(Hzs.datafs/newfs - round(Hzs.datafs/newfs)) > .001; error(['new sample rate (' num2str(newfs) ') does not divide evenly into original sample rate (' num2str(Hzs.datafs) ')' ]); end
+if abs(Hzs.datafs/newfs - round(Hzs.datafs/newfs)) > .001; warning(['new sample rate (' num2str(newfs) ') does not divide evenly into original sample rate (' num2str(Hzs.datafs) ')']);
+    disp('Will have to "resample" data instead of decimating which interpolates data to some degree, check plot at end to ensure no errors were introduced');
+    xx = input('Continue anyway? 1 = yes, 2 = no ');
+    if xx == 2; return; end
+    baddf = true;
+else baddf = false;
+end
 
 trunc = dir([prhloc '*truncate.mat']);
 try rawfile = [trunc.name(1:end-12) 'truncate.mat'];
@@ -35,9 +41,38 @@ DN = (DNorig(1):1/newfs/24/60/60:DNorig(end))';
 slips = round(slips*newfs/ifs);
 Wchange = round(Wchange*newfs/ifs);
 for k = 1:length(calperiodI); calperiodI{k} = round(calperiodI{k}*newfs/ifs); end
-Depth = decdc(data.Pressure,df);
-[fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
-[p,At,Mt,Gt,T,TempI,Light] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
+if ~baddf
+    Depth = decdc(data.Pressure,df);
+    [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data,Depth,CAL,ofs,DN,df,Hzs,tagon,camon,audon,tagslip);
+    [p,At,Mt,Gt,T,TempI,Light] = applyCal2(data,DN,CAL,camondec,ofs,Hzs,df);
+else
+    tempfs = floor(Hzs.datafs/newfs)*newfs; if tempfs == 0; tempfs = newfs; end
+    tempDN = (DN(1):1/tempfs/24/60/60:DN(end))';
+    tempdf = tempfs/newfs;
+    toresamp = {'Pressure','Acc1','Acc2','Acc3','Comp1','Comp2','Comp3','Gyr1','Gyr2','Gyr3','Light1','Light2','Temp','Temp1','Temp2'};
+    data2 = table();
+    data2.Date(:,1) = floor(tempDN); data2.Time = tempDN-floor(tempDN);
+    for ii = 1:length(toresamp)
+        try VAR = timeseries(data.(toresamp{ii}),data.Date+data.Time); catch; warning(['No ' toresamp{ii} ' variable in data table']); continue; end
+        VAR = resample(VAR,tempDN);
+        if any(isnan(VAR.data)); VAR.data = edgenans(inpaint_nans(VAR.data)); end
+        data2.(toresamp{ii}) = VAR.data;
+    end
+    Depth = decdc(data2.Pressure,tempdf);
+    [fs,Mt_bench,At_bench,Gt,DN,Temp,Light,LightIR,Temp1,tagondec,camondec,audondec,tagslipdec] = decimateandapplybenchcal(data2,Depth,CAL,tempfs,DN,tempdf,Hzs,tagon,camon,audon,tagslip);
+    [p,At,Mt,Gt,T,TempI,Light] = applyCal2(data2,DN,CAL,camondec,tempfs,Hzs,tempdf);
+    figure(10); clf; s1 = subplot(311); h = plot(data.Date+data.Time,data.Pressure,data2.Date+data2.Time,data2.Pressure);
+    set(h(1),'linewidth',3); set(h(2),'linewidth',2,'color','k','linestyle','--'); legend('Original','Resampled');
+    set(s1,'ydir','rev')
+    title('Depth')
+    s2 = subplot(312); h = plot(data.Date+data.Time,[data.Acc1 data.Acc2 data.Acc3],data2.Date+data2.Time,[data2.Acc1 data2.Acc2 data2.Acc3]);
+    set(h(1:3),'linewidth',3); set(h(4:6),'linewidth',2,'color','k','linestyle','--'); legend(h([1 4]),'Original','Resampled');
+    title('Accelerometer');
+    s3 = subplot(313); h = plot(data.Date+data.Time,[data.Comp1 data.Comp2 data.Comp3],data2.Date+data2.Time,[data2.Comp1 data2.Comp2 data2.Comp3]);
+    set(h(1:3),'linewidth',3); set(h(4:6),'linewidth',2,'color','k','linestyle','--'); legend(h([1 4]),'Original','Resampled');
+    title('Magnetometer');
+    linkaxes([s1 s2 s3],'x');
+end
 Mt = fir_nodelay(Mt,128,2/(fs/2),'low');
 [Aw,Mw,Gw] = applyW(W,slips(1:end-1,2),slips(2:end,1),At,Mt,Gt);
 [pitch,roll,head] = calcprh(Aw,Mw,dec);
@@ -99,7 +134,7 @@ if exist('nopress','var') && nopress; INFO.NoPressure = true; end % if there's a
 load([prhloc prhfile],'vidDN','vidNam','vidDurs','viddeploy','GPS');
 GPSI = find(~isnan(GPS(:,1)));
 iGPS = GPS;
-GPSIn = round(GPSI*newfs/ifs);
+GPSIn = round(GPSI*newfs/ifs); if GPSIn(1) == 0; GPSIn(1) = 1; end;
 GPS = nan(length(DN),2);
 GPS(GPSIn,:) = iGPS(GPSI,:);
 

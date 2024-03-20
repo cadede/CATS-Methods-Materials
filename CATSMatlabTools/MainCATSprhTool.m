@@ -807,7 +807,7 @@ try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % Machine Learning Toolbox, Mapping Toolbox
 
 creator = 'DEC';
-notes = 'Gaps present in file. In painted with nans. flow noise not created due to gaps in files. d4 set up as Left hand orientation, so swapped z-axis for M and A.';
+notes = '';
 
 load([fileloc filename(1:end-4) 'Info.mat']);%,'nocam','speedstats','Temp','Light','JigRMS','CAL','fs','timedif','DN','flownoise','camondec','ofs','Hzs','df','dec','W','slips','tagondec','audondec');
 if CellNum<11; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
@@ -881,19 +881,19 @@ INFO.creator = creator;
 INFO.Hzs = Hzs; %original data sample rates
 
 
-try GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
-    disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
-    y = input('(1 = yes, 2 = no) ');
-    INFO.GPSoffset = GPSoffset;
-    if y == 1
-        DN = DN + GPSoffset;
-        vidDN = vidDN + GPSoffset;
-        audstart = audstart + GPSoffset;
-        
-        INFO.TimeNote = 'IMU time offset to match GPS time';
-    end
-catch
-end
+% try GPSoffset = median(data.GPSTime+data.GPSDate+INFO.UTC/24 - data.Date-data.Time);
+%     disp(['Data time appears to be off from GPS time by ' num2str(GPSoffset*24*60*60) ' s. Adjust all times to match GPS time?' ])
+%     y = input('(1 = yes, 2 = no) ');
+%     INFO.GPSoffset = GPSoffset;
+%     if y == 1
+%         DN = DN + GPSoffset;
+%         vidDN = vidDN + GPSoffset;
+%         audstart = audstart + GPSoffset;
+%         
+%         INFO.TimeNote = 'IMU time offset to match GPS time';
+%     end
+% catch
+% end
 
 AUD.start = audstart;
 try

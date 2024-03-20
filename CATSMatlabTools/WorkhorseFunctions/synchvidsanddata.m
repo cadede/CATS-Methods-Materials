@@ -77,8 +77,21 @@ if viddata.vid4k && ~isempty(synchaudio) && synchaudio == 1
     xlim([audioI2(1) audioI2(end)]/aud.rate)
     audstart = DN(x)-x2/aud.rate/24/60/60;
     disp(['Old Audio start time: ' datestr(DN(1), 'dd-mmm-yyyy HH:MM:SS.fff')]);
-    disp(['New Audio Start time: ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff') '. Will be asked to rename audio files after prh process is complete.']);
-%     close(FF);
+    disp(['New Audio Start time: ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff')]);% '. Will be asked to rename audio files after prh process is complete.']);
+    kk = input('Rename audio files with new time adjument (recommended)? 1 = yes, 2 = no : ');
+    if kk == 1
+        D = dir(audloc); D = {D.name}; D = D(3:end);
+        for kk = 1:length(D)
+            II = strfind(D{kk},'-');
+            otime = datenum(D{kk}(II(end-2)+1:II(end)+3),'yyyymmdd-HHMMSS-fff');
+            newtime = otime+audstart-DN(1);
+            newfile = [D{kk}(1:II(end-2)) datestr(newtime,'yyyymmdd-HHMMSS-fff') D{kk}(II(end)+4:end)];
+            disp(['old file = ' D{kk}]);
+            disp(['new file = ' newfile]);
+            movefile([audloc D{kk}],[audloc newfile]);
+        end
+    end
+    %     close(FF);
 else
     audstart = nan;
 end

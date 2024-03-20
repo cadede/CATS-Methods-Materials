@@ -104,7 +104,7 @@ if synchaudio == 1
         if ~exist([fileloc 'AudioData\'],'dir'); mkdir([fileloc 'AudioData\']); end
         for i = round(p1/fs)*FS:FS*60*60:round(p2/fs*FS)
             if i> audioInfo.TotalSamples; warning(['wav file stopped recording ' num2str(i) ' hours after deployment']); break; end
-            [Y,FS] = audioread([audiofileloc audiofile],[i min(i+FS*60*60-1,audioInfo.TotalSamples)]);
+            [Y,FS] = audioread([audiofileloc audiofile],[max(i,1) min(i+FS*60*60-1,audioInfo.TotalSamples)]);
             astart = datevec(data.Date(1)+data.Time(1)+(k-1)*1/24); % was p1, but data is already truncated so need to use first value
             astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
             audiowrite([fileloc 'AudioData\' astart],Y,FS);
