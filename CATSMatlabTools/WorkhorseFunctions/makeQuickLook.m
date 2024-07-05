@@ -13,11 +13,12 @@ co = [0 0 1;
       0.25 0.25 0.25];
 set(groot,'defaultAxesColorOrder',co);
 
+if ispc; sl = '\'; else sl = '/'; end
 
 if nargin<1
      [~,fileloc] = uigetfile('*.*','Select prh file in the folder where figures and photos and data live');
 end
-ql = [fileloc 'QL\'];
+ql = [fileloc 'QL' sl];
 %
 D = dir(fileloc); isDir = vertcat(D.isdir);
 D = {D.name}'; %D = D(3:end);
@@ -29,14 +30,14 @@ whaleName = prhf(1:regexp(prhf,' ')-1);
 isID = ~cellfun(@isempty,cellfun(@(x) regexpi(x,whaleName),D,'uniformoutput',false));
 cf = pwd; cd(fileloc);
    blankfileloc = mfilename('fullpath');
-        i = strfind( blankfileloc,'\');
+        i = strfind( blankfileloc,sl);
          blankfileloc =  blankfileloc(1:i(end));
-         bfl = [ blankfileloc 'Structures\'];
+         bfl = [ blankfileloc 'Structures//'];
          bf = 'NoDataImage.jpg';
         
 try
     try map = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),Dql,'uniformoutput',false))&isimagql};
-        map = ['QL\' map];
+        map = ['QL//' map];
     catch; map = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'map'),D,'uniformoutput',false))&isimag};
     end
     mapfl = fileloc; 
@@ -47,16 +48,16 @@ catch; warning('Could not find map image, select map file or press cancel to use
     if isempty(mapfl)||all(mapfl == 0); map = bf; mapfl = bfl; end
 end
 try prhi =  D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),D,'uniformoutput',false))&isimag}; catch; end
-try prhi =  Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),Dql,'uniformoutput',false))&isimagql}; prhi = ['QL\' prhi]; catch; end
+try prhi =  Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'prh'),Dql,'uniformoutput',false))&isimagql}; prhi = ['QL//' prhi]; catch; end
 try try tdr = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'tdr'),Dql,'uniformoutput',false))&isimagql};
-        tdr = ['QL\' tdr];
+        tdr = ['QL//' tdr];
     catch; tdr = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'tdr'),D,'uniformoutput',false))&isimag&isID};
     end
 catch; try tdr = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'tdr'),D,'uniformoutput',false))&isimag}; catch; tdr = []; end
 end
 try
     try kml = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),Dql,'uniformoutput',false))&isimagql};
-        kml = ['QL\' kml];
+        kml = ['QL//' kml];
     catch; kml = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'kml'),D,'uniformoutput',false))&isimag};
     end
     kmlfl = fileloc;
@@ -68,7 +69,7 @@ catch; warning('Could not find kml image, select kml file or press cancel to use
 end
 try
     try gt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),Dql,'uniformoutput',false))&isimagql};
-        gt = ['QL\' gt];
+        gt = ['QL//' gt];
     catch; gt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ptrack'),D,'uniformoutput',false))&isimag};
     end
     gtfl = fileloc;
@@ -80,7 +81,7 @@ catch; warning('Could not find ptrack image, select ptrack file or press cancel 
 end
 try
     try pt = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),Dql,'uniformoutput',false))&isimagql};
-        pt = ['QL\' pt];
+        pt = ['QL//' pt];
     catch; pt = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'geotrack'),D,'uniformoutput',false))&isimag};
     end
     ptfl = fileloc;
@@ -91,8 +92,8 @@ catch; warning('Could not find geotrack image, select ptrack or press cancel to 
     if isempty(ptfl)||all(ptfl==0); pt = bf; ptfl = bfl; end
 end
 try try cam = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),Dql,'uniformoutput',false))&isimagql};
-        cam = ['QL\' cam];
-        try cam2 = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam2'),Dql,'uniformoutput',false))&isimagql}; cam2 = ['QL\' cam2]; catch; cam2 = []; end
+        cam = ['QL//' cam];
+        try cam2 = Dql{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam2'),Dql,'uniformoutput',false))&isimagql}; cam2 = ['QL//' cam2]; catch; cam2 = []; end
     catch; cam = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam'),D,'uniformoutput',false))&isimag};
         try cam2 = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'cam2'),D,'uniformoutput',false))&isimag}; catch; cam2 = []; end
     end
@@ -102,7 +103,7 @@ end
 pfold = D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'Pic'),D,'uniformoutput',false))&isDir};
 D = dir([fileloc pfold]); D = {D.name}';
 try
-ID = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ID_'),D,'uniformoutput',false))}];
+ID = [pfold '//' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'ID_'),D,'uniformoutput',false))}];
 IDfl = fileloc;
 [im,imc] = imread([IDfl ID]); try im = ind2rgb(im,imc); catch; end
 catch; warning('Could not find ID photo, select ID photo or press cancel to use blank file.');
@@ -112,7 +113,7 @@ catch; warning('Could not find ID photo, select ID photo or press cancel to use 
     if isempty(IDfl)||all(IDfl == 0); ID = bf; IDfl = bfl; end
 end
 try
-TAG = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'TAG_'),D,'uniformoutput',false))}];
+TAG = [pfold '//' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'TAG_'),D,'uniformoutput',false))}];
 TAGfl = fileloc;
 [im,imc] = imread([TAGfl TAG]); try im = ind2rgb(im,imc); catch; end
 catch; warning('Could not find photo of tag on animal, select photo or press cancel to use blank file.');
@@ -123,7 +124,7 @@ catch; warning('Could not find photo of tag on animal, select photo or press can
     
 end
 if sum(~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))) > 0
-    DRONE = [pfold '\' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))}];
+    DRONE = [pfold '//' D{~cellfun(@isempty,cellfun(@(x) regexpi(x,'drone_'),D,'uniformoutput',false))}];
     [im,imc] = imread([fileloc DRONE]); try im = ind2rgb(im,imc); catch; end
     DRONE = im;
     drone = true;
@@ -238,7 +239,7 @@ if makemetadata
                 loc = mfilename('fullpath');
                 iiii = strfind(loc,'CATSMatlabTools');
                 loc = loc(1:iiii+15);
-                temploc = [loc 'templates\'];
+                temploc = [loc 'templates//'];
                 copyfile([temploc 'ATN_Metadata.xls'],[fileloc 'ATN_Metadata.xls']);
             catch
             [filenameATN,filelocATN] = uigetfile('*.*','Select ATN_Metadata Template');

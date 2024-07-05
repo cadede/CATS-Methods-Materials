@@ -549,7 +549,7 @@ if any(sum(Mdiff == 0 & Mdiff2 == 0 & Mdiff3 == 0 & Mdiff4 == 0 & Mdiff5 == 0)>.
 disp('Can select tag on and tag off times, or press ctrl+c to escape');
 try
     if sum(data.Pressure>5)<fs*120; error('less than two minutes of dives below 5 m'); end
-    tagon = gettagon(data.Pressure,fs,data.Date(1)+data.Time(1),[data.Acc1 data.Acc2 data.Acc3]);
+    tagon = gettagon(data.Pressure,fs,data.Date+data.Time,[data.Acc1 data.Acc2 data.Acc3]);
     save([newfileloc file(1:end-3) 'mat'],'tagon','-append');
 catch
     disp('No pressure data (or less than two minutes of dives deeper than 5 m) or error in gettagon function, could not determine tag on time')

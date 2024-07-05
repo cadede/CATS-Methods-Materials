@@ -115,7 +115,7 @@ disp('Step 1 successfully completed')
 
 clearvars -except fileloc filename tagtype data tagnum benchfile benchloc benchdata acal aconst txtdata
 
-if ~(strcmpi(tagtype,'acousonde') || (length(tagtype)>=5 && strcmpi(tagtype(1:5),'TDR10')));
+if ~(strcmpi(tagtype,'acousonde') || contains(tagtype,'LL') || (length(tagtype)>=5 && strcmpi(tagtype(1:5),'TDR10')));
     cf = pwd; if ischar(fileloc); cd(fileloc); end
     [filename2,fileloc2]=uigetfile('*.mat', 'select mat file with gyro calibrations','multiselect','on');
     cd(fileloc2);
@@ -171,7 +171,7 @@ newaxis = [
 fs = round(10/(median(diff(times*24*60*60))))/10 % sampling rate to the nearest tenth of a second, then converted to Hz
 
 if ~strcmp(tagtype,'TDR10'); comp = [data.Comp1 data.Comp2 data.Comp3];
-    if ~strcmp(tagtype,'acousonde'); gyro = [data.Gyr1 data.Gyr2 data.Gyr3]; else gyro = nan(size(comp)); end
+    if ~(strcmp(tagtype,'acousonde') || contains(tagtype,'LL')); gyro = [data.Gyr1 data.Gyr2 data.Gyr3]; else gyro = nan(size(comp)); end
 end
 acc = [data.Acc1 data.Acc2 data.Acc3];
 
@@ -189,7 +189,7 @@ for i = length(skippeddata):-1:1
     disp(['WARNING: Missing data of length ' num2str(numnew) ' at time ' datestr(times(skippeddata(i)),'HH:MM:SS.fff')]);
     
 end
-if ~strcmp(tagtype,'acousonde')&& ~strcmp(tagtype,'TDR10'); % take out
+if ~strcmp(tagtype,'acousonde')&& ~strcmp(tagtype,'TDR10') && ~contains(tagtype,'LL') ; % take out
     ssI = nan(length(starts),2); %start, stop index in the calibration file for each round
     for i = 1:length(starts)
         [~,b] = min(abs(times-starts(i)));

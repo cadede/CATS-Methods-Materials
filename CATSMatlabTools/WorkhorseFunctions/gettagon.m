@@ -1,15 +1,19 @@
-function tagon = gettagon(Depth,fs,starttime,At)
+function tagon = gettagon(Depth,fs,DN,At)
 
 % get tagon and tagoff times
 % id tagon and tagoff times by zooming in and selecting the boundaries of
 % time on the whale.
 % inputs: Depth variable
 %          fs (sampling rate)
-%          starttime (matlab datenumber of the starttime- put 0 if unknown)
+%          DN (matlab datenumber at each time point. If only start time is known, enter that 
+%               and DN will be constructed based on sampling rate and assuming no gaps in data.
+%               If starttime is unknown, enter 0)
 %          At (another comparable variable.  Set up to be Acceleration, but could use temperature or even depth again just to make the script work if no other data is available)
 % output: tagon (an index of values for when the tag was on the whale
 
-DN = starttime:1/24/60/60/fs:starttime+(length(Depth)-1)/24/60/60/fs;
+if length(DN)==1
+    DN = DN:1/24/60/60/fs:DN+(length(Depth)-1)/24/60/60/fs;
+end
 
 
 tagon = find(Depth>1,1,'first');

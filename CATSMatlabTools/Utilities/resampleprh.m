@@ -1,7 +1,7 @@
 function resampleprh(newfs,prhloc,INFOloc)
 %based on old file "adjustcatssamplerate"
-% newfs = new sample rate (must be divisible by original sample rate of
-% data
+% newfs = new sample rate (if not divisible by original sample rate,
+%          function offers to resample data instead of only decimating it)
 %prhloc = file location of prh file
 % INFOloc = file location of raw data (INFO file)
 
@@ -38,7 +38,7 @@ df = Hzs.datafs/newfs;
 iDN = DN;
 DN = (DNorig(1):1/newfs/24/60/60:DNorig(end))';
 % [Depth,CAL] = pressurecal(data,DN,CAL,false,ofs,df,tagon,Hzs.pHz);
-slips = round(slips*newfs/ifs);
+slips = round(slips*newfs/ifs); if slips(1)==0; slips(1) = 1; end
 Wchange = round(Wchange*newfs/ifs);
 for k = 1:length(calperiodI); calperiodI{k} = round(calperiodI{k}*newfs/ifs); end
 if ~baddf

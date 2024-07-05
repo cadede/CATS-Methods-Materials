@@ -23,14 +23,16 @@ function		ncfile = CATSnc(prhfile,tagguideloc,ncloc,author)
 % Add Provider_Name and Provider_Organization
 % 
 % nargin = 0; %uncomment this line if you are running from the code (not as a function)
+if ispc; sl = '\'; else sl = '/'; end
+
 if nargin <3 || isempty(ncloc);
     if nargin > 1; 
         % Load the NC Metadata Structures
         % look for Structures folder in same directory as this script
         p = mfilename('fullpath');
-        i = strfind(p,'\');
+        i = strfind(p,sl);
         p = p(1:i(end));
-        ncloc = [p 'Structures\'];
+        ncloc = [p ['Structures' sl]];
         clearvars p i;
         if 7~= exist(ncloc, 'dir')
             [~,ncloc]=uigetfile('*.*', 'Select any file in the Structures folder (check Utilities folder)');
@@ -42,9 +44,9 @@ if nargin <3 || isempty(ncloc);
         % Load the NC Metadata Structures
         % look for Structures folder in same directory as this script
         p = mfilename('fullpath');
-        i = strfind(p,'\');
+        i = strfind(p,sl);
         p = p(1:i(end));
-        ncloc = [p 'Structures\'];
+        ncloc = [p 'Structures' sl];
         clearvars p i;
         if 7~=exist(ncloc, 'dir')
             [~,ncloc]=uigetfile('*.*', 'Select any file in the Structures folder');
@@ -59,9 +61,9 @@ if nargin <3 || isempty(ncloc);
         % look for Structures folder in same directory as this script
         try
             p = mfilename('fullpath');
-            i = strfind(p,'\');
+            i = strfind(p,sl);
             p = p(1:i(end));
-            ncloc = [p 'Structures\'];
+            ncloc = [p 'Structures' sl];
             clearvars p i;        
             if 7~=exist(ncloc, 'dir')
                 [~,ncloc]=uigetfile('*.*', 'Select any file in the Structures folder');
@@ -73,6 +75,7 @@ if nargin <3 || isempty(ncloc);
     end
 end
 %% 1. Load files
+
 i = strfind(prhfile,'\');
 prhfileloc = prhfile(1:i(end));
 prhfilename = prhfile(i(end)+1:end);
@@ -81,7 +84,7 @@ load([prhfileloc prhfilename(1:end-3) 'mat']);
 load([prhfileloc prhfilename(1:end-3) 'mat'],'INFO','GPS','pitch','roll','head','tagon','DN'); %initialize variables for matlab 2020 and higher
 whalename = INFO.whaleName; %prhfilename(1:iii-1);
 try
-    ii = strfind(tagguideloc,'\');
+    ii = strfind(tagguideloc,sl);
     fileloc = tagguideloc(1:ii(end));
     filename = tagguideloc(ii(end)+1:end);
     % iii = strfind(prhfilename,' ');

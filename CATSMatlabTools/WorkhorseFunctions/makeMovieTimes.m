@@ -59,7 +59,9 @@ m2 = dir(movieloc); m2 = {m2.name}; todel = false(size(m2)); todel(1:2) = true; 
 % these try catch help choose which files to import
 try % find all movies in the water to get all relevant audio
     m2times = nan(size(m2));
-    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
+    try for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
+    catch; for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-3)+1:slashI(end)-2),'yyyymmdd-HHMMSS'); end
+    end
     rootDIR = folder; loc1 = strfind(movieloc,'CATS'); if ~isempty(loc1); rootDIR = movieloc(1:loc1+4); end
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch;  titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));

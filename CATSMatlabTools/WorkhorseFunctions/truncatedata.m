@@ -25,7 +25,9 @@ if abs(ODN-ODN2)>1/24/60/60; warning(['Data start time (ODN variable) does not m
     warning('If no ODN, rerun importCATSdata if necessary, starting from csv1 or create ODN variable from data start time in txt file');
     quitprogram = input('Continue despite offset? 1 = yes, 2 = no'); if quitprogram == 2; error('function terminated'); end
 end
-if sum(data.Pressure) == 0; disp('No pressure sensor'); data.Pressure(:) = 30; p = data.Pressure; nopress = true;
+if sum(data.Pressure) == 0||all(diff(data.Pressure)==0)||sum(isnan(data.Pressure)) == length(data.Pressure); 
+    disp('No pressure sensor'); data.Pressure(:) = 30; p = data.Acc3; %p = data.Pressure; 
+    nopress = true;
 else
     p = data.Pressure; nopress = false;
 end

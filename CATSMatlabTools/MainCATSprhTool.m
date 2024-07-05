@@ -43,9 +43,9 @@ disp('Section completed')
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'E://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
-vid4k = true; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
-% set to true if there are are no audio files to read.
-readaudiofiles = true; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+vid4k = false; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
+% set to true if there are audio files to read.
+readaudiofiles = false; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
 
 % these will be less commonly adjusted
@@ -156,7 +156,7 @@ end
 % can set to a specific start time in matlab datenumber format.  
 % Leave as nan to use the graphical interface, or 
 % set to 0 if you do not want to truncate the start time at all.
-truncstart = 0;
+truncstart = nan;
 
 % Follow the prompts at the top of the plot, will need to press enter twice
 % to accept the default selection, or follow prompts to choose the location
@@ -996,7 +996,7 @@ end
 AA = Aw;
 % eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
 for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
-[fpk,q] = dsf(AA(tagon,:),fs,fs); % determine dominant stroke frequency (from animaltags.org)
+[fpk,q] = dsf(AA(tagon,:),fs,min(5,fs)); % determine dominant stroke frequency (from animaltags.org)
 disp(['dominant stroke frequency: ' num2str(fpk) ' quality: ' num2str(q)]);
 [bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses method from animaltags.org (allows for filtering) and then rotates back to normal axis orientation.
 bodyhead = wrapToPi(m2h([Mw(:,1:2) -Mw(:,3)],[AA(:,1:2) -AA(:,3)],fs,fpk/2)+dec);
