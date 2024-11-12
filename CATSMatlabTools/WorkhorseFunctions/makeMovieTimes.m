@@ -304,6 +304,9 @@ for n = 1:length(movies)
         else %simpleread and timestamps.  This only reads some of the timecodes from the video frame, and compares it to what is read from mmread
             vid = mmread([movieloc movies{n}], [],[starttime endtime],false,true);
             flag = true; iii = -1;
+            if isempty(vid.frames); warning(['No frames detected after ' num2str(endtime-dur) ' s, despite reported video length of  ' num2str(videoL) ' s, moving to next video']);
+                break;
+            end
             while flag && iii<100 % try 100 frames until you get a good read
                 iii = iii+1;
                 [newf, flag] = gettimestamp(vid.frames(end-iii).cdata,false);

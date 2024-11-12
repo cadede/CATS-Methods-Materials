@@ -996,7 +996,7 @@ end
 AA = Aw;
 % eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
 for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
-[fpk,q] = dsf(AA(tagon,:),fs,min(5,fs)); % determine dominant stroke frequency (from animaltags.org)
+[fpk,q] = dsf(AA(tagon,:),fs,min(4,fs)); % determine dominant stroke frequency (from animaltags.org)
 disp(['dominant stroke frequency: ' num2str(fpk) ' quality: ' num2str(q)]);
 [bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses method from animaltags.org (allows for filtering) and then rotates back to normal axis orientation.
 bodyhead = wrapToPi(m2h([Mw(:,1:2) -Mw(:,3)],[AA(:,1:2) -AA(:,3)],fs,fpk/2)+dec);

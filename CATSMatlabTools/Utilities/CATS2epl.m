@@ -8,19 +8,32 @@
 % set filedest where your prh file is and filedest2 where you want the
 % final epl file
     clearvars -except D n
-filedest = 'E:\CATS\tag_data\mn200313-70 (Antarctic)\';% ['E:\CATS\tag_data\' D{n} '\'];
-filedest2 = 'F:\Antarctic\2020\epl\';
-Istart = 102878;%120000; % to truncate file to a certain segment, set these to the indices of your prh file.
-Iend = 138000;
-if ~isinf(Iend) || Istart~=1; tail = ['-' num2str(Istart) '-' num2str(Iend)]; trunc = true;
-else tail = ''; trunc = false;
-end
+filedest = 'S:\Elasmobranchs\Basking Shark\CATS\tag_data\cm240502-D2 (Ireland)\';% ['E:\CATS\tag_data\' D{n} '\'];
+filedest2 = 'F:\Ireland\2024\Tag epl files\';
+% Istart = 102878;%120000; % to truncate file to a certain segment, set these to the indices of your prh file.
+% Iend = 138000;
+Tstart = [2024 05 02 10 31 21]; % time start and end of prey mapping around tagged animal (in local time)
+    Tend = [2024 05 02 12 23 14]; 
+
 
 D2 = dir(filedest); D2 = {D2.name}; prhfile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'prh.mat'),D2,'uniformoutput',false))};
-lungefile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))};
-if isempty(lungefile); D2 = dir([filedest 'lunges\']); D2 = {D2.name}; lungefile = ['lunges\' D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))}]; end
+try
+    lungefile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))};
+    if isempty(lungefile); D2 = dir([filedest 'lunges\']); D2 = {D2.name}; lungefile = ['lunges\' D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'lunges.mat'),D2,'uniformoutput',false))}]; end
+    load([filedest lungefile]);
+catch
+    warning('No lunge file detected')
+end
 load([filedest prhfile]);
-load([filedest lungefile]);
+
+[~,Istart] = min(abs(DN-(datenum(Tstart)-30/60/24))); Istart = max(find(tagon,1),Istart); % start the epl file 30 minutes before prey mapping starts (or tag on)
+[~,Iend] = min(abs(DN-(datenum(Tend)+30/60/24))); Iende = min(find(tagon,1,'last'),Iend); % start the epl file 30 minutes before prey mapping starts (or tag on)
+if ~isinf(Iend) || Istart~=1 %tail = ['-' num2str(Istart) '-' num2str(Iend)];
+    T1 = round(datevec(DN(Istart))); T2 = round(datevec(DN(Iend)));
+    tail = ['-' sprintf('%02d',T1(4),T1(5),T1(6)) '-' sprintf('%02d',T2(4),T2(5),T2(6))];
+    trunc = true;
+else tail = ''; trunc = false;
+end
 FS = 1;
 df = round(fs/FS);  if FS>fs || abs(round(fs/FS)-fs/FS)> .001; error('Choose an FS smaller than fs that divides evenly'); end
 % heads = {'Ping_date' 'Ping_Time' 'Ping_milliseconds' 'Latitude' 'Longitude' 'Position_status' 'Depth' 'Line_status' 'Ping_status' 'Altitude' 'GPS_UTC_time'};
@@ -68,6 +81,6 @@ end
 % csvwrite(,[heads; table2cell(T)]);
 % dlmwrite('B:\Dropbox\data\Supergroup\Gold foraging scaling\bwdive.csv',table2cell(T),',');
 writetable(T,[filedest INFO.whaleName tail '.epl.txt'],'delimiter',',')
-movefile([filedest INFO.whaleName tail '.epl.txt'],[filedest2 INFO.whaleName tail '.epl']);
-disp([filedest2 INFO.whaleName tail '.epl written'])
+copyfile([filedest INFO.whaleName tail '.epl.txt'],[filedest2 INFO.whaleName tail '.epl']);
+disp([filedest2 INFO.whaleName tail '.epl written and copied to ' filedest])
 % end

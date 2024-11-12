@@ -329,7 +329,7 @@ while restart
             sp2 = subplot(412);
             OspeedTJ = fJ{ci,1}.a*exp(fJ{ci,1}.b*OJigRMS(OIc,1));
             if model&&ci>length(speedper(:,1)); OspeedTJ = fJ{ci,1}.a*exp(fJ{ci,1}.b*OJigRMSA(OIc,1)); end
-            OspeedTJ2 = fJ{ci,2}.a*exp(fJ{ci,2}.b*OFNRMS(OIc,1));
+            if numRMS == 2; OspeedTJ2 = fJ{ci,2}.a*exp(fJ{ci,2}.b*OFNRMS(OIc,1)); else; OspeedTJ2 = fJ{end,2}.a*exp(fJ{end,2}.b*OFNRMS(OIc,1)); end
             hold on; plot(DN(sectI),speedSP(sectI),'r.','markersize',8);
             ylabel('speed (m/s)');
             plot(DN(I),speedSP(I),'g.','markersize',6);
@@ -353,13 +353,13 @@ while restart
             end
             speed.sectionUsed(OIc) = oi;
             speed.r2(OIc,1) = round(gofJ{ci,1}.rsquare*100)/100;
-            speed.r2(OIc,2) = round(gofJ{ci,2}.rsquare*100)/100;
+if numRMS == 2;            speed.r2(OIc,2) = round(gofJ{ci,2}.rsquare*100)/100; else; speed.r2(OIc,2) = round(gofJ{end,2}.rsquare*100)/100; end
             speed.section(OIc) = i;
             if model&&ci>length(speedper(:,1))&&isempty(button);
                 OJigRMS(OIc,1) = OJigRMSA(OIc);
             end
             r2.([label1 'r2'])(i) = round(gofJ{ci,1}.rsquare*100)/100;
-            r2.([label2 'r2'])(i) = round(gofJ{ci,2}.rsquare*100)/100;
+          if numRMS == 2;  r2.([label2 'r2'])(i) = round(gofJ{ci,2}.rsquare*100)/100; else; r2.([label2 'r2'])(i) = round(gofJ{end,2}.rsquare*100)/100; end
             if ci>length(speedper(:,1)); r2.sectionUsed(i) = {'All'}; else  r2.sectionUsed(i) = {num2str(ci)}; end
         end
     end

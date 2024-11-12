@@ -34,7 +34,7 @@ UTC = -UTCs(TZnum,4)/60; %reported in wrong direction from convention
 DV = datevec(DN);
 yy = DV(1);
 DSToff = UTCs(TZnum,[8 11]); DSTon = UTCs(TZnum,[16 19]);
-if sum(DSToff)~=0 && ~sum(isnan(DSToff)) == 2;
+if sum(DSToff)~=0 && ~(sum(isnan(DSToff)) == 2);
     dayoff = max(find(weekday(datenum(yy,DSToff(1),1):datenum(yy,DSToff(1),1)+30)==1,DSToff(2)));
     dayon = max(find(weekday(datenum(yy,DSTon(1),1):datenum(yy,DSTon(1),1)+30)==1,DSTon(2)));
     dayoff = datenum(yy,DSToff(1),dayoff); dayon = datenum(yy,DSTon(1),dayon);

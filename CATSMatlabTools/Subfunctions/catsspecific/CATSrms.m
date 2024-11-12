@@ -26,7 +26,7 @@ if nov - (1-1/fs)*afs/df > .01 % if your bin size isn't an integer, you have a p
 end
 if sum(aud.data(:,1)==0) == length(aud.data); disp('audiodata column 1 is empty, using audio channel 2');
     x = aud.data(:,2);
-elseif size(aud.data,2) == 1 || all(diff(aud.data(:,2))==0) || all(isnan(aud.data(:,2)))
+elseif size(aud.data,2) == 1 || sum(diff(aud.data(:,2))==0)>.95*length(aud.data(:,2)) || sum(isnan(aud.data(:,2)))>.95*length(aud.data(:,2))
 x = aud.data(:,1); % just use one channel of the data
 else
     maxRMS1 = nanmean(aud.data(:,1)); maxRMS2 = nanmean(aud.data(:,2)); 
