@@ -929,7 +929,7 @@ disp('Section 12 finished, prh file and INFO saved');
 % Matlab packages required: Mapping toolbox
 
 
-clearvars -except fileloc filename 
+% clearvars -except fileloc filename 
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
@@ -975,7 +975,7 @@ disp('GPS data added from pos file, could plot points using script below or move
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
 
-% Matlab packages required: Signal Processing Toolbox,
+% Matlab packages required: Signal Processing Toolbox,vision
 
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');

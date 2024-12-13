@@ -1,7 +1,7 @@
-function [data, Adata, Atime] = importTDR10toCATS(DAP,fileloc, filename)
+ function [data, Adata, Atime] = importTDR10toCATS(DAP,fileloc, filename)
 %
 % David Cade and James Fahlbusch
-% version 8.15.2023
+% version 6.2.2024
 % Goldbogen Lab
 % Stanford University
 %
@@ -11,6 +11,8 @@ function [data, Adata, Atime] = importTDR10toCATS(DAP,fileloc, filename)
 % accepts archive output from both DAP 3.0.0 and 3.0.067. The default DAP
 % version is 3.0.0 and you must specify in the input if you are using
 % 3.0.067.
+% 6/2/2024 JAF added the ability to handle different sampling rates for
+% Temp and Light
 %
 % format:
 % importTDR10toCATS(DAP,fileloc, filename);
@@ -143,16 +145,16 @@ end
     try data(:,'SmoothedLightLevel') = []; catch end
     try data(:,'Events') = []; catch end
     try data(:,'BatteryVoltage') = []; catch end
-    try data(:,'Wet_Dry') = []; catch end
-    try data(:,'Dry') = []; catch end
+%     try data(:,'Wet_Dry') = []; catch end
+%     try data(:,'Dry') = []; catch end
     try data(:,'DAPCorrectedLightLevel') = []; catch end
     try data(:,'DAPSmoothedLightLevel') = []; catch end
     
 %   Create repeated values for variables sampled at lower rates (e.g.Temp, Light)
 % Temp
-    % Create Temp at fs Hz by repeating 1Hz values
-    % Temp1Hz is the actual sampling rate of Temp
-    Temp1Hz = data.Temp(~isnan(data.Temp));%1hz vector of Temp
+    % Create Temp at fs by repeating Hz values
+    % TempHz is the actual sampling rate of Temp
+    TempHz = data.Temp(~isnan(data.Temp));%1hz vector of Temp
     TempDN = data.DN(~isnan(data.Temp));
     % Determine tempFS
     THz = 1/((TempDN(end)-TempDN(1))*24*60*60/length(TempDN));
@@ -165,10 +167,10 @@ end
     %to round to integer and display
         THz = round(THz);
     end   
-    % TempRep will have the 1Hz data repeated fs times per second
+    % TempRep will have the Hz data repeated fs times per second
     TempRep = nan(size(data.Temp));  
-    for i = 1:round(fs)  
-        TempRep(i:round(fs):length(Temp1Hz)*round(fs)) = Temp1Hz; 
+    for i = 1:round(fs)/THz  
+        TempRep(i:round(fs)/THz:length(TempHz)*(round(fs)/THz) ) = TempHz; 
     end
     % find NaN's at end
     nanStart = find(isnan(TempRep),1,'first'); % location of first NaN
@@ -182,8 +184,8 @@ end
     data.Temp = TempRep(1:length(data.Temp));
     clearvars TempRep TempDN lastGood nanStart;
 % Light    
-    % Light1Hz is the actual sampling rate of Light
-    Light1Hz = data.Light(~isnan(data.Light));%1hz vector of Light
+    % LightHz is the actual sampling rate of Light
+    LightHz = data.Light(~isnan(data.Light));%1hz vector of Light
     LightDN = data.DN(~isnan(data.Light));
     % Determine lightFS
     lHz = 1/((LightDN(end)-LightDN(1))*24*60*60/length(LightDN));
@@ -197,10 +199,10 @@ end
     %to round to integer and display
         lHz = round(lHz);
     end  
-    % LightRep will have the 1Hz data repeated 32 times per second
+    % LightRep will have the Hz data repeated 32 times per second
     LightRep = nan(size(data.Light));  
-    for i = 1:round(fs)  
-        LightRep(i:round(fs):length(Light1Hz)*round(fs)) = Light1Hz; 
+    for i = 1:round(fs)/lHz  
+        LightRep(i:round(fs)/lHz:length(LightHz)*round(fs)/lHz) = LightHz; 
     end
     % find NaN's at end
     nanStart = find(isnan(LightRep),1,'first'); % location of first NaN
@@ -214,25 +216,25 @@ end
     data.Light = LightRep(1:length(data.Light));
     clearvars LightRep LightDN lastGood nanStart;
 % TempInternal
-    % Create TempInternal at fs Hz by repeating 1Hz values
-    % Temp1Hz is the actual sampling rate of TempInternal
-    Temp1Hz = data.TempInternal(~isnan(data.TempInternal));%1hz vector of Temp
+    % Create TempInternal at fs Hz by repeating Hz values
+    % TempHz is the actual sampling rate of TempInternal
+    TempHz = data.TempInternal(~isnan(data.TempInternal));%1hz vector of Temp
     TempDN = data.DN(~isnan(data.TempInternal));
     % Determine tempFS
-    T1Hz = 1/((TempDN(end)-TempDN(1))*24*60*60/length(TempDN));
-    disp(['Internal Temperature sampling rate is: ', num2str(T1Hz) 'Hz']);
+    THz = 1/((TempDN(end)-TempDN(1))*24*60*60/length(TempDN));
+    disp(['Internal Temperature sampling rate is: ', num2str(THz) 'Hz']);
     %check if sampling rate is noninteger and if so round
-    if abs(round(T1Hz)-T1Hz)>.01;  disp('Internal Temperature sampling rate is non-integer, but using rounded value'); disp('T1Hz was '); disp(num2str(T1Hz)); 
-        T1Hz = round(T1Hz); disp('T1Hz is now '); disp(num2str(T1Hz)); 
+    if abs(round(THz)-THz)>.01;  disp('Internal Temperature sampling rate is non-integer, but using rounded value'); disp('THz was '); disp(num2str(THz)); 
+        THz = round(THz); disp('THz is now '); disp(num2str(THz)); 
     else
     %if the sampling rate is <.01 difference from integer value, we still need
     %to round to integer and display
-        T1Hz = round(T1Hz);
+        THz = round(THz);
     end   
-    % TempRep will have the 1Hz data repeated fs times per second
+    % TempRep will have the Hz data repeated fs times per second
     TempRep = nan(size(data.TempInternal));  
-    for i = 1:round(fs)  
-        TempRep(i:round(fs):length(Temp1Hz)*round(fs)) = Temp1Hz; 
+    for i = 1:round(fs)/THz  
+        TempRep(i:round(fs)/THz:length(TempHz)*round(fs)/THz) = TempHz; 
     end
     % find NaN's at end
     nanStart = find(isnan(TempRep),1,'first'); % location of first NaN
@@ -246,9 +248,9 @@ end
     data.TempInternal = TempRep(1:length(data.TempInternal));
     clearvars TempRep TempDN lastGood nanStart;    
 % TempDepthInternal
-    % Create TempDepthInternal at fs Hz by repeating 1Hz values
-    % Temp1Hz is the actual sampling rate of TempDepthInternal
-    Temp1Hz = data.TempDepthInternal(~isnan(data.TempDepthInternal));%1hz vector of TempDepthInternal
+    % Create TempDepthInternal at fs Hz by repeating Hz values
+    % TempHz is the actual sampling rate of TempDepthInternal
+    TempHz = data.TempDepthInternal(~isnan(data.TempDepthInternal));%1hz vector of TempDepthInternal
     TempDN = data.DN(~isnan(data.TempDepthInternal));
     % Determine tempFS
     TDIHz = 1/((TempDN(end)-TempDN(1))*24*60*60/length(TempDN));
@@ -261,10 +263,10 @@ end
     %to round to integer and display
         TDIHz = round(TDIHz);
     end   
-    % TempRep will have the 1Hz data repeated fs times per second
+    % TempRep will have the Hz data repeated fs times per second
     TempRep = nan(size(data.TempDepthInternal));  
-    for i = 1:round(fs)  
-        TempRep(i:round(fs):length(Temp1Hz)*round(fs)) = Temp1Hz; 
+    for i = 1:round(fs)/TDIHz  
+        TempRep(i:round(fs)/TDIHz:length(TempHz)*round(fs)/TDIHz) = TempHz; 
     end
     % find NaN's at end
     nanStart = find(isnan(TempRep),1,'first'); % location of first NaN
@@ -277,10 +279,43 @@ end
     end
     data.TempDepthInternal = TempRep(1:length(data.TempDepthInternal));
     clearvars TempRep TempDN lastGood nanStart;    
+ % Wet_Dry
+    % Create Wet_Dry at fs Hz by repeating Hz values
+    % Wet_DryHz is the actual sampling rate of Wet_Dry
+    Wet_Dry_Raw = data.Wet_Dry(~isnan(data.Wet_Dry));%1hz vector of Wet_Dry
+    Wet_DryDN = data.DN(~isnan(data.Wet_Dry));
+    % Determine Wet_DryFS
+    Wet_DryHz = 1/((Wet_DryDN(end)-Wet_DryDN(1))*24*60*60/length(Wet_DryDN));
+    disp(['Wet_Dry sampling rate is: ', num2str(Wet_DryHz) 'Hz']);
+    %check if sampling rate is noninteger and if so round
+    if abs(round(Wet_DryHz)-Wet_DryHz)>.01;  disp('Wet_Dry sampling rate is non-integer, but using rounded value'); 
+        disp('Wet_DryHz was '); disp(num2str(Wet_DryHz)); 
+        Wet_DryHz = round(Wet_DryHz); disp('Wet_DryHz is now '); disp(num2str(Wet_DryHz)); 
+    else
+    %if the sampling rate is <.01 difference from integer value, we still need
+    %to round to integer and display
+        Wet_DryHz = round(Wet_DryHz);
+    end   
+    % Wet_DryRep will have the Hz data repeated fs times per second
+    Wet_DryRep = nan(size(data.Wet_Dry));  
+    for i = 1:round(fs)/Wet_DryHz  
+        Wet_DryRep(i:round(fs)/Wet_DryHz:length(Wet_Dry_Raw)*round(fs)/Wet_DryHz) = Wet_Dry_Raw; 
+    end
+    % find NaN's at end
+    nanStart = find(isnan(Wet_DryRep),1,'first'); % location of first NaN
+    lastGood = find(~isnan(Wet_DryRep),1,'last'); % location of last good Wet_Dry value
+    % throw an error if there are too many NaN's being replaced at end.
+    if length(Wet_DryRep)-nanStart > fs 
+        error('There is an issue with the up/downsampling process of Wet_Dry') ;
+    else      
+        Wet_DryRep(nanStart:end) = Wet_DryRep(lastGood);
+    end
+    data.Wet_Dry = Wet_DryRep(1:length(data.Wet_Dry));
+    clearvars Wet_DryRep Wet_DryDN lastGood nanStart; 
     
     disp(head(data,5));
     % Save Hzs (determined from data)
-    Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',0,'THz',THz,'TDIHz',TDIHz);
+    Hzs = struct('accHz',fs,'gyrHz',fs,'magHz',fs,'pHz',fs,'lHz',lHz,'GPSHz',fs,'UTC',0,'THz',THz,'TDIHz',TDIHz,'Wet_DryHz',Wet_DryHz);
     ODN = data.DN(1);
     disp('Section 2 (Data Processing) finished');
         
@@ -375,11 +410,11 @@ Adata = [data.Acc1 data.Acc2 data.Acc3];
      if ~isempty(lastwarn)
          error(lastwarn);
      end
- catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
+  catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
      save([fileloc filename(1:end-4) '.mat'],'data','events','Adata','Atime','Hzs','ODN','-v7.3');
-     if ~isempty(notes); save([fileloc filename(1:end-3) 'mat'],'notes','-append'); end
+     if ~isempty(notes);save([fileloc filename(1:end-3) 'mat'],'notes','-append'); end
      disp('Made a version 7.3 file in order to include all');
- end
+  end
  disp('Section 3 (Save) finished');
 %% 4. Plot Depth Profile and Save as BMP
 if exist('pconst','var'); p = (data.Pressure-pconst)*pcal; else p = data.CorrectedDepth; p2 = data.Pressure; end
