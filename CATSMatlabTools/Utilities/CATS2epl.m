@@ -8,12 +8,12 @@
 % set filedest where your prh file is and filedest2 where you want the
 % final epl file
     clearvars -except D n
-filedest = 'S:\Elasmobranchs\Basking Shark\CATS\tag_data\cm240502-D2 (Ireland)\';% ['E:\CATS\tag_data\' D{n} '\'];
-filedest2 = 'F:\Ireland\2024\Tag epl files\';
+filedest = 'Y:\Gold Data\Tag Data\CATS\tag_data\bw180827-52 (IOS_Monterey)\';% ['E:\CATS\tag_data\' D{n} '\'];
+filedest2 = 'Y:\Gold Data\Echosounders\Monterey\2018\epl files\';
 % Istart = 102878;%120000; % to truncate file to a certain segment, set these to the indices of your prh file.
 % Iend = 138000;
-Tstart = [2024 05 02 10 31 21]; % time start and end of prey mapping around tagged animal (in local time)
-    Tend = [2024 05 02 12 23 14]; 
+Tstart = [2018 08 27 09 00 00 ]; % time start and end of prey mapping around tagged animal (in local time)
+    Tend = [2018 08 27 14 00 00]; 
 
 
 D2 = dir(filedest); D2 = {D2.name}; prhfile = D2{~cellfun(@isempty,cellfun(@(x) strfind(x,'prh.mat'),D2,'uniformoutput',false))};

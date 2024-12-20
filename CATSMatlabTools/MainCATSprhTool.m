@@ -253,8 +253,8 @@ tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Ac
 %processor speeds of CATS tags are sufficient to handle video/data time
 %synchs independently.
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
-nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
-audioonly = false; % set to true if tag has no camera but does have audio
+nocam = true; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
+audioonly = true; % set to true if tag has no camera but does have audio
 
 if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -298,6 +298,11 @@ if nocam
              end
          end
          if ~isempty(vidDN); audstart = vidDN(find(~isnan(vidDN),1)); end% audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
+            synchaudioB = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
+        if synchaudioB == 1
+             Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; 
+            audstart = synchaudio(tagon,DNorig,ofs,fileloc,data.Pressure,Atemp);
+        end
 %          audstart = nan; 
     else; audstart = nan;
     end
