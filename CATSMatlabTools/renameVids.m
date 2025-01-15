@@ -9,6 +9,8 @@
 % for files without the (stitched clip) appendix as long as they have the
 % video number embedded.
 
+% put prh file into the folder with the videos
+
 [filename,fileloc] = uigetfile('*.mp4','Grab files to rename','multiselect','on');
 if ~iscell(filename); filename = {filename}; end
 d = dir(fileloc); D = {d.name};

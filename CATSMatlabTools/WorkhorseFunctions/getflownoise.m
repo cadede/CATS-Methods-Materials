@@ -94,6 +94,8 @@ if ~nocam || ~noaud
             DBdf = 4;
         elseif aud.rate == 25811
             DBdf = 53;
+        elseif aud.rate == 23925
+            DBdf = 25;
         else error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
         end
         try

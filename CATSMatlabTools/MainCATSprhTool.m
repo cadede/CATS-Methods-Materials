@@ -253,8 +253,8 @@ tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Ac
 %processor speeds of CATS tags are sufficient to handle video/data time
 %synchs independently.
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
-nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
-audioonly = false; % set to true if tag has no camera but does have audio
+nocam = true; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
+audioonly = true; % set to true if tag has no camera but does have audio
 
 if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -298,6 +298,11 @@ if nocam
              end
          end
          if ~isempty(vidDN); audstart = vidDN(find(~isnan(vidDN),1)); end% audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
+            synchaudioB = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
+        if synchaudioB == 1
+             Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; 
+            audstart = synchaudio(tagon,DNorig,ofs,fileloc,data.Pressure,Atemp);
+        end
 %          audstart = nan; 
     else; audstart = nan;
     end
@@ -929,7 +934,7 @@ disp('Section 12 finished, prh file and INFO saved');
 % Matlab packages required: Mapping toolbox
 
 
-clearvars -except fileloc filename 
+% clearvars -except fileloc filename 
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
@@ -975,7 +980,7 @@ disp('GPS data added from pos file, could plot points using script below or move
 % This step also allows you to manually adjust auto GPS points, so worth
 % running.
 
-% Matlab packages required: Signal Processing Toolbox,
+% Matlab packages required: Signal Processing Toolbox,vision
 
 clearvars -except prhfile fileloc filename
 load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
@@ -996,7 +1001,7 @@ end
 AA = Aw;
 % eliminate nans at the beginning and end of the file so that the smoothed body pitch and roll don't have nans
 for i = 1:3; AA(:,i) = edgenans(fixgaps(Aw(:,i))); AA(isnan(AA(:,i)),i) = AA(find(~isnan(AA(:,i)),1,'last'),i); end
-[fpk,q] = dsf(AA(tagon,:),fs,min(5,fs)); % determine dominant stroke frequency (from animaltags.org)
+[fpk,q] = dsf(AA(tagon,:),fs,min(4,fs)); % determine dominant stroke frequency (from animaltags.org)
 disp(['dominant stroke frequency: ' num2str(fpk) ' quality: ' num2str(q)]);
 [bodypitch,bodyroll] = a2pr([AA(:,1:2) -AA(:,3)],fs,fpk/2); bodyroll = -bodyroll; %uses method from animaltags.org (allows for filtering) and then rotates back to normal axis orientation.
 bodyhead = wrapToPi(m2h([Mw(:,1:2) -Mw(:,3)],[AA(:,1:2) -AA(:,3)],fs,fpk/2)+dec);

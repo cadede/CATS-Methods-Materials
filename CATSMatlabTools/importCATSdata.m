@@ -211,6 +211,7 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'CC vid. '))) = {'VidSize'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'EC ['))) = {'EC'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
+        try headers(~cellfun(@isempty,strfind(headers,'SWS'))) = {'SWS'}; catch; end
         data.Properties.VariableNames = headers;
         
         [accHz,gyrHz,magHz,pHz,lHz,GPSHz,UTC,THz,T1Hz,ODN] = sampledRates(fileloc,file);

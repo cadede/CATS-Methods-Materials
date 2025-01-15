@@ -663,6 +663,11 @@ disp('Step 4 successfully completed')
 % acal =   1 / 8192  ; % * 9.80665; % last term for gravity
 % magcal = .15;
 % gycal = ( 1 / 32.8 ) * ( 3.141592653 / 180 );
+% For T series before firmware update
+%T = -2E-21*x^5 + 3E-16*x^4 - 2E-11*x^3 + 7E-07*x^2 - 0.014*x + 164.12 (for
+%extreme temps.
+% for 0 to 45, use Tconst = 82.258/.0017 and Tcal = -.0017 (T =
+% Tcal*(x-Tconst)
 
 str = 'CATS'; % can set a prefix (e.g. AcousondeCal32;
 if ~exist('Tcal','var'); Tcal = 1; Tconst = 0; end
