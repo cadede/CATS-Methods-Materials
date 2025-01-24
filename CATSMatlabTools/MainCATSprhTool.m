@@ -275,8 +275,8 @@ if nocam
          viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
          vidDN = viddata.vidDN; vidDurs = viddata.vidDurs;
          catch
-            warning('movieTimes file does not exist, if this is a CATS tag, press ''ctrl-c'' to quit and then run cell one on the audio files.');
-            warning('If this is not a cats tag press enter to try to read the start time of each audio file from the file name of files within the AudioData folder');
+            warning('movieTimes file does not exist, if this is a CATS tag with audio downloaded with camera data (older tags), press ''ctrl-c'' to quit and then run cell one on the audio files.');
+            warning('If this is not a cats tag, or a cats tag with audio downloaded separately via the diary (newer tags) press enter to try to read the start time of each audio file from the file name of files within the AudioData folder');
             warning('If there is an error, create a movieTimes file with a "vidDN" and "vidDurs" variable that matches the start time and duration of each audio file');
             pause;
             disp('Make a movieTimes file by reading timestamps from file names (e.g. for acousonde)? For dtag or continuous wav files with no gaps, press no')
@@ -297,7 +297,7 @@ if nocam
                  audon(a:b)= true;
              end
          end
-         if ~isempty(vidDN); audstart = vidDN(find(~isnan(vidDN),1)); end% audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
+         if ~isempty(vidDN); audstart = nan; end %vidDN(find(~isnan(vidDN),1)); end% audstart is only necessary for tags that have a single audio file (like 4k tags where audio is recorded on diary)
             synchaudioB = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
         if synchaudioB == 1
              Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; 
@@ -840,7 +840,7 @@ tagon = tagondec; camon = camondec; tagslip = slips;
 %
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
 if ~exist('vidNam','var')&& ~nocam || sum(~isnan(vidDN))>0; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam','vid4k'); 
-elseif ~exist('vidNam','var'); vidNam = {}; viddeploy = [];
+elseif ~exist('vidNam','var') || isempty(vidNam); vidNam = {}; viddeploy = [];
 end
 if exist('frameTimes','var') && length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
 

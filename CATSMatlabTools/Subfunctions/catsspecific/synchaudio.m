@@ -33,10 +33,10 @@ xlabel('Seconds')
 xlim([pI(1) pI(end)])
 [x,~] = ginput(1);
 [~,x] = min(abs(DN-x));
-[i1,mag] = peakfinder(Atemp(x-fs:x+fs,3));
+[i1,mag] = peakfinder(abs(Atemp(x-fs:x+fs,3)));
 [~,i] = max(mag); i1 = i1(i);
 x = x-fs-1+i1;
-plot(ax(2),DN(x),mag(i),'rs','markerfacecolor','r')
+plot(ax(2),DN(x),Atemp(x-fs+i1,3),'rs','markerfacecolor','r')
 set(ax,'xlim',[DN(x-10*fs) DN(x+10*fs)])
 set(t,'string','');
 subplot(2,1,2); hold on;
@@ -54,7 +54,7 @@ audstart = DN(x)-x2/aud.rate/24/60/60;
 disp(['Old Audio start time: ' datestr(DN(1), 'dd-mmm-yyyy HH:MM:SS.fff')]);
 disp(['New Audio Start time: ' datestr(audstart,'dd-mmm-yyyy HH:MM:SS.fff')]);% '. Will be asked to rename audio files after prh process is complete.']);
 kk = input('Rename audio files with new time adjument (recommended)? 1 = yes, 2 = no : ');
-if kk == 1
+if kk ~=2
     D = dir(audloc); D = {D.name}; D = D(3:end);
     for kk = 1:length(D)
         II = strfind(D{kk},'-');

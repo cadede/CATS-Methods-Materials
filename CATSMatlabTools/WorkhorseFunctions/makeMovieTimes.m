@@ -86,7 +86,9 @@ end
 
 try % find all movies on whale to get frameTimes
     m2times = nan(size(m2));
-    for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
+    try for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-2)+1:slashI(end)-1),'yyyymmdd-HHMMSS'); end
+    catch; for i = 1:length(m2); slashI = regexp(m2{i},'-'); m2times(i) = datenum(m2{i}(slashI(end-3)+1:slashI(end)-2),'yyyymmdd-HHMMSS'); end
+    end
     rootDIR = strfind(movieloc,'CATS'); rootDIR = movieloc(1:rootDIR+4);
     try [~,~,txt] = xlsread([rootDIR 'TAG GUIDE.xlsx']); catch; try [~,~,txt] = xlsread([fileloc filename]); catch; cd(fileloc); titl = 'Get Tag Guide to find tag off and recovery times'; if ~ispc; menu(titl,'OK'); end; [filename, fileloc] = uigetfile('*.xls*',titl); [~,~,txt] = xlsread([fileloc filename]); end; end
     rows = find(~cellfun(@isempty, cellfun(@(x) strfind(x,whaleID),txt(:,1),'uniformoutput',false)));

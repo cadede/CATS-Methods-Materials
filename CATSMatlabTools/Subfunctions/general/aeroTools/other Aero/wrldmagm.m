@@ -93,7 +93,11 @@ if ((nargin < 5) && ( dt < 0.0 && dt >= -5.0 ))
 end
 
 if ( isnan(dt) || dt < 0.0 || dt > 5.0)
+   if dt > 5.0 && dt < 6.0
+       warning('model has not been updated for 2025')
+   else
     error(message('aero:wrldmagm:invalidDYear'));
+   end
 end
 
 if ( isnan(height) || height < 0.0  || height > 1000000.0  )
