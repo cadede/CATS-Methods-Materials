@@ -22,7 +22,6 @@ function [axA, axM, axG] = axisconventions(tagtype)
 % 3 heave with top facing up giving max/pos value -- wrong- in NED, z axis is facing down so -1
 % See "platypus" tag type below for how these can be corrected.
 
-
 x = 1; y = 2; z = 3; 
 % in here, put what each column actually is (that is, the [y -x z] implies
 % that data in the 1 column is actually y, and data in the second column is
@@ -51,6 +50,22 @@ elseif strcmpi(tagtype,'Mini')
     axAo = [y x -z];
     axMo = [x y z];
     axGo = [y x -z]; % no
+elseif strcmpi(tagtype,'Mini2')
+    axAo = [-y -x -z];
+    axMo = [-y -x -z];
+    axGo = [-y -x -z];
+elseif strcmpi(tagtype,'MiniGrouper')
+    axAo = [y -x -z];
+    axMo = [y -x -z];
+    axGo = [y -x -z];
+elseif strcmpi(tagtype,'MonkSeal')
+   axAo = [-y -x -z];
+   axMo = [-y -x -z];
+   axGo = [-y -x -z];
+elseif strcmpi(tagtype,'DeepRated')
+    axAo = [-y -x -z];
+    axMo = [y x z];
+    axGo = [y x z];
 elseif strcmpi(tagtype,'platypus')
 axAo = [x -y -z];
 axMo = [-x -z y];
