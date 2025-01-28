@@ -10,7 +10,7 @@ if nargin<2; fs = 5; end
 afs = aud.rate;
 nov = round((1-1/fs)*afs/df); %allow for 0.8*fs samples of overlap (for 5 hz)...so the one second analysis window slides forward by 1/fs sec per time ->  fs hz data
 intbins = true;
-if nov - (1-1/fs)*afs/df > .01 % if your bin size isn't an integer, you have a problem
+if abs(nov - (1-1/fs)*afs/df) > .01 % if your bin size isn't an integer, you have a problem
     try F = factor(afs/fs);
         [d,I] = min(abs(F-df));
         if d/df <.5 && afs/df > 1100 %if the adjusted decimation factor is between 50% and 150% of the old one and you still get a sampling rate above 1100 Hz, roll with it
@@ -24,7 +24,10 @@ if nov - (1-1/fs)*afs/df > .01 % if your bin size isn't an integer, you have a p
         intbins = false;
     end
 end
-if sum(aud.data(:,1)==0) == length(aud.data); disp('audiodata column 1 is empty, using audio channel 2');
+if sum(aud.data(:,1)==0) == length(aud.data) ||...
+        sum(diff(aud.data(:,1))==0)>.95*length(aud.data(:,1)) ||...
+        sum(isnan(aud.data(:,1)))>.95*length(aud.data(:,1))
+    disp('audiodata column 1 is empty, using audio channel 2');
     x = aud.data(:,2);
 elseif size(aud.data,2) == 1 || sum(diff(aud.data(:,2))==0)>.95*length(aud.data(:,2)) || sum(isnan(aud.data(:,2)))>.95*length(aud.data(:,2))
 x = aud.data(:,1); % just use one channel of the data

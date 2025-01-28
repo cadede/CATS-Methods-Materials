@@ -27,8 +27,26 @@ set(ax,'xlim',[DN(I(1)) DN(I(end))]);
 t = title('Click on synch location in upper graph (will select peak within 1s)');
 set(ax,'nextplot','add')
 subplot(2,1,2);
-pI = (1:length(audioI))/aud.rate;
-plot(pI,aud.data(audioI));
+nfft = 2048; 
+nov = nfft/2;
+w = hanning(nfft) ;
+spec = nan(200,1); k = 1; % 1/10 of a second bins
+for i = audioI(1):aud.rate/10:audioI(end)
+    x = aud.data(i:i+round(aud.rate/10),1);
+    [SL,f] = spectrum_level(x,nfft,aud.rate,w,nov);
+
+    [TOL,fc]=spec2tol(SL,f);
+    spec(k,1:length(fc)) = TOL';
+    k = k+1;
+end
+pI = (1:size(spec,1))/10;
+
+% pI = (1:length(audioI))/aud.rate;
+plot(pI,spec);%aud.data(audioI));
+hold on; 
+plot(pI,mean(spec,2),'k','linewidth',3)
+lgd = legend(num2str(round(fc')));
+lgd.Title.String = 'Center Frequency';
 xlabel('Seconds')
 xlim([pI(1) pI(end)])
 [x,~] = ginput(1);
@@ -40,14 +58,19 @@ plot(ax(2),DN(x),Atemp(x-fs+i1,3),'rs','markerfacecolor','r')
 set(ax,'xlim',[DN(x-10*fs) DN(x+10*fs)])
 set(t,'string','');
 subplot(2,1,2); hold on;
-title('Click on synch location in lower graph (will select peak within 1s)');
+title('Click on synch location in lower graph (will select peak within 1s). Look for where noise is broad band and high');
 [x2,~] = ginput(1);
-x2 = x2*aud.rate;
-x2 = audioI(1)-1+round(x2);
-[i1,mag] = peakfinder(aud.data(x2-aud.rate:x2+aud.rate));
-[~,i] = max(mag); i1 = i1(i);
-x2 = x2-aud.rate-1+i1;
-plot(pI(x2-audioI(1)+1),mag(i),'rs','markerfacecolor','r')
+% x2 = x2*aud.rate;
+% x2 = audioI(1)-1+round(x2);
+% [i1,mag] = peakfinder(aud.data(x2-aud.rate:x2+aud.rate));
+% [~,i] = max(mag); i1 = i1(i);
+% x2 = x2-aud.rate-1+i1;
+% plot(pI(x2-audioI(1)+1),mag(i),'rs','markerfacecolor','r')
+oi = mean(spec,2);
+[i1,mag] = peakfinder(oi(x2*10-10:x2*10+10));
+[~,i] = max(mag); i1 = round(i1(i)+x2*10-10-1);
+plot(pI(i1),mag(i),'rs','markerfacecolor','r')
+x2 = pI(i1)*aud.rate+audioI(1);
 audioI2 = x2-audioI(1)+1-10*aud.rate:x2-audioI(1)+1+10*aud.rate;
 xlim([audioI2(1) audioI2(end)]/aud.rate)
 audstart = DN(x)-x2/aud.rate/24/60/60;

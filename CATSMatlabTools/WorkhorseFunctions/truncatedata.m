@@ -92,14 +92,34 @@ disp(['New data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM
 disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:MM:SS')]);
 synchaudio = 0;
 while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
-    disp('Are there audio data to truncate? (i.e., was there a single audio file recorded on the diary that starts at the same time the tag was switched on?)');
+    disp('Are there audio data to truncate and/or split into reasonable sizes? (i.e., was there a single audio file recorded on the diary that starts at the same time the tag was switched on?)');
 synchaudio = input('1 = yes, 2 = no (i.e. no audio, or there are multiple audio files with separate time stamps) ');
 end
 oi = pwd;
 try cd([fileloc 'raw\']); catch; cd(fileloc); end
 if synchaudio == 1
         [audiofile,audiofileloc]=uigetfile('*.wav', 'select wav file'); 
-        [~,FS] = audioread([audiofileloc audiofile],[1 5]);
+        [Y,FS] = audioread([audiofileloc audiofile],[1 5]);
+        if size(Y,2>1)
+            disp('More than 1 channel of data in audio file, press enter to examine data. Recommend retaining only one channel unless both channels have important data')
+            [Y,FS] = audioread([audiofileloc audiofile],[1 max(size(Y,1),FS*60*20)]); % read 10 minutes of data of first file to determine channels to keep
+           figure(10); clf;
+            for kk = 1:size(Y,2)
+                subplot(size(Y,2),1,kk);
+                plot(Y(:,kk))
+                xlabel(['Channel ' num2str(kk)])
+                if kk == 1
+                    title('Type number of primary channel to retain just one channel, else type "a" to keep all channels')
+                end
+            end
+            button = 0;
+            while ~ismember(button,[49:48+size(Y,2) 97])
+            [~,~,button] = ginput(1);
+            end
+            if button == 97; channels = 1:size(Y,2); disp('All Channels retained')
+            else; channels = button - 48; disp(['Channel ' num2str(button - 48) ' retained'])
+            end
+        end
         audioInfo = audioinfo([audiofileloc audiofile]);
 %         audiostart = data.Date(1)+data.Time(1);
         k = 1;
@@ -109,9 +129,9 @@ if synchaudio == 1
             [Y,FS] = audioread([audiofileloc audiofile],[max(i,1) min(i+FS*60*60-1,audioInfo.TotalSamples)]);
             astart = datevec(data.Date(1)+data.Time(1)+(k-1)*1/24); % was p1, but data is already truncated so need to use first value
             astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
-            audiowrite([fileloc 'AudioData\' astart],Y,FS);
+            audiowrite([fileloc 'AudioData\' astart],Y(:,channels),FS);
             aud = struct();
-            aud.data = Y;
+            aud.data = Y(:,channels);
             aud.rate = FS;
             aud.bits = audioInfo.BitsPerSample;
              aud.totalDuration = size(aud.data,1)/aud.rate;
