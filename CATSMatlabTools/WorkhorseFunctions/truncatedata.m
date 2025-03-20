@@ -100,7 +100,7 @@ try cd([fileloc 'raw\']); catch; cd(fileloc); end
 if synchaudio == 1
         [audiofile,audiofileloc]=uigetfile('*.wav', 'select wav file'); 
         [Y,FS] = audioread([audiofileloc audiofile],[1 5]);
-        if size(Y,2>1)
+        if size(Y,2)>1
             disp('More than 1 channel of data in audio file, press enter to examine data. Recommend retaining only one channel unless both channels have important data')
             [Y,FS] = audioread([audiofileloc audiofile],[1 max(size(Y,1),FS*60*20)]); % read 10 minutes of data of first file to determine channels to keep
            figure(10); clf;

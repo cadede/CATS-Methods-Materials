@@ -940,7 +940,7 @@ close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
 try vid4k = INFO.vid4k; catch; vid4k = false; end
-if vid4k
+if vid4k || exist([fileloc 'raw//' filename(1:end-4) '_gps.csv'],'file')
     disp('Importing gps.csv file');
     addGPSfromcsv(fileloc,INFO);
 else
@@ -1091,10 +1091,10 @@ try copyfile([fileloc INFO.whaleName '_prh' num2str(fs) '.nc'],[rootDIR 'tag_dat
 catch; disp('Could not copy file to tag_data//prh//nc// folder, nc file is only in working directory.');
 end
 % Can use this code to get lats and longs from geoPtrack:
-Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
-% Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
+% Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
+[lats, longs] = track2latlong(GPS,tagon,geoPtrack);% Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
 % truncated to tagon time
-DN2 = DN(tagon); p2 = p(tagon);
+DN2 = DN(tagon); p2 = p(tagon); Lats = lats(tagon); Longs = longs(tagon);
 T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),p2(1:fs:end),'VariableNames',{'Time','Lat','Long','Depth'});
 writetable(T,[fileloc INFO.whaleName '_1HzgeoPtrackLatLong.csv']);
 
