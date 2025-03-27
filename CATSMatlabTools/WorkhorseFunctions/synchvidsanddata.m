@@ -309,10 +309,14 @@ else
             for ii = 1:length(FIX)
                 i = FIX(ii);
                 ADJ = find(abs(vidDN(i+1:end)-vidDNorig(i+1:end))>0,1,'first')+i; % if there have been any adjustments, use them, else will have to use the next one.
-                vidDN(i) = vidDNorig(i)-vidDNorig(ADJ)+vidDN(ADJ);
-                adjust = -vidDNorig(ADJ)+vidDN(ADJ);
-                disp(['Adj for ' num2str(i)]);
-                disp(datestr(abs(adjust),'MM:SS.FFF'));
+                if ~isempty(ADJ)
+                    vidDN(i) = vidDNorig(i)-vidDNorig(ADJ)+vidDN(ADJ);
+                    adjust = -vidDNorig(ADJ)+vidDN(ADJ);
+                    disp(['Adj for ' num2str(i)]);
+                    disp(datestr(abs(adjust),'MM:SS.FFF'));
+                else
+                    disp(['No adj for ' num2str(i)])
+                end
             end
         end
         

@@ -119,6 +119,8 @@ if synchaudio == 1
             if button == 97; channels = 1:size(Y,2); disp('All Channels retained')
             else; channels = button - 48; disp(['Channel ' num2str(button - 48) ' retained'])
             end
+        else
+            channels = 1;
         end
         audioInfo = audioinfo([audiofileloc audiofile]);
 %         audiostart = data.Date(1)+data.Time(1);
