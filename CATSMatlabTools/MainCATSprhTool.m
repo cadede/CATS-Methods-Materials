@@ -1014,7 +1014,7 @@ sp = speed.JJ; if sum(isnan(sp)) == length(sp); disp('Speed is nans, using 1 m/s
 % sp(isnan(sp)) = 0;
 % sp(p<1) = 0.1; sp = runmean(sp,fs);
 %
-[t,pt,newspeed,newhead] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0);
+[t,pt,newspeed,newhead,GPSI] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0);
 
 % Use this code to make a ptrack if there is no lat/long information at all 
 % nhead = fixgaps(bodyhead); nhead(isnan(nhead)) = 0;
@@ -1044,7 +1044,7 @@ gtrack2kml(geoPtrack,tagon,fs,DN,1/60,GPS(gI),GPS(gI,2),INFO.UTC,INFO.whaleName,
 author = 'Dave Cade, davecade@stanford.edu'; % change user as appropriate
 % Matlab packages required: Audio Toolbox,
 
-save([fileloc prhfile],'geoPtrack','Ptrack','-append');
+save([fileloc prhfile],'geoPtrack','Ptrack','GPSI','-append');
 saveas(Gfig,[fileloc 'QL//' INFO.whaleName 'ptrack.bmp']);
 savefig(Gfig,[fileloc 'QL//' INFO.whaleName 'ptrack.fig']);
 saveas(102,[fileloc INFO.whaleName 'geotrack.bmp']);

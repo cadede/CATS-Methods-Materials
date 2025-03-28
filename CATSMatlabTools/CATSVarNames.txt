@@ -18,6 +18,7 @@ fs- sample rate of the data, in Hz
 geoPtrack- [x,y,z] in meters of georeferenced pseudotrack
 GPS- An index of Lat, Long for each position that is known.  This is mostly nans, except where a GPS position is known.  This file is trimmed to include only presumably accurate posisitions that are not obviously wrong (i.e. they fit an approximate pseudotrack).  GPS(1,:) is an approx. GPS of the area, used for calculating inc & dec & b.
 GPSerr- for tagged derived GPS points (not for manual GPS points from focal follows), an error estimate of the std in m.
+GPSI- logical index of which GPS points were used in the final georeferenced pseudotrack (some points are automatically excluded if error threshold is exceeded)
 Gt- Gyroscope data (radians/sec) around each axis (x,y,z) in the tag's reference frame
 Gw- Gyroscope data rotated to the whale's reference frame
 GwUB (not in current workflow)- Gyroscope data in the whale's reference frame with the bias removed for each sample.  

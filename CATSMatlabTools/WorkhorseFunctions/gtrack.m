@@ -1,10 +1,13 @@
-function [T,pT,newspeed,newhead] = gtrack(pitch, head, p, fs,speed,tagon,DN,GPS,GPSerr,errThresh,adjspeed,excludeloops)
+function [T,pT,newspeed,newhead,GPSI] = gtrack(pitch, head, p, fs,speed,tagon,DN,GPS,GPSerr,errThresh,adjspeed,excludeloops)
 %%
 % all inputs required through GPSerr
 % errThresh, adjspeed and exclude loops are optional inputs
 % outputs: T is the georeferenced pseudotrack with three columns of [m East, m North, m depth];
 % outputs: pT is the uncorrected pseudotrack with three columns of [m East, m North, m depth]; THIS IS DIFFERENT THAN JOHNSON ptrack [north, east,depth];
 % newspeed and newhead are the corrections made to speed and head to fit the pseudotrack to the given points.
+% GPSI is the index of the GPS points that are used in T after applying
+% the error threshold.
+
 tagonO = tagon; % tagon original (to get rid of GPS points in the situation where the tag came off and then was redeployed.
 tagon(find(tagon,1):find(tagon,1,'last')) = true;
 % sp = speed.JJ; nhead = head + 30.10*pi/180;
@@ -75,7 +78,9 @@ for i = G0+1:Ginf
         todel = [todel; i];
     end
 end
+GPSI = false(size(GPS,1));
 Gi(todel) = [];
+GPSI(Gi) = true;
 Ginf = Ginf - length(todel);
 
 
