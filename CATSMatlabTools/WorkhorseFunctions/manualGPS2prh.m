@@ -57,8 +57,15 @@ if oi == 1
     end
 end
 
-
-
+% Remove all Lat/Long values that occur more than once
+if exist('GPS', 'var') && size(GPS,2) >= 2
+    % Round slightly to avoid float issues
+    roundedGPS = round(GPS(:,1:2)*1e6)/1e6;  % precision to ~0.1 meter
+    [~, ~, ic] = unique(roundedGPS, 'rows');
+    counts = accumarray(ic, 1);
+    dupIdx = counts(ic) > 1;  % mark all rows that are duplicates (occur more than once)
+    GPS(dupIdx, :) = NaN;     % remove them all
+end
 
 if ~ischar(GPSfile);
     hits = cell(3,3);
