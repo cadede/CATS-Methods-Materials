@@ -78,7 +78,7 @@ for i = G0+1:Ginf
         todel = [todel; i];
     end
 end
-GPSI = false(size(GPS,1));
+GPSI = false(size(GPS,1),1);
 Gi(todel) = [];
 GPSI(Gi) = true;
 Ginf = Ginf - length(todel);
