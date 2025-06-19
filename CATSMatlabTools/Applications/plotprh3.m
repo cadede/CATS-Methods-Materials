@@ -1,12 +1,25 @@
-function [ax1,ax2,ax3,H1,H2,H3] = plotprh3 (prh,lunges,FIG)
+function [ax1,ax2,ax3,H1,H2,H3] = plotprh3 (prh,lunges,FIG,gyroAx,nogyro)
 global L
 % plots a set of 3 subplots using the data in the prh structure
 % LungeI is an index of lunges to plot (optional)
 % FIG is an optional argument that specifies the figure number to plot in
+% gyroAx should be 2 for finding pitch strokes or 3 for finding heading
+% strokes
+% nogryo = true if you want to plot strokes using the accelerometer
 % OUTPUTS:
 % ax1-3, the axis handles of each subplot
 % H1-3, the plot handles in each subplot
-if nargin<3
+
+if nargin<5||isempty(nogyro)
+    nogyro = false;
+end
+
+if nargin<4 || isempty(gyroAx)
+    gyroAx = 2;
+end
+if nogyro; gyroAx = gyroAx-1; end
+
+if nargin<3 || isempty(FIG)
     FIG = figure; 
 else; figure(FIG); clf;
 end
@@ -64,7 +77,7 @@ set(gcf,'units','normalized','outerposition',[0 0 1 1]);
     
     % plot other data useful for identifying events.  Here we plot y-axis
     % gyroscope (useful for identifying up/down tail beats) and jerk data
-    highP = prh.Gw(:,2);
+    if ~nogyro; highP = prh.Gw(:,gyroAx); else; highP = prh.Aw(:,gyroAx); end
     subplot(3,1,3);
     % first determine strokes and glides by choosing a threshold of detection
     lowpassfilt = .5; % filter out high frequency noise above 2 Hz

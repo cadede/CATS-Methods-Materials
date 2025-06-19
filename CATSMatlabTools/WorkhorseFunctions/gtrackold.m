@@ -18,9 +18,9 @@ pthresh = 2;
 sp = speed;
 sp2 = sp; sp2(isnan(sp2)) = min(sp2);
 sp2 = runmean(sp2,2*fs);
-sp2(p<=pthresh & sp>0.5) = nan; % but only want to get rid of high speeds in case low speeds have been entered for sleeping whales
+sp2(p<=pthresh & p>0.5) = nan; % but only want to get rid of high speeds in case low speeds have been entered for sleeping whales
 sp2 = fixgaps(sp2);
-sp(p<=pthresh& sp>0.5) = sp2(p<=pthresh& sp>0.5); sp = fixgaps(sp); sp(isnan(sp)) = min(sp);
+sp(p<=pthresh& p>0.5) = sp2(p<=pthresh& p>0.5); sp = fixgaps(sp); sp(isnan(sp)) = min(sp);
 speed = sp;
 figure(40); clf; ax = plotyy(DN,p,DN,sp);
 

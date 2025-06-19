@@ -1,4 +1,4 @@
-function make4kMovieTimes(dur,folder,ripAudio,timestamps,whaleID)
+function [vidDN, vidDurs] = make4kMovieTimes(dur,folder,ripAudio,timestamps,whaleID)
 dbstop if error;
 
 % this function reads the time off each video frame for high resolution

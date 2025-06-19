@@ -87,11 +87,13 @@ if sum(I(:,1)) ~=size(I,1)
     Mt = (Mt-repmat(magconston,numrows,1))*magcalon;
     Mt(I) = nan; Mtoff(I) = nan;
 else
+    Mt = nan(size(Depth,1),3);
+    warning ('No magnetometer detected, Mt is nans');
     Mtoff = Mt;
 end
-camondec = camon(1:df:end); camondec = camondec(1:size(Mt,1));
+camondec = camon(1:df:end); camondec = camondec(1:max(size(Mt,1),length(camondec)));
 camondec = interp2length(camondec,ofs/df,ofs/df,nout);
-audondec = audon(1:df:end); audondec = audondec(1:size(Mt,1));
+audondec = audon(1:df:end); audondec = audondec(1:max(size(Mt,1),length(audondec)));
 audondec=interp2length(audondec,ofs/df,ofs/df,nout);
 % camoff = ~camon;
 %camoffdec = camoff(1:df:end); camoffdec = camoffdec(1:size(Mt,1));

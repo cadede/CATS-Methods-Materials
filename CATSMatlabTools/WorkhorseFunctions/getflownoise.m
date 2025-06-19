@@ -84,6 +84,8 @@ if ~nocam || ~noaud
             DBdf = 7; %7 is the decimation factor that allows for integer subsampling bins
         elseif aud.rate == 48000 || aud.rate == 12000 || aud.rate == 24000
             DBdf = 15;
+        elseif aud.rate == 47851
+            DBdf = 109;
         elseif aud.rate == 96000
             DBdf = 30;
         elseif aud.rate == 240000
@@ -96,7 +98,10 @@ if ~nocam || ~noaud
             DBdf = 53;
         elseif aud.rate == 23925
             DBdf = 25;
-        else error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
+            elseif aud.rate == 95703
+            DBdf = 73;
+        else; warning('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin'); 
+            error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
         end
         try
         [DBt, offset] = CATSrms(aud,fs,DBdf); %offset is in seconds

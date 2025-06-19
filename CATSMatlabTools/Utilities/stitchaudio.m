@@ -87,8 +87,9 @@ if ~noaud
         try audStart = vidDN(vidnum);%+offset/24/60/60;
         catch
             try audStart = datenum(afile(min(regexp(afile,'-'))+1:max(regexp(afile,'-'))-1),'yyyymmdd-HHMMSS-fff');
+            catch; try audStart = datenum(afile(min(regexp(afile,'-'))+1:max(regexp(afile,'-'))+3),'yyyymmdd-HHMMSS-fff');
             catch; audStart = datenum(afile(min(regexp(afile,'-'))+1:max(regexp(afile,'-'))-1),'yyyymmdd-HHMMSS'); disp('could only read timestamp to nearest second');
-            end
+            end; end
         end
         
         if i == 1 || firstaudio; STARTTIME = audStart;

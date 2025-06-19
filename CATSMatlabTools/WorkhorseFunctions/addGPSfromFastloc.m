@@ -1,21 +1,21 @@
 %% 13. Combine fastGPS data with PRH file
 % based on Add_SDA_GPS by James Fahlbusch (c) 2019
 
-function addGPSfromFastloc(fileloc,INFO)
-try D = dir([fileloc '/fastGPS']);
-    D = {D.name}; D = D(3:end);
-    iscsv = cellfun(@(x) strcmp(x(end-3:end),'.csv'),D,'uniformoutput',false);
-    if sum(cellfun(@isempty,iscsv)) == 0
-       D = D(cellfun(@(x) x,iscsv));
-    else
-        D = D(~isempty(iscsv));
-    end
-    if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error('can''t find file'); end
-catch
-    cdir = pwd; cd(fileloc);
-    [filenameGPS,filelocGPS] = uigetfile('*.csv','select fastGPS csv file for this deployment');
-    cd (cdir);
-end
+function addGPSfromFastloc(filelocGPS,filenameGPS,INFO)
+% try D = dir([fileloc '/fastGPS']);
+%     D = {D.name}; D = D(3:end);
+%     iscsv = cellfun(@(x) strcmp(x(end-3:end),'.csv'),D,'uniformoutput',false);
+%     if sum(cellfun(@isempty,iscsv)) == 0
+%        D = D(cellfun(@(x) x,iscsv));
+%     else
+%         D = D(~isempty(iscsv));
+%     end
+%     if length(D) == 1; filenameGPS = D{1}; filelocGPS = [fileloc '/fastGPS/']; else error('can''t find file'); end
+% catch
+%     cdir = pwd; cd(fileloc);
+%     [filenameGPS,filelocGPS] = uigetfile('*.csv','select fastGPS csv file for this deployment');
+%     cd (cdir);
+% end
 % tag 70 is fastGPS 1231, 71 is 1232;
 if str2num(INFO.tagnum) == 70; gpsID = 1231; elseif str2num(INFO.tagnum) == 71; gpsID = 1229;
 else gpsID = input('Input fastGPS ID # for this deployment: ');

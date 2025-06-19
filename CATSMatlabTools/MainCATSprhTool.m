@@ -42,8 +42,8 @@ disp('Section completed')
 % you want to read in a TAG GUIDE for tag on and tag off times.
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
-folder = 'E://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
-vid4k = false; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
+folder = 'H://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
+vid4k = true; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
 % set to true if there are audio files to read.
 readaudiofiles = false; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
@@ -61,9 +61,9 @@ whaleID = []; % if your videos are within a folder labeled with your whaleID in 
 if vid4k
     readtimestamps = false; % timestamp reading for 4k video not yet enabled/tested. Filename timestamps appear to be up to 1 s off so should use surfacing method via excel template to synch video and data.
     readaudiofiles = false; % assumes that audio is downloaded separately. Currently reading audio from 4k video is not supported. wav files will be written on to data video at stitch video/audio step.
-    make4kMovieTimes(dur,folder,readaudiofiles,readtimestamps,whaleID);
+    [vidDN, vidDurs] = make4kMovieTimes(dur,folder,readaudiofiles,readtimestamps,whaleID);
 else
-    makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly,ignorebadaudio); %workhorse script
+    [vidDN, vidDurs] = makeMovieTimes(dur,readtimestamps,simpleread,folder,readaudiofiles,timewarn,whaleID,redovids,audioonly,ignorebadaudio); %workhorse script
 end
 disp('Section 1 completed');
 %% 2. Select files (START HERE IF NO VIDEOS) 
@@ -97,7 +97,7 @@ disp('Section 1 completed');
 % variables to set
 decfac = 5; %decimation factor (e.g. decimate 50 Hz data in "data" to 10 Hz data with a decfac of 5)
 % Can set "folder" below to start looking for files in a specific place on your computer
-folder = 'D:\Tag Data\Dtags\3s\ONR Energetics of Exposure\ONR proposal\DATA\Beaked Whales\tag_data_raw/'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
+folder = 'H://CATS//tag_data_raw//'; % folder in the drive where the cal files are located (and where you want to look for files) %'Users//Dave//Documents//Programs//MATLAB//Tagging//CATS cal';%
 
 % import files
 global fileloc filename
@@ -253,8 +253,8 @@ tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Ac
 %processor speeds of CATS tags are sufficient to handle video/data time
 %synchs independently.
 synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
-nocam = true; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
-audioonly = true; % set to true if tag has no camera but does have audio
+nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
+audioonly = false; % set to true if tag has no camera but does have audio
 
 if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
@@ -589,11 +589,18 @@ end
 
 if s == 1
    try [flownoise,AUD] = getflownoise(audiodir,vars);
-    disp('Now making full deployment audio file');
-    try if isempty(audstart); stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); end; catch; disp('error in stitch audio'); end
+    try 
+        if ~isempty(audstart)
+            ss = input('Stitch audio files into single long file? 1 = yes, 2 = no: ');
+        else
+            ss = 1;
+        end
+        if ss == 1;  disp('Now making full deployment audio file'); stitchaudio([fileloc 'AudioData//'],vars.whaleName,vars.DN(1),vars.vidDN,fileloc); end
+    catch; disp('error in stitch audio');
+    end
    catch disp('error in read audio- continue without making flownoise? 1 = yes, 2= no');
        ss = input('?');
-       if ss == 2; error('error in read audio, run get flownoise line above to find source of error'); else flownoise = nan(size(Depth)); AUD = []; end
+       if ss == 2; error('error in read audio, run get flownoise line above to find source of error, most likely is an unknown audio sampling rate that needs to be added'); else flownoise = nan(size(Depth)); AUD = []; end
    end
 end
 
@@ -939,18 +946,22 @@ load([fileloc filename(1:end-4) 'Info.mat'],'prhfile','INFO');
 close all
 rootDIR = strfind(fileloc,'CATS'); rootDIR = fileloc(1:rootDIR+4); % rootDIR can be used to locate the TAG GUIDE for importing further data about the tag
 
-try vid4k = INFO.vid4k; catch; vid4k = false; end
-if vid4k || exist([fileloc 'raw//' filename(1:end-4) '_gps.csv'],'file')
+% try vid4k = INFO.vid4k; catch; vid4k = false; end
+[gpsfile, gpsfileloc] = uigetfile('*.pos;*.csv','Select csv or pos or fastloc GPS file');
+
+if strcmp(gpsfile(end-7:end),'_gps.csv')%exist([fileloc 'raw//' filename(1:end-4) '_gps.csv'],'file')
     disp('Importing gps.csv file');
     addGPSfromcsv(fileloc,INFO);
+elseif strcmp(gpsfile(end-2:end),'pos')
+        addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
 else
     try
-        addGPSfrompos(fileloc,[],INFO.Hzs,INFO.UTC); %catch; disp('No GPS file found or error in adding tag GPS'); end
-    catch
         %note, to use addGPSfromFastloc, you will need to program your specific
         %tagnums and fastloc ID#s into the script (or enter it when prompted)
         disp('Error in using pos, looking for fastloc GPS folder');
-        addGPSfromFastloc(fileloc,INFO)
+        addGPSfromFastloc(gpsfileloc,gpsfile,INFO);
+    catch
+        error('unknown GPS file type')
     end
 end
 disp('Section 13a finished');

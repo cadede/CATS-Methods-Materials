@@ -85,6 +85,7 @@ title('Look at main screen for next instruction');
 % minfig(FF,1)
 try set(FF,'windowstate','minimized'); catch; end
 % truncate data
+oDN = data.Date+data.Time;
 data = data(p1:p2,:);
 DN = data.Date+data.Time; [~,aa] = min(abs(DN(1)-Atime)); [~,ba] = min(abs(DN(end)-Atime));
 Adata = Adata(aa:ba,:); Atime = Atime(aa:ba);
@@ -92,26 +93,38 @@ disp(['New data start time:' datestr(data.Date(1)+data.Time(1),'mm/dd/yyyy HH:MM
 disp(['New data end time:' datestr(data.Date(end)+data.Time(end),'mm/dd/yyyy HH:MM:SS')]);
 synchaudio = 0;
 while ~isempty(synchaudio) && synchaudio~=1 && synchaudio~=2
-    disp('Are there audio data to truncate and/or split into reasonable sizes? (i.e., was there a single audio file recorded on the diary that starts at the same time the tag was switched on?)');
-synchaudio = input('1 = yes, 2 = no (i.e. no audio, or there are multiple audio files with separate time stamps) ');
+    disp('Are there audio data to truncate and/or split into reasonable sizes? (i.e., was audio recorded separately that starts at the same time the tag was switched on but without timestamps in file names?)');
+synchaudio = input('1 = yes, 2 = no (i.e. no audio, or there are multiple audio files of workable sizes with separate time stamps) ');
 end
 oi = pwd;
 try cd([fileloc 'raw\']); catch; cd(fileloc); end
 if synchaudio == 1
-        [audiofile,audiofileloc]=uigetfile('*.wav', 'select wav file'); 
+        [audiofiles,audiofileloc]=uigetfile('*.wav', 'select all wav files from deployment (only those lining up with selected data will be retained)','multiSelect','on'); 
+        if ischar(audiofiles); audiofiles = {audiofiles}; end
+        audiofile = audiofiles{1};
+        totalDurations = nan(0,1);
+        for i = 1:length(audiofiles)
+            audioInfo = audioinfo([audiofileloc audiofiles{i}]);
+            totalDurations(i) = audioInfo.Duration;
+        end
+        disp(['Total duration of audio files is ' num2str(sum(totalDurations)/60/60) ' hrs and total duration of data is ' num2str((p2-p1)/fs/60/60) ' hrs']);
+        disp('AudioData folder will only contain audio files covering the duration of the data')
         [Y,FS] = audioread([audiofileloc audiofile],[1 5]);
         if size(Y,2)>1
             disp('More than 1 channel of data in audio file, press enter to examine data. Recommend retaining only one channel unless both channels have important data')
             [Y,FS] = audioread([audiofileloc audiofile],[1 max(size(Y,1),FS*60*20)]); % read 10 minutes of data of first file to determine channels to keep
            figure(10); clf;
+           sp = nan; ys = nan(1,2);
             for kk = 1:size(Y,2)
-                subplot(size(Y,2),1,kk);
+                sp(kk) = subplot(size(Y,2),1,kk);
                 plot(Y(:,kk))
                 xlabel(['Channel ' num2str(kk)])
                 if kk == 1
                     title('Type number of primary channel to retain just one channel, else type "a" to keep all channels')
                 end
+                ys(kk,:) = get(sp(kk),'ylim');
             end
+            set(sp,'ylim',[min(ys(:,1)) max(ys(:,2))])
             button = 0;
             while ~ismember(button,[49:48+size(Y,2) 97])
             [~,~,button] = ginput(1);
@@ -122,36 +135,59 @@ if synchaudio == 1
         else
             channels = 1;
         end
-        audioInfo = audioinfo([audiofileloc audiofile]);
-%         audiostart = data.Date(1)+data.Time(1);
-        k = 1;
         if ~exist([fileloc 'AudioData\'],'dir'); mkdir([fileloc 'AudioData\']); end
-        for i = round(p1/fs)*FS:FS*60*60:round(p2/fs*FS)
-            if i> audioInfo.TotalSamples; warning(['wav file stopped recording ' num2str(i) ' hours after deployment']); break; end
-            [Y,FS] = audioread([audiofileloc audiofile],[max(i,1) min(i+FS*60*60-1,audioInfo.TotalSamples)]);
-            astart = datevec(data.Date(1)+data.Time(1)+(k-1)*1/24); % was p1, but data is already truncated so need to use first value
-            astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
-            audiowrite([fileloc 'AudioData\' astart],Y(:,channels),FS);
-            aud = struct();
-            aud.data = Y(:,channels);
-            aud.rate = FS;
-            aud.bits = audioInfo.BitsPerSample;
-             aud.totalDuration = size(aud.data,1)/aud.rate;
-             aud.nrChannels = size(aud.data,2);
-             totalDuration = aud.totalDuration;
-             lastwarn('');
-             try
-                 save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration');
-                 if ~isempty(lastwarn)
-                     error(lastwarn);
-                 end
-             catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
-                 save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration','-v7.3');
-                 disp('Made a version 7.3 file in order to write large data file (sample rate was large)');
-             end
-              disp([num2str(k) ' hours of audio completed']);
-             k = k+1;
+        p1current = p1; 
+        kstart = find(p1/fs<cumsum(totalDurations),1,'first');
+        if isempty(kstart); error('All audio appears to be recorded before data starts'); end
+        kend = find(p2/fs<cumsum(totalDurations),1,'first');
+        if isempty(kend);kend = length(audiofiles); end
+        
+        for kk = kstart:kend
+            audiofile = audiofiles{kk};
+
+            audioInfo = audioinfo([audiofileloc audiofile]);
+            k = 1;
+            %         audiostart = data.Date(1)+data.Time(1);
+            istart = round(p1current/fs*FS)-sum(totalDurations(1:kk-1))*FS;
+            if p1current>p2; disp(['Audio file reading stopped after file # ' num2str(kk-1)]); break; end
+            if istart/FS<-2/fs;error('start time of audio incorrectly calculated'); end
+            if istart/FS<2/fs; istart = 1; end
+            for i = istart:FS*60*60:round(p2/fs*FS)-sum(totalDurations(1:kk-1))*FS
+                if i> audioInfo.TotalSamples
+                    if kk<length(audiofiles)
+                        [~,p1current] = min(abs(oDN-(sum(totalDurations(1:kk)/24/60/60)+oDN(1))));
+                        disp('Moving to next audiofile');
+                    else
+                        warning(['wav files stopped recording ' num2str(sum(totalDurations)/60/60) ' hours after tag was started']);
+                    end
+                    break; 
+                end
+                [Y,FS] = audioread([audiofileloc audiofile],[max(i,1) min(i+FS*60*60-1,audioInfo.TotalSamples)]);
+                astart = datevec(oDN(p1current) + (k-1)*1/24); % was p1, but data is already truncated so need to use first value
+                astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
+                audiowrite([fileloc 'AudioData\' astart],Y(:,channels),FS);
+                aud = struct();
+                aud.data = Y(:,channels);
+                aud.rate = FS;
+                aud.bits = audioInfo.BitsPerSample;
+                aud.totalDuration = size(aud.data,1)/aud.rate;
+                aud.nrChannels = size(aud.data,2);
+                totalDuration = aud.totalDuration;
+                lastwarn('');
+                try
+                    save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration');
+                    if ~isempty(lastwarn)
+                        error(lastwarn);
+                    end
+                catch %v7.3 allows for bigger files, but makes a freaking huge file if used when you don't need it
+                    save([fileloc 'AudioData\' astart(1:end-4) 'audio.mat'],'aud','totalDuration','-v7.3');
+                    disp('Made a version 7.3 file in order to write large data file (sample rate was large)');
+                end
+                disp(['Hour ' num2str(k) ' of audio file ' num2str(kk) ' completed']);
+                k = k+1;
+            end
         end
+        
 end
 cd(oi);
 
