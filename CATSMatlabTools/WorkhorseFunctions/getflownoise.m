@@ -125,7 +125,8 @@ if ~nocam || ~noaud
 %         end
         try if ~isempty(audstart); error(' '); end; audStart = vidDN(vidnum)+offset/24/60/60; 
         catch
-            if i == 1; disp('assuming audiofiles start at beginning of file and are continuous');
+            if i == 1; 
+                disp('assuming audiofiles start at time in audio filename (or beginning of data file) and are continuous');
                 if isempty(audstart); audStart = DN(1) +offset/24/60/60; else audStart = audstart; end
             elseif ~isempty(vidnum) && (vidnum>length(vidDN) || isempty(vidDN)) && ~exist('lastDur','var')
                 warning(['audio ' num2str(vidnum) ' does not seem to be on whale, skipping']);

@@ -18,7 +18,22 @@ if exist([audloc audfile(1:end-4) 'audio.mat'],'file'); load([audloc audfile(1:e
     end
 end
 FF = figure(100); clf;
-audioI = round((timestamp-DN(1))*24*60*60*aud.rate); audioI = audioI-aud.rate*10:audioI+aud.rate*10;
+try
+    II = strfind(audfile,'-');
+    otime = datenum(audfile(II(end-2)+1:II(end)+3),'yyyymmdd-HHMMSS-fff');
+    starttimedif = abs(otime-DN(1));
+catch
+    warning('starttime of audiofile could not be read from file name, using data start time');
+    starttimedif = 0; otime = DN(1);
+end
+if starttimedif>.001/24/60/60
+    warning(['Starttime of data is ' datestr(DN(1),'yyyy-mmm-dd HH:MM:SS.fff') ', but starttime in audio name is ' datestr(otime,'yyyy-mmm-dd HH:MM:SS.fff')]);
+    xx = input('Okay to proceed using audio start time from file name? (1 = yes, 2 = no):');
+    if xx~=1; error('check audio start time'); end
+end
+
+
+audioI = round((timestamp-otime)*24*60*60*aud.rate); audioI = audioI-aud.rate*10:audioI+aud.rate*10;
 sp1 = subplot(2,1,1); hold on;
 ax = plotyy(DN(I),p(I),DN(I),Atemp(I,3)); legend('Depth','Az')
 set(ax(1),'ydir','rev')

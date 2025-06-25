@@ -43,7 +43,7 @@ disp('Section completed')
 
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'H://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
-vid4k = true; % set to false if using older HD resolution CATS video or if you have audio only in CATS raw format
+useVideoTimestamps = true; % set to true if you want to read the timestamps off the video. Set to false to rely on the timestamps from the video names. Can also set to true if you have audio only in cats raw format
 % set to true if there are audio files to read.
 readaudiofiles = false; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
 
@@ -58,7 +58,8 @@ ignorebadaudio = false; % set to true if raw files appear to be corrupted/wrong 
 % whaleID allows you to look up tag off and on times from a TAG GUIDE.xlx.
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
-if vid4k
+if useVideoTimestamps; vid4k = true; else; vid4k = false; end
+if vid4k % a legacy variable name that was a bit unclear. Future versions will rename
     readtimestamps = false; % timestamp reading for 4k video not yet enabled/tested. Filename timestamps appear to be up to 1 s off so should use surfacing method via excel template to synch video and data.
     readaudiofiles = false; % assumes that audio is downloaded separately. Currently reading audio from 4k video is not supported. wav files will be written on to data video at stitch video/audio step.
     [vidDN, vidDurs] = make4kMovieTimes(dur,folder,readaudiofiles,readtimestamps,whaleID);
@@ -252,7 +253,7 @@ tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Ac
 %video and the data). This may or may not be the future default until the
 %processor speeds of CATS tags are sufficient to handle video/data time
 %synchs independently.
-synchusingvidtimestamps = true; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
+synchusingvidtimestamps = false; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
 nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
 audioonly = false; % set to true if tag has no camera but does have audio
 
