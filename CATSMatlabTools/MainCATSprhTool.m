@@ -58,7 +58,7 @@ ignorebadaudio = false; % set to true if raw files appear to be corrupted/wrong 
 % whaleID allows you to look up tag off and on times from a TAG GUIDE.xlx.
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
-if useVideoTimestamps; vid4k = true; else; vid4k = false; end
+if useVideoTimestamps; vid4k = false; else; vid4k = true; end
 if vid4k % a legacy variable name that was a bit unclear. Future versions will rename
     readtimestamps = false; % timestamp reading for 4k video not yet enabled/tested. Filename timestamps appear to be up to 1 s off so should use surfacing method via excel template to synch video and data.
     readaudiofiles = false; % assumes that audio is downloaded separately. Currently reading audio from 4k video is not supported. wav files will be written on to data video at stitch video/audio step.
