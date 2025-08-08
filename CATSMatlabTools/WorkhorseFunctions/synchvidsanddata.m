@@ -14,17 +14,17 @@ if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else 
 pconst = CAL.pconst; pcal = CAL.pcal;
  
  % synch 
-try if viddata.vid4k
+% try if viddata.vid4k
         synchaudioB = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
         
-    else audstart = [];
-    end
-catch
-    audstart = []; viddata.vid4k = false;
-    disp('To synch an audio file, add a true ''vid4k'' boolean variable to your movieTimes file');
-end
+%     else audstart = [];
+%     end
+% catch
+%     audstart = []; viddata.vid4k = false;
+%     disp('To synch an audio file, add a true ''vid4k'' boolean variable to your movieTimes file');
+% end
 cf = pwd;
-if viddata.vid4k && ~isempty(synchaudioB) && synchaudioB == 1
+if synchaudioB == 1 % viddata.vid4k && ~isempty(synchaudioB) && 
    audstart = synchaudio(tagon,DN,fs,fileloc,data.Pressure,Atemp);
 else
     audstart = nan;

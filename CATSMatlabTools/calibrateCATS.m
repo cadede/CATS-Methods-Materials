@@ -373,7 +373,7 @@ timescal = data.Date + data.Time;
 fs = round(10/(median(diff(times*24*60*60))))/10  % sampling rate to the nearest hundredth of a second, then converted to Hz
 
 comp = [data.Comp1 data.Comp2 data.Comp3];
-if ~strcmp(tagtype,'acousonde'); gyro = [data.Gyr1 data.Gyr2 data.Gyr3]; else gyro = nan(size(comp)); end
+if ~strcmp(tagtype,'acousonde'); try gyro = [data.Gyr1 data.Gyr2 data.Gyr3]; catch; gyro = nan(size(comp)); end; else gyro = nan(size(comp)); end
 acc = [data.Acc1 data.Acc2 data.Acc3];
 
 % add in any missing pieces, sometimes there are gaps in the data
