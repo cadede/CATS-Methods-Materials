@@ -153,15 +153,19 @@ if synchaudio == 1
             if istart/FS<-2/fs;error('start time of audio incorrectly calculated'); end
             if istart/FS<2/fs; istart = 1; end
             for i = istart:FS*60*60:round(p2/fs*FS)-sum(totalDurations(1:kk-1))*FS
-                if i> audioInfo.TotalSamples
-                    if kk<length(audiofiles)
-                        [~,p1current] = min(abs(oDN-(sum(totalDurations(1:kk)/24/60/60)+oDN(1))));
-                        disp('Moving to next audiofile');
-                    else
-                        warning(['wav files stopped recording ' num2str(sum(totalDurations)/60/60) ' hours after tag was started']);
-                    end
-                    break; 
-                end
+                % if i> audioInfo.TotalSamples
+                %     if kk<length(audiofiles)
+                %         [~,p1current] = min(abs(oDN-(sum(totalDurations(1:kk)/24/60/60)+oDN(1))));
+                %         disp('Moving to next audiofile');
+                %         if abs(p1current/fs-sum(totalDurations(1:kk)))>0.1
+                %             warning('appears to be a gap in data (perhaps tag was turned off and back on), proceeding under assumption that audio was recording when data was recording')
+                %             p1current = round(sum(totalDurations(1:kk))*fs)+1;
+                %         end
+                %     else
+                %         warning(['wav files stopped recording ' num2str(sum(totalDurations)/60/60) ' hours after tag was started']);
+                %     end
+                %     break; 
+                % end
                 [Y,FS] = audioread([audiofileloc audiofile],[max(i,1) min(i+FS*60*60-1,audioInfo.TotalSamples)]);
                 astart = datevec(oDN(p1current) + (k-1)*1/24); % was p1, but data is already truncated so need to use first value
                 astart = [tagnum '-' sprintf('%04d',astart(1)) sprintf('%02d',astart(2)) sprintf('%02d',astart(3)) '-' sprintf('%02d',astart(4)) sprintf('%02d',astart(5)) sprintf('%02d',floor(astart(6))) '-' sprintf('%03d',round((astart(6)-floor(astart(6)))*1000)) '.wav'];
@@ -185,6 +189,19 @@ if synchaudio == 1
                 end
                 disp(['Hour ' num2str(k) ' of audio file ' num2str(kk) ' completed']);
                 k = k+1;
+                if i+FS*60*60> audioInfo.TotalSamples 
+                    if kk<length(audiofiles)
+                        [~,p1current] = min(abs(oDN-(sum(totalDurations(1:kk)/24/60/60)+oDN(1))));
+                        disp('Moving to next audiofile');
+                        if abs(p1current/fs-sum(totalDurations(1:kk)))>0.1
+                            warning('appears to be a gap in data (perhaps tag was turned off and back on), proceeding under assumption that audio was recording when data was recording')
+                            p1current = round(sum(totalDurations(1:kk))*fs)+1;
+                        end
+                    else
+                        warning(['wav files stopped recording ' num2str(sum(totalDurations)/60/60) ' hours after tag was started']);
+                    end
+                    break; 
+                end
             end
         end
         

@@ -1,4 +1,4 @@
-function [T,pT,newspeed,newhead,GPSI] = gtrack(pitch, head, p, fs,speed,tagon,DN,GPS,GPSerr,errThresh,adjspeed,excludeloops)
+function [T,pT,newspeed,newhead,GPSI] = gtrack(pitch, head, p, fs,speed,tagon,DN,GPS,GPSerr,errThresh,adjspeed,excludeloops,method)
 %%
 % all inputs required through GPSerr
 % errThresh, adjspeed and exclude loops are optional inputs
@@ -66,7 +66,10 @@ end
 if nargin<10 || isempty(errThresh)
     errThresh = max([std(abs(GPSerr(Gi(G0:Ginf),:)),[],1)/8; [10 10 10]]);
 end
-if nargin<12  % an attempt to exlude bubble nets from adjustment (leave circles as the pseudo tracks).  Mixed success
+if nargin<13 || isempty(method)
+    method = 'UTM';
+end
+if nargin<12 || isempty(excludeloops)  % an attempt to exclude bubble nets from adjustment (leave circles as the pseudo tracks).  Mixed success
     excludeloops = false;
 end
 if nargin<11 || isempty(adjspeed)
@@ -86,17 +89,18 @@ Ginf = Ginf - length(todel);
 
 
 
-
-% [x,y,uzone] = deg2utm(GPS(Gi,1),GPS(Gi,2));
-% [xp,yp,mainUZ] = utm2m(x,y,uzone);
- proj = projcrs(32610); %WGS 1984
+if strcmp(method,'projection')
+     proj = projcrs(32610); %WGS 1984
 proj.GeographicCRS.Name;
-
 [xp,y] = projfwd(proj,GPS(Gi,1),GPS(Gi,2));
+else
+[x,y,uzone] = deg2utm(GPS(Gi,1),GPS(Gi,2));
+[xp,mainUZ] = utm2m(x,y,uzone);
+end
 
-% if any(~cellfun(@(x) strcmp(x,uzone(1,:)),mat2cell(uzone,ones(size(uzone,1),1),4)))
-%     disp('GPS hits span UTM zones, this may cause problems on axes but all else should be fine');
-% end
+if any(~cellfun(@(x) strcmp(x,uzone(1,:)),mat2cell(uzone,ones(size(uzone,1),1),4)))
+    disp('GPS hits span UTM zones, this may cause problems on axes but all else should be fine');
+end
 
 x0 = xp(G0); y0 = y(G0);
 xp = xp-xp(G0);
@@ -185,18 +189,21 @@ xs = get(gca,'xtick')';
 xs = xs(1:2:end);
 set(gca,'xtick',xs);
 ys = get(gca,'ytick')';
-% if length(ys)<size(uzone,1); UZ = uzone(1:size(ys,1),:);
-% else
-%     UZ = repmat(mainUZ,length(ys),1); %uzone(1,:)
-% end
-% dys = utm2deg(zeros(size(ys,1),1)+x0,ys+y0,UZ);
-% if length(xs)<size(uzone,1); UZ = uzone(1:size(xs,1),:);
-% else
-%     UZ = repmat(mainUZ,length(xs),1); %uzone(1,:)
-% end
-% [~,dxs] = utm2deg(xs+x0,zeros(size(xs,1),1)+y0,UZ);
-[dys] = projinv(proj,(xs(1)+x0)*ones(size(ys)),ys+y0);
-[~,dxs] = projinv(proj,xs+x0,(ys(1)+y0)*ones(size(xs)));
+if strcmp(method,'UTM')
+    if length(ys)<size(uzone,1); UZ = uzone(1:size(ys,1),:);
+    else
+        UZ = repmat(mainUZ,length(ys),1); %uzone(1,:)
+    end
+    dys = utm2deg(zeros(size(ys,1),1)+x0,ys+y0,UZ);
+    if length(xs)<size(uzone,1); UZ = uzone(1:size(xs,1),:);
+    else
+        UZ = repmat(mainUZ,length(xs),1); %uzone(1,:)
+    end
+    [~,dxs] = utm2deg(xs+x0,zeros(size(xs,1),1)+y0,UZ);
+elseif strcmp(method,'projection')
+    [dys] = projinv(proj,(xs(1)+x0)*ones(size(ys)),ys+y0);
+    [~,dxs] = projinv(proj,xs+x0,(ys(1)+y0)*ones(size(xs)));
+end
 
 oi = sprintf('%0.3f',dxs); oi = reshape(oi,size(oi,2)/size(dxs,1),size(dxs,1))';
 xlabs = [oi repmat([char(176) ' ('],size(xs,1),1) num2str(xs) repmat(' m)',size(xs,1),1)];
@@ -221,19 +228,21 @@ xs = get(gca,'xtick')';
 xs = xs(1:2:end);
 set(gca,'xtick',xs);
 ys = get(gca,'ytick')';
-% if length(ys)<size(uzone,1); UZ = uzone(1:size(ys,1),:);
-% else UZ = repmat(uzone(1,:),length(ys),1);
-% end
-% UZ = repmat(mainUZ,length(ys),1); %uzone(1,:)
-% dys = utm2deg(zeros(size(ys,1),1)+x0,ys+y0,UZ);
-% if length(xs)<size(uzone,1); UZ = uzone(1:size(xs,1),:);
-% else UZ = repmat(uzone(1,:),length(xs),1);
-% end
-% UZ = repmat(mainUZ,length(xs),1); %uzone(1,:)
-% [~,dxs] = utm2deg(xs+x0,zeros(size(xs,1),1)+y0,UZ);
+if strcmp(method,'UTM')
+if length(ys)<size(uzone,1); UZ = uzone(1:size(ys,1),:);
+else UZ = repmat(uzone(1,:),length(ys),1);
+end
+UZ = repmat(mainUZ,length(ys),1); %uzone(1,:)
+dys = utm2deg(zeros(size(ys,1),1)+x0,ys+y0,UZ);
+if length(xs)<size(uzone,1); UZ = uzone(1:size(xs,1),:);
+else UZ = repmat(uzone(1,:),length(xs),1);
+end
+UZ = repmat(mainUZ,length(xs),1); %uzone(1,:)
+[~,dxs] = utm2deg(xs+x0,zeros(size(xs,1),1)+y0,UZ);
+elseif strcmp(method,'projection')
 [dys] = projinv(proj,(xs(1)+x0)*ones(size(ys)),ys+y0);
 [~,dxs] = projinv(proj,xs+x0,(ys(1)+y0)*ones(size(xs)));
-
+end
 
 oi = sprintf('%0.3f',dxs); oi = reshape(oi,size(oi,2)/size(dxs,1),size(dxs,1))';
 xlabs = [oi repmat([char(176) ' ('],size(xs,1),1) num2str(xs) repmat(' m)',size(xs,1),1)];
@@ -259,14 +268,17 @@ s2 = subplot(2,1,2); plot(DN,head*180/pi,DN,newhead*180/pi,'g--'); set(gca,'xtic
 linkaxes([s1 s2],'x');
 figure(newf);
 
-%  [x1,y1,z1] = deg2utm(GPS(Gi(G0),1),GPS(Gi(G0),2));
+if strcmp(method,'UTM')
+ [x1,y1,z1] = deg2utm(GPS(Gi(G0),1),GPS(Gi(G0),2));
+     [l1,l2] = utm2deg(x1,y1,z1);
+    Gi = [find(tagon,1)-1; Gi];
+    G0 = 1;
+elseif strcmp(method,'projection')
  [x1,y1] = projfwd(proj,GPS(Gi(G0),1),GPS(Gi(G0),2));
     x1 = x1 + T(find(tagon,1,'last'),1);
     y1 = y1 + T(find(tagon,1,'last'),2);
     [l1,l2] = projinv(proj,x1,y1);
+end
 
-%     [l1,l2] = utm2deg(x1,y1,z1);
-%     Gi = [find(tagon,1)-1; Gi];
-%     G0 = 1;
     disp(['End of track: ' num2str([l1 l2])]);
 

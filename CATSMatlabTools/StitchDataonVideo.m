@@ -350,8 +350,18 @@ for n = startn:length(filename)
                     end
                 end
             end
-            sf = find(abs(oframeTimes{vidN}-vid.times(1))<1/30);
-            if isempty(sf); error('vid.times(1) not fround in oframeTimes'); end
+           sf = find(abs(oframeTimes{vidN}-vid.times(1))<1/31);
+            if isempty(sf) && j ~=1
+                for iii = 2:6
+                    sf = find(abs(oframeTimes{vidN}-vid.times(iii))<1/31);
+                    if ~isempty(sf)
+                    sf = sf-(iii-1); warning(['vid.times(1) not found exactly in oframeTimes, cueing off vid.times(' num2str(iii) ')']); break;
+                    end
+                end
+            end
+            if isempty(sf)
+                error('vid.times(1) not fround in oframeTimes');
+            end
             if length(sf)>1  
                 [~,sfa] = min(abs(sf-endf)); sf = sf(sfa);
 %                 sf = sf(sf == endf+1);
@@ -538,8 +548,8 @@ for n = startn:length(filename)
             if i == 1; y2 = mean(ys); else y2 = 0; end
             vidts(i) = text(DN2(a1+20),y2,vNs(i,:),'verticalalignment','top','horizontalalignment','left','fontsize',10,'color','r');
         end
-        if ~exist ([prhloc 'graphs'],'dir'); mkdir ([prhloc 'graphs']); end
-        if oj == 1; savefig(fig1,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') speedgraph' num2str(fs) 'Hz.fig']); end
+%         if ~exist ([prhloc 'graphs'],'dir'); mkdir ([prhloc 'graphs']); end
+%         if oj == 1; savefig(fig1,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') speedgraph' num2str(fs) 'Hz.fig']); end
         %
         
         
@@ -588,7 +598,7 @@ for n = startn:length(filename)
         ltext = text(xs(1)-(xs(2)-xs(1))*.028,ys(1)-(ys(2)-ys(1))/40,'Local Time: ','parent',axp(1),'verticalalignment','top','fontname',get(axp(1),'fontname'),'fontsize',get(axp(1),'fontsize'),'horizontalalignment','left');
         %
         if vidN < 10; vN = ['0' num2str(vidN)]; else vN = num2str(vidN); end
-        if oj == 1; savefig(fig3,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') prhgraph' num2str(fs) 'Hz.fig']); end
+%         if oj == 1; savefig(fig3,[prhloc 'graphs//' prhfile(1:prhN) ' (' vN ') prhgraph' num2str(fs) 'Hz.fig']); end
         
         %            +(j-1)*dur/24/60/60; %time stamp of the video fragment
         

@@ -356,9 +356,13 @@ try k = strncmpi(txt{row,species},{S.abbrev},2) ;
 catch k = strncmpi(species,{S.abbrev},2) ;
 end
 if all(k==0),
-    fprintf(' Warning: unknown species %s. Set metadata manually in tagged_species.csv\n', prefix) ;
-    error('see warning');
-    return ;
+    fprintf(' Warning: unknown species %s. Set metadata manually in tagged_species.csv and restart or enter species here\n', prefix) ;
+%     error('see warning');
+%     return ;
+k = 1;
+    S(k).abbrev = input('Animal species abbreviation? ');
+    S(k).common_name = input('Common Name? ');
+    S(k).science_name = input('genus species? ');
 end
 if sum(k)>1,
     fprintf(' More than one species match "%s". Retry with a longer species name.\n',prefix) ;

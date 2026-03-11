@@ -257,8 +257,8 @@ try
     prhi = im;
 catch %from vert2sxsprh
     load([fileloc prhf]);
-    pitch = load([fileloc prhf],'pitch'); pitch = pitch.pitch;
-    load([fileloc prhf],'roll');
+    prh = load([fileloc prhf],'pitch','roll','head'); pitch = prh.pitch; roll = prh.roll; head = prh.head;
+    % load([fileloc prhf],'roll');
     DN2= 1:length(DN); %changes the DN graphs back to regular indices the lazy way (instead of deleting the DN wrapper)
     clear pat;
     fig = figure(2); clf; %set(fig2,'color',[.8 .8 .8]);

@@ -212,7 +212,7 @@ disp('Section 3 finished');
    if ~exist('ofs','var'); ofs = round(1/mean(diff(data.Time(50:100))*24*60*60)); warning(['No ofs variable found, calculated ' num2str(ofs) ' Hz as original sampling rate of data table']); end
     if ~exist('Afs','var'); Afs = round(1/mean(diff(Atime(50:100))*24*60*60)); warning(['No Afs variable found, calculated ' num2str(Afs) ' Hz as original sampling rate of data table']); end
 
-      save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','-append');
+      save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Hzs','CAL','df','ofs','Afs','ODN','-append');
       
       
       %% 4.(old cell 5) get tagon and tagoff times 
@@ -264,7 +264,7 @@ end
 GPS = cell2mat(headers(2,2:3)); %from above file
 whaleName = char(headers(1,2));
 timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
-load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum','tagon');
+load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum','tagon','ODN');
 if CellNum < 3; error('Step 3 has not been run'); end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
@@ -1026,7 +1026,17 @@ sp = speed.JJ; if sum(isnan(sp)) == length(sp); disp('Speed is nans, using 1 m/s
 % sp(isnan(sp)) = 0;
 % sp(p<1) = 0.1; sp = runmean(sp,fs);
 %
-[t,pt,newspeed,newhead,GPSI] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0);
+% Some errors in gtracks were found when tracks cross UTM zones. The
+% 'projection' method fixes that, but is only accurate/tested in California. May
+% need to adjust script or choose a specific projection for the projcrs script within 
+% gtrack if tracks cross UTM zones in other locations.
+if any(GPS(:,1)>32 & GPS(:,1)<48) && any (GPS(:,2)>-126 & GPS(:,2)<-116)
+    method = 'projection';
+else
+    method = 'UTM';
+end
+
+[t,pt,newspeed,newhead,GPSI] = gtrack(bodypitch,bodyhead,p,fs,sp,tagon,DN,[nan nan; GPS(2:end,:)],GPSerr,[],0,[],method);
 
 % Use this code to make a ptrack if there is no lat/long information at all 
 % nhead = fixgaps(bodyhead); nhead(isnan(nhead)) = 0;
@@ -1106,6 +1116,7 @@ end
 % Gi = find(~isnan(GPS(:,1))); [~,G0] = min(abs(Gi-find(tagon,1))); G1 = GPS(Gi(G0),:);  [x1,y1,z1] = deg2utm(G1(1),G1(2)); [Lats,Longs] = utm2deg(geoPtrack(tagon,1)+x1,geoPtrack(tagon,2)+y1,repmat(z1,sum(tagon),1)); lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs;
 [lats, longs] = track2latlong(GPS,tagon,geoPtrack);% Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
 % truncated to tagon time
+if length(lats) == sum(tagon); Lats = lats; Longs = longs; lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs; end
 DN2 = DN(tagon); p2 = p(tagon); Lats = lats(tagon); Longs = longs(tagon);
 T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),p2(1:fs:end),'VariableNames',{'Time','Lat','Long','Depth'});
 writetable(T,[fileloc INFO.whaleName '_1HzgeoPtrackLatLong.csv']);
@@ -1137,13 +1148,16 @@ disp('Section 13 finished, prh file and INFO saved');
 % note that the "Drone" column is for "Droned Length"
 
 % Matlab packages required: Robust Control Toolbox, Computer Vision Toolbox, 
+% whaleID = 'gg250811-T99';
+% fileloc = ['i:\CATS\tag_data\' whaleID ' (Monterey)\'];
+whaleID = INFO.whaleName; % if starting from this cell, adjust two lines above and comment out this line
 
 makemetadata = true; % Also creates a metadatafile in ATN format (requires an ATN template xls file from the "templates" folder). Set to false if you don't want this
 
 rootDIR = fileloc(1:strfind(fileloc,'CATS')+4);
 
 makeQuickLook(fileloc,makemetadata);
-whaleID = INFO.whaleName;
+
 try copyfile([fileloc '_' whaleID 'Quicklook.jpg'],[rootDIR 'tag_data//Quicklook//' whaleID 'Quicklook.jpg']);
 catch; warning('Could not copy file to tag_data//Quicklook folder');
 end

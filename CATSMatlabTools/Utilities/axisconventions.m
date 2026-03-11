@@ -22,6 +22,7 @@ function [axA, axM, axG] = axisconventions(tagtype)
 % 3 heave with top facing up giving max/pos value -- wrong- in NED, z axis is facing down so -1
 % See "platypus" tag type below for how these can be corrected.
 
+
 x = 1; y = 2; z = 3; 
 % in here, put what each column actually is (that is, the [y -x z] implies
 % that data in the 1 column is actually y, and data in the second column is
@@ -30,19 +31,19 @@ if strcmpi(tagtype,'Wireless') || strcmpi(tagtype,'motus') || strcmpi(tagtype,'a
     axAo = [x y z];
     axMo = [x y z];
     axGo = [x y z]; % no gyros in acousonde
-elseif strcmpi(tagtype,'TECG')
-   axAo = [-y -x -z];
-   axMo = [-y -x -z];
-   axGo = [-y -x -z];
 elseif strcmpi(tagtype,'Technosmart')
    axAo = [x -y -z];
    axMo = [-y x z];
    axGo = [x -y -z];
+   elseif strcmpi(tagtype,'Axy')
+   axAo = [x y -z];
+   axMo = [x y -z];
+   axGo = [x y z]; %no gyros
 elseif strcmpi(tagtype,'Beacon')
    axAo = [-y x z];
    axMo = [-y x z];
    axGo = [-y x z];
-elseif strcmpi(tagtype,'Trident')
+elseif strcmpi(tagtype,'Trident') || strcmpi(tagtype,'TECG') || strcmpi(tagtype,'Mini2')
    axAo = [-y -x -z];
    axMo = [-y -x -z];
    axGo = [-y -x -z];
@@ -50,10 +51,6 @@ elseif strcmpi(tagtype,'Mini')
     axAo = [y x -z];
     axMo = [x y z];
     axGo = [y x -z]; % no
-elseif strcmpi(tagtype,'Mini2')
-    axAo = [-y -x -z];
-    axMo = [-y -x -z];
-    axGo = [-y -x -z];
 elseif strcmpi(tagtype,'MiniGrouper')
     axAo = [y -x -z];
     axMo = [y -x -z];
