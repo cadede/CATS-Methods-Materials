@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsanddata(data,headers,tagon,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchusingvidtimestamps,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsanddata(data,headers,tagon,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchstyle,useFrames)
 
 % this function looks to see if any adjustment is needed for the video and
 % data times, based on inputs from the meta data xls file, and then also
@@ -12,9 +12,17 @@ if nargin<12; useFrames = false; end %this is a legacy switch for if you enter f
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
  Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
 pconst = CAL.pconst; pcal = CAL.pcal;
+
+if strcmp(synchstyle,'timestamps')||strcmp(synchstyle,'audio')
+    synchusingvidtimestamps = true;
+elseif strcmp(synchstyle,'surfacings')
+    synchusingvidtimestamps = false;
+end
+audfold = []; movaudfold = [];
  
  % synch 
 % try if viddata.vid4k
+        disp('Can choose not to resynch files if you have already run through the audio synching process')
         synchaudioB = input('Synch audio files with data (for CATS tags, select yes if audio was downloaded as a single audio file and then split in an earlier step)? (1 = yes, 2 = no) ');
         
 %     else audstart = [];
@@ -173,7 +181,19 @@ else
         timeDN = times; % now time stamps are always time (not seconds), and timeDN is time since video start
         timesO = times; 
         lastgood = 1; FIX = [];
+        t1 = find(tagon,1); t2 = find(tagon,1,'last');
         for i = 1:length(frameTimes)
+            if strcmp(synchstyle,'audio') && ~isempty(frameTimes{i}) && vidDN(i) + vidDurs(i)/24/60/60 >DN(t1) && vidDN(i)<DN(t2)
+                if isempty(audfold)
+                    [~,audfold] = uigetfile('*.wav','Select an audio file from "AudioData" folder (file names should now have correct start time synched with data)');
+                end
+                if isempty(movaudfold)
+                    [~,movaudfold] = uigetfile('*.wav','Select an audio file from wavfiles folder (files with audio stripped directly from movie files)');
+                end
+                tvidDN = synchvideousingaudio(i,tagon,DN,vidDN(i),vidDurs(i),fs,p,Atemp,audfold,movaudfold);
+                vidDN(i) = tvidDN;
+                if i == length(frameTimes); disp('Audio from movie files no longer needed, can delete when ready'); end
+            end
             if ~synchusingvidtimestamps
                 surfI = find(videonum == i & strcmp(types,'Surface'));
                 manI = find(videonum == i & strcmp(types,'Manual')); % if the whale does not surface, can do a manual calibration using another factor (tagoff, no paddlewheel to paddlewheel audio etc.)

@@ -241,24 +241,43 @@ tagon = gettagon(data.Pressure,ofs,data.Date(1)+data.Time(1)+timedif/24,[data.Ac
    CellNum = 4;
          save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','tagon','nopress','-append');
      disp('Section 4 done');
-%% 5.(old cell 4) adjust video times to match data times 
-% This is mostly for legacy data that does not have accurate start times(see below), but run it anyway as it sets up some variables.
-% for pre-wireless data:
-% If you are using the excel sheet to synch vids and data from animal surfacings (uncommon), it makes graphs where boxes should line up with surfacings and displays some values indicating how much each video needs to be adjusted.
-%NOTE: this cell can sometimes take a long time to run if there is a large
-% data file
+%% 5. Synch video and audio with data 
+% (run this cell even if you do not have video or audio as it creates null variables)
+% 
+% There are three options for synching videos (details below). In general, 
+% the offset between video time stamps and data is delayed 1-2 s. So they 
+%  are generally accurate by default, but for many purposes that is not
+%  sufficient. 
+% Also note that there are two major versions of CATS tags accounted for here.
+% Prior to 2021, tags with audio had the audio written directly onto the 
+% video (audio was synched with video). Since then, the audio is downloaded
+% as a separate file and is more consistent and of higher quality. So data, 
+% audio and video though all have slightly different offsets (clock drift does
+% not seem noticeable).
 
-%NEW: first flag has been set to false as a default (so it will try to read
-%surfacing files from the xls header file and use those to synchronize the
-%video and the data). This may or may not be the future default until the
-%processor speeds of CATS tags are sufficient to handle video/data time
-%synchs independently.
-synchusingvidtimestamps = false; % for newer videos where timestamp from data is imprinted on video accurately (CHECK THIS BEFORE SWITCHING THIS FLAG TO TRUE, RECOMMEND USING HEADER FILE TO IDENTIFY SURFACINGS FOR MORE ACCURATE SYNCHRONIZATIONS)
-nocam = false; %false; % set to true if this is a data only tag. If there is just audio, set to true.  Will have to set audon independently
+% see page in wiki (https://github.com/cadede/CATS-Methods-Materials/wiki) 
+% on new tag audio for a full description 
+
+% input these three parameters
+nocam = false; % set to true if this is a data only tag. If there is just audio, set to true.  
 audioonly = false; % set to true if tag has no camera but does have audio
+synchstyle = 'audio'; % options are: 'audio','surfacings','timestamps';
+% 'audio': best for new tags with separate audio, video and data. First
+% synchs audio with data, then uses the camera audio (needs to be have been recorded at high
+% gain!) to find peaks in audio that can be used as synch points
+% 'surfacings': uses the xls header file where specific frame times of
+% surfacings were noted and uses the pressure sensor trace to synch with
+% these time points
+% 'timestamps': some new tags have accurate enough start times encoded in
+% the video names such that this process is needed. Basically skips the
+% synch process and just uses vidDN variable from movieTimes file.
 
 if CellNum<4; x = input('Previous cell has not been completed, continue anyway? 1 = yes, 2 = no');
     if x~=1; error('Previous cell has not been completed'); end
+end
+
+if ~nocam && ~audioonly && ~(strcmp(synchstyle,'audio')||strcmp(synchstyle,'surfacings')||strcmp(synchstyle,'timestamps'))
+    error('synchstyle variable must be ''audio'', ''surfacings'', or ''timestamps''')
 end
 
 GPS = cell2mat(headers(2,2:3)); %from above file
@@ -312,7 +331,7 @@ else
    % this script makes a few variables, but its main purpose is to
    % synchronize video and data (and audio for newer tags) using surfacings for videos that do not
    % have a record of their start times (i.e. collected independently of the diary data)
-   [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchusingvidtimestamps);
+   [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchstyle);
 end
    CellNum = 5;
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audstart','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
