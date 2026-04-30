@@ -284,7 +284,8 @@ end
 GPS = cell2mat(headers(2,2:3)); %from above file
 whaleName = char(headers(1,2));
 timedif = cell2mat(headers(3,2)); % The number of hours the tag time is behind (if it's in a time zone ahead, use -).  Also account for day differences here (as 24*# of days ahead)
-load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum','tagon','ODN');
+audstart = [];
+load([fileloc filename(1:end-4) 'Info.mat'],'Afs','ofs','CAL','Hzs','CellNum','tagon','ODN','audstart');
 if CellNum < 3; error('Step 3 has not been run'); end
 if ~exist('data','var'); load([fileloc filename(1:end-4) 'truncate.mat']); end
 DNorig = data.Date+data.Time+timedif/24;
@@ -325,14 +326,14 @@ if nocam
             audstart = synchaudio(tagon,DNorig,ofs,fileloc,data.Pressure,Atemp);
         end
 %          audstart = nan; 
-    else; audstart = nan;
+    elseif ~exist('audstart','var')||isempty(audstart); audstart = nan;
     end
 else
    viddata = load([fileloc filename(1:end-4) 'movieTimes.mat']); %load frameTimes and videoDur from the movies, as well as any previously determined info from previous prh makings with different decimation factors
    % this script makes a few variables, but its main purpose is to
    % synchronize video and data (and audio for newer tags) using surfacings for videos that do not
    % have a record of their start times (i.e. collected independently of the diary data)
-   [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchstyle);
+   [camon,audon,vidDN,vidDurs,nocam,tagslip,~,audstart] =  synchvidsanddata(data,headers,tagon,viddata,Hzs,DNorig,ODN,ofs,CAL,nocam,synchstyle,audstart);
 end
    CellNum = 5;
      save([fileloc filename(1:end-4) 'Info.mat'],'camon','audstart','audon','tagslip','GPS','whaleName','tagnum','DNorig','vidDN','vidDurs','timedif','CellNum','nocam','-append');
@@ -363,7 +364,7 @@ end
 disp(['New Sampling Rate: ' num2str(ofs/df);]);
 if ofs/df ~= 10; warning('Final sampling rate does not equal 10 Hz'); end
 fs = ofs/df;
-DV = datevec(DNorig(1));
+DV = datevec(DNorig(1)); DV(1) = DV(1) - 3;
 if DV(1,1)<2015; str = '2010'; elseif DV(1,1)<2020; str = '2015'; else str = '2020'; end
 if isnan(GPS(1,1)) || isnan(GPS(1,2)); error('No GPS location (needed to calculate magnetic field'); end
 try [~,~,dec,inc,b] = wrldmagm(0,GPS(1,1),GPS(1,2),decyear(DV(1,:)),str); % newest wrldmagm in subfunctions 
@@ -752,8 +753,8 @@ end
 
 
 % set threshold parameters
-minDepth = 5;
-minPitch = 45;
+minDepth = 1;
+minPitch = 10;
 % speedEnds = speedper(:,2);
 minSpeed = 1;
 % speedEnds([1 4 5 end-1:end]) = [];

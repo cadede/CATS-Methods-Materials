@@ -197,13 +197,13 @@ while (isempty(button) || button ~= 113) && k<= length(pI)
         break;
     elseif button == 1 % left click
         adj(end+1,1) = x;
-        a = (x-aud.start)*24*60*60; % a is seconds since start time
+        a = (x-aI(1))*24*60*60; % a is seconds since start time
         [i1,mag] = peakfinder(audmean(a*10-5:a*10+5)); % audmean is in 1/10 s bins
         [~,i] = max(mag); i1 = round(i1(i)+a*10-5-1);
         m(size(adj,1),1) = plot(ax(3),aI(i1),mag(i),'rs','markerfacecolor','r');
         [x,~,button]=ginput(1);
         adj(end,2) = x;
-        a = (x-movaud.start)*24*60*60; % a is seconds since start time
+        a = (x-maI(1))*24*60*60; % a is seconds since start time
         [i1,mag] = peakfinder(movaudmean(a*10-5:a*10+5)); % audmean is in 1/10 s bins
         [~,i] = max(mag); i1 = round(i1(i)+a*10-5-1);
         m(size(adj,1),2) = plot(ax(4),maI(i1),mag(i),'rs','markerfacecolor','r');

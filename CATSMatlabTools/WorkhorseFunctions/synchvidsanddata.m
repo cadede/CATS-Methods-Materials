@@ -1,4 +1,4 @@
-function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsanddata(data,headers,tagon,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchstyle,useFrames)
+function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsanddata(data,headers,tagon,viddata,Hzs,DN,ODN,fs,CAL,nocam,synchstyle,audstart,useFrames)
 
 % this function looks to see if any adjustment is needed for the video and
 % data times, based on inputs from the meta data xls file, and then also
@@ -8,7 +8,7 @@ function [camon,audon,vidDN,vidDurs,nocam,tagslip,vidadj,audstart] = synchvidsan
 
 dbstop if error;
 global fileloc filename
-if nargin<12; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
+if nargin<13; useFrames = false; end %this is a legacy switch for if you enter framenumbers into the excel sheet instead of times
 if sum(diff(data.Pressure)<.001) == length(data.Pressure); nopress = true; else nopress = false; end
  Atemp = ([data.Acc1 data.Acc2 data.Acc3]-repmat(CAL.aconst,size(data,1),1))*CAL.acal; %temp Acceleration file for guessing at tagslip location
 pconst = CAL.pconst; pcal = CAL.pcal;
@@ -34,7 +34,8 @@ audfold = []; movaudfold = [];
 cf = pwd;
 if synchaudioB == 1 % viddata.vid4k && ~isempty(synchaudioB) && 
    audstart = synchaudio(tagon,DN,fs,fileloc,data.Pressure,Atemp);
-else
+   save([fileloc filename(1:end-4) 'Info.mat'],'audstart','-append')
+elseif ~exist('audstart','var') || isempty(audstart)
     audstart = nan;
 end
 
