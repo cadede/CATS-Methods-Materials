@@ -45,7 +45,8 @@ dur = 15; % break the video up into chunks of length dur seconds to ensure progr
 folder = 'H://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
 useVideoTimestamps = true; % set to true if you want to read the timestamps off the video. Set to false to rely on the timestamps from the video names. Can also set to true if you have audio only in cats raw format
 % set to true if there are audio files to read.
-readaudiofiles = false; % set to false if there is no audio data or if you are rerunning this script due to an interruption and have already created the AudioData folder and populated it with wav and audio.mat files
+readaudiofiles = false; % set to false when you do not need to maintain the audio files from the video 
+% (e.g. if there is no audio, or if the main audio is downloaded separately from the video). 
 
 
 % these will be less commonly adjusted
