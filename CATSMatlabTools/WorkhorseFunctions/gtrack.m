@@ -96,11 +96,12 @@ proj.GeographicCRS.Name;
 else
 [x,y,uzone] = deg2utm(GPS(Gi,1),GPS(Gi,2));
 [xp,mainUZ] = utm2m(x,y,uzone);
-end
-
 if any(~cellfun(@(x) strcmp(x,uzone(1,:)),mat2cell(uzone,ones(size(uzone,1),1),4)))
     disp('GPS hits span UTM zones, this may cause problems on axes but all else should be fine');
 end
+end
+
+
 
 x0 = xp(G0); y0 = y(G0);
 xp = xp-xp(G0);

@@ -29,7 +29,23 @@ end
 if starttimedif>.001/24/60/60
     warning(['Starttime of data is ' datestr(DN(1),'yyyy-mmm-dd HH:MM:SS.fff') ', but starttime in audio name is ' datestr(otime,'yyyy-mmm-dd HH:MM:SS.fff')]);
     xx = input('Okay to proceed using audio start time from file name? (1 = yes, 2 = no):');
-    if xx~=1; error('check audio start time'); end
+    if xx ==2
+        yy = input('rename audiofiles to match starttime of data? (recommended if you are redoing the synchronization) (1 = yes, 2 = no)');
+        if yy == 1
+            D = dir(audloc); D = {D.name}; D = D(3:end);
+            for kk = 1:length(D)
+                II = strfind(D{kk},'-');
+                atime = datenum(D{kk}(II(end-2)+1:II(end)+3),'yyyymmdd-HHMMSS-fff');
+                if kk == 1; auddif = atime - DN(1); otime = atime - auddif; end
+                newtime = atime-auddif;
+                newfile = [D{kk}(1:II(end-2)) datestr(newtime,'yyyymmdd-HHMMSS-fff') D{kk}(II(end)+4:end)];
+                disp(['old file = ' D{kk}]);
+                disp(['new file = ' newfile]);
+                movefile([audloc D{kk}],[audloc newfile]);
+            end
+        end
+    elseif xx~=1; error('check audio start time');
+    end
 end
 
 
