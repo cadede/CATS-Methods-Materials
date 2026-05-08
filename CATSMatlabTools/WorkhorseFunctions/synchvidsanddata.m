@@ -183,16 +183,30 @@ else
         timesO = times; 
         lastgood = 1; FIX = [];
         t1 = find(tagon,1); t2 = find(tagon,1,'last');
-        for i = 1:length(frameTimes)
-            if strcmp(synchstyle,'audio') && ~isempty(frameTimes{i}) && vidDN(i) + vidDurs(i)/24/60/60 >DN(t1) && vidDN(i)<DN(t2)
+
+        if strcmp(synchstyle,'audio') 
+            tvidDN = nan(size(vidDN));
+            for i = find(vidDN + vidDurs/24/60/60 >DN(t1),1):min(find(vidDN<DN(t2),1,'last'),length(frameTimes))
                 if isempty(audfold)
                     [~,audfold] = uigetfile('*.wav','Select an audio file from "AudioData" folder (file names should now have correct start time synched with data)');
                 end
                 if isempty(movaudfold)
                     [~,movaudfold] = uigetfile('*.wav','Select an audio file from wavfiles folder (files with audio stripped directly from movie files)');
                 end
-                tvidDN = synchvideousingaudio(i,tagon,DN,vidDN(i),vidDurs(i),fs,p,Atemp,audfold,movaudfold);
-                vidDN(i) = tvidDN;
+                figure(i); clf; title(['Processing audio from video ' num2str(i) '. When all videos are complete, will ask for input'])
+                tvidDN(i) = autosynchvideousingaudio(i,tagon,DN,vidDN(i),vidDurs(i),fs,p,Atemp,audfold,movaudfold);
+            end
+        end
+
+        for i = 1:length(frameTimes)
+            if strcmp(synchstyle,'audio') && ~isempty(frameTimes{i}) && vidDN(i) + vidDurs(i)/24/60/60 >DN(t1) && vidDN(i)<DN(t2)
+                figure(i); pause;
+                title('Press "s" to manually synch peaks (will reprocess data) or any other button to accept auto synch')
+                [~,~,button] = ginput(1);
+                if button == 115
+                    tvidDN(i) = synchvideousingaudio(i,tagon,DN,vidDN(i),vidDurs(i),fs,p,Atemp,audfold,movaudfold);
+                end
+                vidDN(i) = tvidDN(i);
                 if i == length(frameTimes); disp('Audio from movie files no longer needed, can delete when ready'); end
             end
             if ~synchusingvidtimestamps
