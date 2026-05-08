@@ -56,6 +56,7 @@ function [XYZ, H, DEC, DIP, F] = wrldmagm(height, lat, lon, dyear, varargin )
 %   Report: The US/UK World Magnetic Model for 2015-2020". 
 
 narginchk(4, 5);
+if dyear>=2025; dyear = 2025; warning('wrldmagm is predicting from 2020 models, should be fine for most purposes of general magnetic field prediction'); end
 
 % Get string value for epoch
 if ((nargin > 4) && (ischar(varargin{1}) || isstring( varargin{1} )))
