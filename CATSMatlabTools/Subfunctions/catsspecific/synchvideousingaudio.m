@@ -1,4 +1,5 @@
 function tvidDN = synchvideousingaudio(vidNum,tagon,DN,vidDN,vidDurs,fs,p,A,audfold,movaudfold)
+dbstop if error
 cf = pwd;
 cd (movaudfold);
 movaudfiles = dir('*.wav');
@@ -171,8 +172,10 @@ pI = PI(pI);
 curadj = 0;
 if isempty(pI)
     set(t,'string',{'No surfacings detected! Use controls to zoom to time window with a suitable synch point'; 'Then press enter'});
+    linkaxes(ax(1:4),'x');
     pause;
-    [~,pI] = min(abs(DN-diff(get(ax(1),'xlim'))));
+    [~,pI] = min(abs(DN-mean(get(ax(1),'xlim'))));
+    linkaxes(ax(1:4),'off')
 end
 
 while (isempty(button) || button ~= 113) && k<= length(pI)
