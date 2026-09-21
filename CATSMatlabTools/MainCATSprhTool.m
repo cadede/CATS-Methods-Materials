@@ -44,12 +44,19 @@ disp('Section completed')
 dur = 15; % break the video up into chunks of length dur seconds to ensure progress and avoid crashes.  Smaller numbers use less memory
 folder = 'H://CATS//tag_data_raw//'; % optional- just gives you a place to start looking for your data files
 useVideoTimestamps = true; % set to true if you want to read the timestamps off the video. Set to false to rely on the timestamps from the video names. Can also set to true if you have audio only in cats raw format
-% set to true if there are audio files to read.
+% for most newer applications, useVideoTimestamps can be false (will be
+% quicker). But if the processer is taxed (e.g. if the LED is draining the
+% battery, and the video is subject to skipped frames, may need to read all
+% timestamps to ensure good synchronization).
+
+% set to true if there are audio files were encoded on video (only for old
+% tag versions)
 readaudiofiles = false; % set to false when you do not need to maintain the audio files from the video 
 % (e.g. if there is no audio, or if the main audio is downloaded separately from the video). 
 
 
-% these will be less commonly adjusted
+% these will be less commonly adjusted, and only relevant if
+% useVideoTimestamps = true;
 audioonly = false; % set to true for tags that do not have video (currently only works if you have wav files, if you only have ".raw" versions of audio files and no video files, we will have to make some adjustments still to ensure data is converted at the right sample rate.
 readtimestamps = true; % if there are embeded timestamps on the video.  If simpleread, only read timestamps at the end of a section and compare to the video time
 simpleread = true; % newer videos with accurate initial timestamps (to the ms). If false, reads timestamps from every frame and tries to estimate the bad frame reads
@@ -59,8 +66,7 @@ ignorebadaudio = false; % set to true if raw files appear to be corrupted/wrong 
 % whaleID allows you to look up tag off and on times from a TAG GUIDE.xlx.
 % If there is no tag guide or the information doesn't exist, you will have to choose manually which videos to import.
 whaleID = []; % if your videos are within a folder labeled with your whaleID in spYYMMDD-tagnum format, then you can leave this blank.  Else fill this in
-if useVideoTimestamps; vid4k = false; else; vid4k = true; end
-if vid4k % a legacy variable name that was a bit unclear. Future versions will rename
+if ~useVideoTimestamps % a legacy variable name that was a bit unclear. Future versions will rename
     readtimestamps = false; % timestamp reading for 4k video not yet enabled/tested. Filename timestamps appear to be up to 1 s off so should use surfacing method via excel template to synch video and data.
     readaudiofiles = false; % assumes that audio is downloaded separately. Currently reading audio from 4k video is not supported. wav files will be written on to data video at stitch video/audio step.
     [vidDN, vidDurs] = make4kMovieTimes(dur,folder,readaudiofiles,readtimestamps,whaleID);
@@ -700,7 +706,15 @@ end
 % speedP = Paddles; speedP(speedP == 0) = nan;
 
 CellNum = 10.5;
-save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Jig','-append');
+ try
+    save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Jig','-append');
+catch
+    info1 = load([fileloc filename(1:end-4) 'Info.mat']);
+    info1.CellNum = Cellnum; info1.Jig = Jig;
+    save([fileloc filename(1:end-4) 'Info.mat'],'-struct','info1','-v7.3');
+    clear info1;
+%     save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','Jig','-append');
+end
 disp('Section 10b finished');
 %
 % use this to examine the two metrics of turbulent flow.  They should
@@ -818,7 +832,16 @@ end
 CellNum = 11;
 if ~exist('speedstats','var'); speedstats = struct(); end
 disp('Section 11 (speed) finished');
-save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
+try
+    save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
+catch
+    info1 = load([fileloc filename(1:end-4) 'Info.mat']);
+    info1.CellNum = Cellnum; info1.JigRMS = JigRMS; info1.speedstats = speedstats;
+    save([fileloc filename(1:end-4) 'Info.mat'],'-struct','info1','-v7.3');
+%     save([fileloc filename(1:end-4) 'Info.mat'],'CellNum','JigRMS','speedstats','-append');
+clear info1;
+end
+
 try save([fileloc filename(1:end-4) 'Info.mat'],'Paddles','-append'); catch; end
 % %% if you want to apply speed using speed calibrations from another tag,
 % % uncomment this section
@@ -868,7 +891,7 @@ CAL.info = 'Bench cals used for G, 3d in situ cal used for M, A and p. If A3d is
 tagon = tagondec; camon = camondec; tagslip = slips; 
 %
 if ~exist('frameTimes','var') && ~nocam; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes'); end
-if ~exist('vidNam','var')&& ~nocam || sum(~isnan(vidDN))>0; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam','vid4k'); 
+if ~exist('vidNam','var')&& ~nocam || sum(~isnan(vidDN))>0; load([fileloc filename(1:end-4) 'movieTimes.mat'],'frameTimes','vidNam'); 
 elseif ~exist('vidNam','var') || isempty(vidNam); vidNam = {}; viddeploy = [];
 end
 if exist('frameTimes','var') && length(frameTimes)>length(vidDN); frameTimes(length(vidDN)+1:end) = []; end
@@ -892,9 +915,9 @@ INFO.calperiod = cellfun(@(x) DN(x),calperiodI,'uniformoutput',false);
 INFO.calperiodI = calperiodI;
 INFO.Wchange = Wchange; %tagslip indices used for tag rotation to animal frame (like Wcalperiods, but trying to find the actual slip)
 INFO.tagslip = slips;
-try if vid4k; INFO.vid4k = true; else INFO.vid4k = false; end
-catch; INFO.vid4k = false;
-end
+% try if vid4k; INFO.vid4k = true; else INFO.vid4k = false; end
+% catch; INFO.vid4k = false;
+% end
 try INFO.TempInternal = TempI; catch; end
 if exist('nopress','var') && nopress; INFO.NoPressure = true; end % if there's a tag with a messed up pressure sensor
 a = [];

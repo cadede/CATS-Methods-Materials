@@ -5,7 +5,7 @@ nout = length(DN);
 %well as a cal structure and outputs the axis oriented and in situ
 %calibrated sensor matrices
 
-if nargin<5; df = 1; end
+if nargin<7; df = 1; end
 % if you don't need to decimate, assume df = 1;
 
 names =fieldnames(CAL);
@@ -15,7 +15,9 @@ end
 
 try pressTemp = data.Temp1; catch; pressTemp = data.Temp; end
 try Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal+polyval([CAL.pc.tcomp,CAL.pc.poly(2)],pressTemp-CAL.pc.tref),ofs,Hzs.pHz,df,nout,'pHz');
-catch; Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal,ofs,Hzs.pHz,df,nout,'pHz');
+catch 
+    try CAL.pconst + 1; catch; CAL.pconst = 0; end; try CAL.pcal+1; catch; CAL.pcal = 1; end
+    Depth = decimateM((data.Pressure-CAL.pconst)*CAL.pcal,ofs,Hzs.pHz,df,nout,'pHz');
     disp('Bench pressure cal applied');
 end
 try Temp = (data.Temp-CAL.Tconst)*CAL.Tcal; catch; Temp = data.Temp; end
@@ -54,7 +56,7 @@ end
 if ~exist('magconstoff','var'); 
     try magconstoff = magconston; magcaloff = magcalon; catch
         try magconstoff = magconst; magconston = magconst; magcalon = magcal; magcaloff = magcal;
-        catch; warning('no magnetometer bench cal, to continue press enter'); pause;
+        catch; warning('no magnetometer bench cal');%, to continue press enter'); pause;
             magconston = [0 0 0]; magcalon = diag(ones(3,1));
             magconstoff = magconston; magcaloff = magcalon;
         end

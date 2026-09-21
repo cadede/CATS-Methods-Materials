@@ -309,7 +309,7 @@ for n = 1:length(movies)
             if isempty(vid.frames); warning(['No frames detected after ' num2str(endtime-dur) ' s, despite reported video length of  ' num2str(videoL) ' s, moving to next video']);
                 break;
             end
-            while flag && iii<100 % try 100 frames until you get a good read
+            while flag && iii<100 && iii<length(vid.frames)-1% try 100 frames until you get a good read
                 iii = iii+1;
                 [newf, flag] = gettimestamp(vid.frames(end-iii).cdata,false);
             end

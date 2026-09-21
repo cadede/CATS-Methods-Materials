@@ -35,9 +35,11 @@ whaleName = INFO.whaleName;
     if ~exist('head', 'var')
         head = nan(size(p));
     end
-    speedJJ = speed.JJ;
-    speedJJ(isnan(speedJJ)) = min(speedJJ); speedJJ = runmean(speedJJ,round(fs/2)); speedJJ(isnan(speed.JJ)) = nan;
-    J = njerk(Aw,fs); J(end+1) = J(end);
+        if ~exist('roll','var'); roll = zeros(size(p)); warning('no roll variable'); end
+    if ~exist('pitch','var'); pitch = pi/2*ones(size(p)); warning('no pitch variable'); end
+    try speedJJ = speed.JJ; catch; try speedJJ = speed.FN; catch; warning('no speed, using depth diff'); speedJJ = [diff(p)*fs./sin(pitch(1:end-1)); 0]; end; end
+    try speedJJ(isnan(speedJJ)) = min(speedJJ); speedJJ = runmean(speedJJ,round(fs/2)); speedJJ(isnan(speed.JJ)) = nan; catch; warning('error in smoothing speed'); end
+    try J = njerk(Aw,fs); J(end+1) = J(end); catch; J = zeros(size(p)); end
     if exist('LungeDN','var')
         L = LungeDN;
         LI = LungeI;
@@ -65,6 +67,9 @@ whaleName = INFO.whaleName;
         LI = nan(0,0);
         LC = nan(0,0);
     end
+
+
+
     disp(['TagTurnedOn: ' datestr(DN(1),'mm/dd/yy HH:MM:SS.fff')]);
     disp(['TagOnAnimal: ' datestr(DN(find(tagon,1)),'mm/dd/yy HH:MM:SS.fff')]);
     disp(['EndData: ' datestr(DN(end),'mm/dd/yy HH:MM:SS.fff')]);
@@ -98,7 +103,7 @@ disp('Section 1 finished: Data Loaded');
         set(ax1(1),'ydir','rev','nextplot','add','ylim',[-5 max(p(tagonI))]);
         ylabel('Jerk','parent',ax1(2));
         ylabel('Depth','parent',ax1(1));
-        set(ax1(2),'ycolor','m','ylim',[0 1.2*max(J(tagonI))]);
+        set(ax1(2),'ycolor','m','ylim',[0 max(1.2*max(J(tagonI)),1)]);
         set(h2,'color','m');
         set(ax1,'xlim',[DN(I(1)) DN(I(end))]);
         set(ax1,'xticklabel',datestr(get(gca,'xtick'),'mm/dd HH:MM:SS'));

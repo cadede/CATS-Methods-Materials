@@ -47,6 +47,14 @@ elseif strcmpi(tagtype,'Trident') || strcmpi(tagtype,'TECG') || strcmpi(tagtype,
    axAo = [-y -x -z];
    axMo = [-y -x -z];
    axGo = [-y -x -z];
+      elseif strcmpi(tagtype,'CATSmini')
+    axAo = [-y -x -z];
+    axMo = [x y -z];
+    axGo = [-y -x -z];
+   elseif strcmpi(tagtype,'Shark')
+    axAo = [-y -x -z];
+    axMo = [y x z];
+    axGo = [-y -x -z];
 elseif strcmpi(tagtype,'Mini')
     axAo = [y x -z];
     axMo = [x y z];

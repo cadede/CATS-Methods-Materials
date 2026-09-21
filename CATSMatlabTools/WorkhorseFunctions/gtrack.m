@@ -205,8 +205,9 @@ elseif strcmp(method,'projection')
     [dys] = projinv(proj,(xs(1)+x0)*ones(size(ys)),ys+y0);
     [~,dxs] = projinv(proj,xs+x0,(ys(1)+y0)*ones(size(xs)));
 end
-
-oi = sprintf('%0.3f',dxs); oi = reshape(oi,size(oi,2)/size(dxs,1),size(dxs,1))';
+maxL = 5;
+for iii = 1:length(dxs); maxL = max(maxL,length(sprintf('%0.3f',dxs(iii)))); end
+oi = sprintf(['%0' num2str(maxL) '.3f'],dxs); oi = reshape(oi,size(oi,2)/size(dxs,1),size(dxs,1))';
 xlabs = [oi repmat([char(176) ' ('],size(xs,1),1) num2str(xs) repmat(' m)',size(xs,1),1)];
 oi = sprintf('%0.3f',dys); oi = reshape(oi,size(oi,2)/size(dys,1),size(dys,1))';
 ylabs = [oi repmat([char(176) ' ('],size(ys,1),1) num2str(ys) repmat(' m)',size(ys,1),1)];

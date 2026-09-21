@@ -293,6 +293,10 @@ for n = 1:length(movies)
     try
     OBJ =  VideoReader([movieloc movies{n}]);
     fr = OBJ.FrameRate;
+    disp([movies{n} 'Frame Rate: ' num2str(fr)])
+    if abs(fr-round(fr))>.1 || (abs(fr-30)>.1 && abs(fr-25)>.1)
+        warning('Framerate for this video is unusual, likely there are skipped frames, recommend rerunning cell with useVideoTimestamps = true')
+    end
     frameTimes{vidNum(n)} = 1/fr:1/fr:OBJ.Duration;
      catch;  vid = mmread([movieloc movies{i}],[1 10]); % just read a 
          fr = vid.rate;

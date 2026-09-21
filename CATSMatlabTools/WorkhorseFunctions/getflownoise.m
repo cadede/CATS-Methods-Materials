@@ -98,10 +98,16 @@ if ~nocam || ~noaud
             DBdf = 53;
         elseif aud.rate == 23925
             DBdf = 25;
-            elseif aud.rate == 95703
+        elseif aud.rate == 95703
             DBdf = 73;
-        else; warning('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin'); 
-            error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
+        elseif aud.rate <=2000
+            DBdf = 1;
+        else F = factor (aud.rate);
+            subsets = SUBSET(F);
+            DBdf = choosedf(subsets,aud.rate);
+%         else;
+            warning(['new sampling rate (' num2str(aud.rate) ' Hz), decimation factor calculated automatically as: ' num2str(DBdf) ]); %'edit script above this line to include a decimation factor that results in an integer bin'); 
+%             error('new sampling rate, edit script above this line to include a decimation factor that results in an integer bin');
         end
         try
         [DBt, offset] = CATSrms(aud,fs,DBdf); %offset is in seconds
@@ -165,3 +171,33 @@ if ~nocam || ~noaud
 
 end
 DB(isinf(DB)) = nan;
+end
+
+% subfunction
+function subsets = SUBSET(list)
+N = length(list);
+subsets = {};
+for k = 0:N
+    if k == 0
+        subsets{end+1} = []; % Add the empty set
+    else
+        % Get all combinations of size k
+        combos = nchoosek(list, k); 
+        
+        % Split rows of the matrix into individual cells
+        num_combos = size(combos, 1);
+        for i = 1:num_combos
+            subsets{end+1} = combos(i, :);
+        end
+    end
+end
+
+end
+
+function df = choosedf(subsets,audrate)
+prods = cellfun(@prod,subsets);
+rates = audrate./prods;
+rates(rates<300) = audrate*10;
+[~,b] = min(abs(rates-1000));
+df = prods(b);
+end

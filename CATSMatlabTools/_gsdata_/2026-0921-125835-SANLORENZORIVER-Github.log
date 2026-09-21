@@ -1,0 +1,32 @@
+2026-09-21 12:58:35: -- Analysis Started by User Command
+2026-09-21 12:58:35: L: Reading State File C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-09-21 12:58:35: R: Reading State File C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-09-21 12:58:35: Not using/deleting cached state file, because remote state file has changed since last Sync:
+State file: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+name= folder=0 link=0 file=0 attrs=0 size=-1 mod-time=(null-time) cre-time=(null-time) ab=0 ckt=0 cks= dsply= cmnt= != 
+
+2026-09-21 12:58:35: R: State file does not exist: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-09-21 12:58:35: /Applications/SimpleLungeDetection.m: Conflict: New files that differ
+2026-09-21 12:58:35: /MainCATSprhTool.m: Conflict: New files that differ
+2026-09-21 12:58:35: /Other tag tools/importdTag3data.m: Conflict: New files that differ
+2026-09-21 12:58:35: /Utilities/applyCal2.m: Conflict: New files that differ
+2026-09-21 12:58:35: /Utilities/axisconventions.m: Conflict: New files that differ
+2026-09-21 12:58:35: /WorkhorseFunctions/getflownoise.m: Conflict: New files that differ
+2026-09-21 12:58:35: /WorkhorseFunctions/gtrack.m: Conflict: New files that differ
+2026-09-21 12:58:35: /WorkhorseFunctions/make4kMovieTimes.m: Conflict: New files that differ
+2026-09-21 12:58:35: /WorkhorseFunctions/makeMovieTimes.m: Conflict: New files that differ
+2026-09-21 12:58:35: Analyze has finished with Conflicts. Resolve Conflicts by selecting the correct sync direction, then click Sync
+2026-09-21 12:58:35: Changes: 9, Conflicts: 9, CopyTime: 0, FixState: 868, Errors: 0, All: 906
+2026-09-21 12:58:35: == Sync Started by User Command
+2026-09-21 12:58:35: /Applications/SimpleLungeDetection.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /MainCATSprhTool.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /Other tag tools/importdTag3data.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /Utilities/applyCal2.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /Utilities/axisconventions.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /WorkhorseFunctions/getflownoise.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /WorkhorseFunctions/gtrack.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /WorkhorseFunctions/make4kMovieTimes.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: /WorkhorseFunctions/makeMovieTimes.m: unresolved conflict results in No Copy
+2026-09-21 12:58:35: Save State File C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-09-21 12:58:35: Save State File C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-09-21 12:58:35: == Sync Complete. Time: 00:00:00, Speed: 0.00/s, OK: 868, Errors: 0, Conflicts: 9
