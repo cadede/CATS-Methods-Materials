@@ -93,6 +93,9 @@ warning('off','MATLAB:textscan:AllNatSuggestFormat')
 if regexp(filename(end-7:end-4),'_\d\d\d')
     i = max(strfind(filename,'_'));
     i = str2num(filename(i+1:i+3));
+elseif regexp(filename(end-7:end),'\d\d\d.csv')
+    i = min(strfind(filename,'.csv'));
+    i = str2num(filename(i-3:i-1));
 else
     i = 0;
 end
@@ -210,7 +213,9 @@ while any(strcmp({DIR.name},[fname(1:end-3) num2str(i,'%03u')])) || any(strcmp({
         try headers(~cellfun(@isempty,strfind(headers,'CC status'))) = {'CamOn'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'CC vid. '))) = {'VidSize'}; catch; end
         try headers(~cellfun(@isempty,strfind(headers,'EC ['))) = {'EC'}; catch; end
-        try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
+        try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone Left' 'Hydrophone Right'}; catch 
+            try headers(~cellfun(@isempty,strfind(headers,'Hydrophone'))) = {'Hydrophone'}; catch; end
+        end
         try headers(~cellfun(@isempty,strfind(headers,'SWS'))) = {'SWS'}; catch; end
         data.Properties.VariableNames = headers;
         

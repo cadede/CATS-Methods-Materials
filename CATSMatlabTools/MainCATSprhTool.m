@@ -963,6 +963,11 @@ CellNum = 12;
 prhfile = [whaleName ' ' num2str(fs) 'Hzprh.mat'];
 save([fileloc prhfile],'Aw','At','Gw','Gt','fs','pitch','roll','head','p','T','Light','Mt','Mw','GPS','DN','speed','speedstats','JigRMS','tagon','camon','vidDN','vidNam','vidDurs','viddeploy','flownoise','INFO','audon');
 if exist('Paddles','var'); save([fileloc prhfile],'Paddles','-append'); end
+if ismember('C',data.Properties.VariableNames) % if you have CTD data
+    CTD = [data.C data.T data.D];
+    save([fileloc prhfile],'CTD','-append')
+end
+
 save([fileloc filename(1:end-4) 'Info.mat'],'prhfile','CellNum','INFO','-append');
 disp('Section 12 finished, prh file and INFO saved');
 
@@ -1161,6 +1166,8 @@ end
 [lats, longs] = track2latlong(GPS,tagon,geoPtrack);% Creates a lat long csv of the georeferenced pseudotrack at 1 Hz,
 % truncated to tagon time
 if length(lats) == sum(tagon); Lats = lats; Longs = longs; lats = nan(size(tagon)); longs = lats; lats(tagon) = Lats; longs(tagon) = Longs; end
+geoPtrackLatLong = [lats longs];
+save([fileloc prhfile],'geoPtrackLatLong','-append');
 DN2 = DN(tagon); p2 = p(tagon); Lats = lats(tagon); Longs = longs(tagon);
 T = table(datestr(DN2(1:fs:end),'mm/dd/yyyy HH:MM:SS'),Lats(1:fs:end),Longs(1:fs:end),p2(1:fs:end),'VariableNames',{'Time','Lat','Long','Depth'});
 writetable(T,[fileloc INFO.whaleName '_1HzgeoPtrackLatLong.csv']);

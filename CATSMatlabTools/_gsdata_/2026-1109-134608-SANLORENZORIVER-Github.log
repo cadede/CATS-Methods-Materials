@@ -1,0 +1,23 @@
+2026-11-09 13:46:08: -- Analysis Started by User Command
+2026-11-09 13:46:08: L: Reading State File C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-11-09 13:46:08: R: Reading State File C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-11-09 13:46:08: Changes: 2, Conflicts: 0, CopyTime: 0, FixState: 81, Errors: 0, All: 904
+2026-11-09 13:46:08: Left to Right: Copy File: 2 
+2026-11-09 13:46:08: == Sync Started by User Command
+2026-11-09 13:46:08: Copy Over 'C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/importCATSdata.m' -> 'C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/importCATSdata.m' (32,315)
+2026-11-09 13:46:08: Copy Over 'C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/MainCATSprhTool.m' -> 'C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/MainCATSprhTool.m' (68,219)
+2026-11-09 13:46:09: Save State File C:/Users/Dave/Documents/Programs/MATLAB/Tagging/CATS Tools/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-11-09 13:46:09: Save State File C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_file_state_v4._gs
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/Applications/SimpleLungeDetection.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/Other tag tools/importdTag3data.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/Utilities/applyCal2.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/Utilities/axisconventions.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/WorkhorseFunctions/getflownoise.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/WorkhorseFunctions/gtrack.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/WorkhorseFunctions/make4kMovieTimes.m
+2026-11-09 13:46:09: Deleted Recycled: C:/Users/Dave/Documents/GitHub/CATS-Methods-Materials/CATSMatlabTools/_gsdata_/_saved_/WorkhorseFunctions/makeMovieTimes.m
+2026-11-09 13:46:09: GsDeleteEmptyFoldersFS: /_gsdata_/_saved_/Applications
+2026-11-09 13:46:09: GsDeleteEmptyFoldersFS: /_gsdata_/_saved_/Other tag tools
+2026-11-09 13:46:09: GsDeleteEmptyFoldersFS: /_gsdata_/_saved_/Utilities
+2026-11-09 13:46:09: GsDeleteEmptyFoldersFS: /_gsdata_/_saved_/WorkhorseFunctions
+2026-11-09 13:46:09: == Sync Complete. Time: 00:00:01, Speed: 0.00/s, OK: 83, Errors: 0
